@@ -75,7 +75,7 @@ class LiveTvRepositoryImpl @Inject constructor(
         val source = sourceRepository.getActiveSource().first() ?: return
         configureBaseUrl(source.serverUrl, source.port)
 
-        val epgResponse = api.getShortEpg(source.username, source.password, streamId)
+        val epgResponse = api.getShortEpg(username = source.username, password = source.password, streamId = streamId)
         val entries = epgResponse.toDomain(streamId)
 
         epgDao.deleteByStream(streamId, source.id)

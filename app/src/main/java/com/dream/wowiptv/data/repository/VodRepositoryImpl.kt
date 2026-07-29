@@ -49,7 +49,7 @@ class VodRepositoryImpl @Inject constructor(
     override suspend fun getInfo(vodId: Int): VodInfo {
         val source = sourceRepository.getActiveSource().first() ?: error("No active source")
         configureBaseUrl(source.serverUrl, source.port)
-        val dto = api.getVodInfo(source.username, source.password, vodId)
+        val dto = api.getVodInfo(username = source.username, password = source.password, vodId = vodId)
         return dto.toDomain()
     }
 

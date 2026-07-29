@@ -49,7 +49,7 @@ class SeriesRepositoryImpl @Inject constructor(
     override suspend fun getInfo(seriesId: Int): SeriesInfo {
         val source = sourceRepository.getActiveSource().first() ?: error("No active source")
         configureBaseUrl(source.serverUrl, source.port)
-        val dto = api.getSeriesInfo(source.username, source.password, seriesId)
+        val dto = api.getSeriesInfo(username = source.username, password = source.password, seriesId = seriesId)
         return dto.toDomain()
     }
 
