@@ -23,7 +23,7 @@ data class SeriesInfoData(
     val cast: String? = null,
     val director: String? = null,
     val genre: String? = null,
-    @SerializedName("releaseDate")
+    @SerializedName("release_date")
     val releaseDate: String? = null,
     val rating: String? = null,
     val cover: String? = null,

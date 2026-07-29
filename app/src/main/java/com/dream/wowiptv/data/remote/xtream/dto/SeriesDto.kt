@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName
 
 data class SeriesDto(
     @SerializedName("series_id")
-    val seriesId: String? = null,
+    val seriesId: Int? = null,
     val name: String? = null,
     val cover: String? = null,
     val plot: String? = null,

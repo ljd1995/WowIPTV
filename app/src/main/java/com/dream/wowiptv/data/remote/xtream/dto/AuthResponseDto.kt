@@ -11,7 +11,6 @@ data class AuthResponseDto(
 
 data class UserInfoDto(
     val username: String? = null,
-    val password: String? = null,
     val message: String? = null,
     val auth: Int? = null,
     val status: String? = null,

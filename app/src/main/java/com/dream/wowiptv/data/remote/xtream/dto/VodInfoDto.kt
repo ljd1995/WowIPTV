@@ -30,7 +30,7 @@ data class VodInfoData(
 
 data class VodMovieData(
     @SerializedName("stream_id")
-    val streamId: String? = null,
+    val streamId: Int? = null,
     val name: String? = null,
     val added: String? = null,
     @SerializedName("category_id")
