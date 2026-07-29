@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.rememberNavController
+import com.dream.wowiptv.presentation.common.theme.WowIPTVTheme
 import com.dream.wowiptv.presentation.navigation.AppNavGraph
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -14,8 +15,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val navController = rememberNavController()
-            AppNavGraph(navController = navController)
+            WowIPTVTheme {
+                val navController = rememberNavController()
+                AppNavGraph(navController = navController)
+            }
         }
     }
 }
