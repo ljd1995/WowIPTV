@@ -1,7 +1,9 @@
 package com.dream.wowiptv.data.repository
 
 import com.dream.wowiptv.data.local.dao.VodCategoryDao
+import com.dream.wowiptv.data.local.dao.VodInfoDao
 import com.dream.wowiptv.data.local.dao.VodStreamDao
+import com.dream.wowiptv.data.mapper.toCachedEntity
 import com.dream.wowiptv.data.mapper.toDomain
 import com.dream.wowiptv.data.mapper.toEntity
 import com.dream.wowiptv.data.remote.xtream.DynamicBaseUrlInterceptor
@@ -24,6 +26,7 @@ class VodRepositoryImpl @Inject constructor(
     private val api: XtreamApi,
     private val vodCategoryDao: VodCategoryDao,
     private val vodStreamDao: VodStreamDao,
+    private val vodInfoDao: VodInfoDao,
     private val sourceRepository: SourceRepository,
     private val baseUrlInterceptor: DynamicBaseUrlInterceptor
 ) : VodRepository {
@@ -48,9 +51,12 @@ class VodRepositoryImpl @Inject constructor(
 
     override suspend fun getInfo(vodId: Int): VodInfo {
         val source = sourceRepository.getActiveSource().first() ?: error("No active source")
+        vodInfoDao.get(vodId, source.id)?.let { return it.toDomain() }
         configureBaseUrl(source.serverUrl, source.port)
         val dto = api.getVodInfo(username = source.username, password = source.password, vodId = vodId)
-        return dto.toDomain()
+        val info = dto.toDomain()
+        vodInfoDao.insert(info.toCachedEntity(source.id))
+        return info
     }
 
     override suspend fun refreshAll() {
@@ -65,6 +71,8 @@ class VodRepositoryImpl @Inject constructor(
 
         vodStreamDao.deleteBySource(source.id)
         vodStreamDao.insertAll(streams.map { it.toDomain().toEntity(source.id) })
+
+        vodInfoDao.deleteBySource(source.id)
     }
 
     private fun configureBaseUrl(serverUrl: String, port: Int) {

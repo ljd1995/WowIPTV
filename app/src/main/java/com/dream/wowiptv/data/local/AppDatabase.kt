@@ -9,7 +9,9 @@ import com.dream.wowiptv.data.local.dao.SeriesCategoryDao
 import com.dream.wowiptv.data.local.dao.SeriesDao
 import com.dream.wowiptv.data.local.dao.SourceDao
 import com.dream.wowiptv.data.local.dao.VodCategoryDao
+import com.dream.wowiptv.data.local.dao.VodInfoDao
 import com.dream.wowiptv.data.local.dao.VodStreamDao
+import com.dream.wowiptv.data.local.entity.CachedVodInfoEntity
 import com.dream.wowiptv.data.local.entity.EpisodeEntity
 import com.dream.wowiptv.data.local.entity.EpgEntity
 import com.dream.wowiptv.data.local.entity.LiveCategoryEntity
@@ -29,12 +31,13 @@ import com.dream.wowiptv.data.local.entity.VodStreamEntity
         EpgEntity::class,
         VodCategoryEntity::class,
         VodStreamEntity::class,
+        CachedVodInfoEntity::class,
         SeriesCategoryEntity::class,
         SeriesEntity::class,
         SeasonEntity::class,
         EpisodeEntity::class
     ],
-    version = 2
+    version = 3
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun sourceDao(): SourceDao
@@ -43,6 +46,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun epgDao(): EpgDao
     abstract fun vodCategoryDao(): VodCategoryDao
     abstract fun vodStreamDao(): VodStreamDao
+    abstract fun vodInfoDao(): VodInfoDao
     abstract fun seriesCategoryDao(): SeriesCategoryDao
     abstract fun seriesDao(): SeriesDao
 }

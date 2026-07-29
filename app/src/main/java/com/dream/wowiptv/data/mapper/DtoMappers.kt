@@ -1,5 +1,6 @@
 package com.dream.wowiptv.data.mapper
 
+import com.dream.wowiptv.data.local.entity.CachedVodInfoEntity
 import com.dream.wowiptv.data.local.entity.EpisodeEntity
 import com.dream.wowiptv.data.local.entity.EpgEntity
 import com.dream.wowiptv.data.local.entity.LiveCategoryEntity
@@ -143,6 +144,7 @@ fun SeriesInfoDto.toDomain(): SeriesInfo {
             entry.value.map { episodeDto ->
                 Episode(
                     id = episodeDto.id?.toIntOrNull() ?: 0,
+                    seasonNum = episodeDto.season ?: 0,
                     episodeNum = episodeDto.episodeNum?.toIntOrNull() ?: 0,
                     title = episodeDto.title.orEmpty(),
                     containerExtension = episodeDto.containerExtension.orEmpty(),
@@ -222,6 +224,43 @@ fun VodStream.toEntity(sourceId: Long): VodStreamEntity {
     )
 }
 
+fun VodInfo.toCachedEntity(sourceId: Long): CachedVodInfoEntity {
+    return CachedVodInfoEntity(
+        vodId = id,
+        name = name,
+        cover = cover,
+        backdropPath = backdropPath,
+        plot = plot,
+        cast = cast,
+        director = director,
+        genre = genre,
+        releasedate = releasedate,
+        durationSecs = durationSecs,
+        rating = rating,
+        youtubeTrailer = youtubeTrailer,
+        categoryId = categoryId,
+        sourceId = sourceId
+    )
+}
+
+fun CachedVodInfoEntity.toDomain(): VodInfo {
+    return VodInfo(
+        id = vodId,
+        name = name,
+        cover = cover,
+        backdropPath = backdropPath,
+        plot = plot,
+        cast = cast,
+        director = director,
+        genre = genre,
+        releasedate = releasedate,
+        durationSecs = durationSecs,
+        rating = rating,
+        youtubeTrailer = youtubeTrailer,
+        categoryId = categoryId
+    )
+}
+
 fun SeriesCategory.toEntity(sourceId: Long): SeriesCategoryEntity {
     return SeriesCategoryEntity(
         categoryId = id,
@@ -260,7 +299,7 @@ fun Episode.toEntity(seriesId: Int, sourceId: Long): EpisodeEntity {
     return EpisodeEntity(
         episodeId = id.toString(),
         seriesId = seriesId,
-        seasonNum = null,
+        seasonNum = seasonNum,
         episodeNum = episodeNum,
         title = title,
         containerExtension = containerExtension,
@@ -354,6 +393,7 @@ fun SeasonEntity.toDomain(): Season {
 fun EpisodeEntity.toDomain(): Episode {
     return Episode(
         id = episodeId.toIntOrNull() ?: 0,
+        seasonNum = seasonNum ?: 0,
         episodeNum = episodeNum ?: 0,
         title = title.orEmpty(),
         containerExtension = containerExtension.orEmpty(),

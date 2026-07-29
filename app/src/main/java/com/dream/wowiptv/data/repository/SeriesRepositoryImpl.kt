@@ -6,6 +6,8 @@ import com.dream.wowiptv.data.mapper.toDomain
 import com.dream.wowiptv.data.mapper.toEntity
 import com.dream.wowiptv.data.remote.xtream.DynamicBaseUrlInterceptor
 import com.dream.wowiptv.data.remote.xtream.XtreamApi
+import com.dream.wowiptv.domain.model.Episode
+import com.dream.wowiptv.domain.model.Season
 import com.dream.wowiptv.domain.model.SeriesCategory
 import com.dream.wowiptv.domain.model.SeriesInfo
 import com.dream.wowiptv.domain.model.SeriesItem
@@ -48,9 +50,27 @@ class SeriesRepositoryImpl @Inject constructor(
 
     override suspend fun getInfo(seriesId: Int): SeriesInfo {
         val source = sourceRepository.getActiveSource().first() ?: error("No active source")
+        val seasonEntities = seriesDao.getSeasons(seriesId, source.id)
+        val episodeEntities = seriesDao.getEpisodes(seriesId, source.id)
+        if (seasonEntities.isNotEmpty() && episodeEntities.isNotEmpty()) {
+            val seasons = seasonEntities.map { it.toDomain() }
+            val episodes = episodeEntities.groupBy(
+                { it.seasonNum ?: 0 },
+                { it.toDomain() }
+            )
+            return SeriesInfo(
+                seasons = seasons,
+                episodes = episodes,
+                info = seriesDao.getBySourceAndCategory(source.id, null).first().find { it.seriesId == seriesId }?.toDomain()
+                    ?: SeriesItem(id = seriesId, name = "", cover = null, plot = null, cast = null, director = null, genre = null, rating = null, categoryId = 0)
+            )
+        }
         configureBaseUrl(source.serverUrl, source.port)
         val dto = api.getSeriesInfo(username = source.username, password = source.password, seriesId = seriesId)
-        return dto.toDomain()
+        val info = dto.toDomain()
+        seriesDao.insertAllSeasons(info.seasons.map { it.toEntity(seriesId, source.id) })
+        seriesDao.insertAllEpisodes(info.episodes.flatMap { (_, episodes) -> episodes.map { it.toEntity(seriesId, source.id) } })
+        return info
     }
 
     override suspend fun refreshAll() {
