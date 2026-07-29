@@ -10,7 +10,7 @@ class PlayStreamUseCase @Inject constructor(
     sealed class StreamType {
         data class Live(val streamId: Int, val containerExtension: String = "ts") : StreamType()
         data class Vod(val vodId: Int, val containerExtension: String = "mp4") : StreamType()
-        data class Series(val episodeId: Int, val containerExtension: String = "mp4") : StreamType()
+        data class Series(val episodeId: String, val containerExtension: String = "mp4") : StreamType()
     }
 
     suspend operator fun invoke(type: StreamType): String {

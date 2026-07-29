@@ -28,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dream.wowiptv.domain.model.XtreamSource
+import kotlinx.coroutines.launch
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 
@@ -58,17 +60,20 @@ fun SourceFormScreen(
         return
     }
 
+    val scope = rememberCoroutineScope()
     key(sourceId ?: -1L) {
         SourceFormInner(
             initialSource = editingSource,
             isEditing = sourceId != null,
             onSave = { name, serverUrl, port, username, password ->
-                if (sourceId != null) {
-                    viewModel.updateSource(sourceId, name, serverUrl, port, username, password)
-                } else {
-                    viewModel.addSource(name, serverUrl, port, username, password)
+                scope.launch {
+                    if (sourceId != null) {
+                        viewModel.updateSource(sourceId, name, serverUrl, port, username, password)
+                    } else {
+                        viewModel.addSource(name, serverUrl, port, username, password)
+                    }
+                    onNavigateBack()
                 }
-                onNavigateBack()
             },
             onNavigateBack = onNavigateBack
         )

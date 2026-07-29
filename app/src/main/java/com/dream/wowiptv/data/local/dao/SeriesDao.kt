@@ -33,6 +33,9 @@ interface SeriesDao {
     @Query("SELECT * FROM episodes WHERE sourceId = :sourceId AND seriesId = :seriesId")
     suspend fun getEpisodes(seriesId: Int, sourceId: Long): List<EpisodeEntity>
 
+    @Query("SELECT * FROM series_list WHERE sourceId = :sourceId AND seriesId = :seriesId LIMIT 1")
+    suspend fun getBySourceAndId(sourceId: Long, seriesId: Int): SeriesEntity?
+
     @Query("DELETE FROM series_list WHERE sourceId = :sourceId")
     suspend fun deleteSeriesBySource(sourceId: Long)
 

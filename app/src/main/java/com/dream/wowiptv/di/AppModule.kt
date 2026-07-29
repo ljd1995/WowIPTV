@@ -30,11 +30,11 @@ object AppModule {
     @Singleton
     fun provideOkHttpClient(interceptor: DynamicBaseUrlInterceptor): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = HttpLoggingInterceptor.Level.HEADERS
         }
         return OkHttpClient.Builder()
             .addInterceptor(logging)
-            .addNetworkInterceptor(interceptor)
+            .addInterceptor(interceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)

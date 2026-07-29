@@ -26,6 +26,9 @@ interface SourceDao {
     @Delete
     suspend fun delete(source: SourceEntity)
 
+    @Query("DELETE FROM sources WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
     @Query("UPDATE sources SET isActive = 0")
     suspend fun deactivateAll()
 

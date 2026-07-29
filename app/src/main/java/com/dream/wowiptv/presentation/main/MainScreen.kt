@@ -61,7 +61,7 @@ fun MainScreen(outerNavController: NavHostController) {
             composable(BottomNavItem.Live.route) {
                 LiveScreen(
                     onPlayStream = { streamId ->
-                        outerNavController.navigate(Routes.playerRoute("live", streamId))
+                        outerNavController.navigate(Routes.playerRoute("live", streamId.toString()))
                     },
                     onNavigateToEpg = { streamId ->
                         outerNavController.navigate(Routes.epgRoute(streamId))

@@ -4,6 +4,8 @@ import com.dream.wowiptv.domain.repository.LiveTvRepository
 import com.dream.wowiptv.domain.repository.SeriesRepository
 import com.dream.wowiptv.domain.repository.SourceRepository
 import com.dream.wowiptv.domain.repository.VodRepository
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import javax.inject.Inject
 
 class SwitchSourceUseCase @Inject constructor(
@@ -13,9 +15,11 @@ class SwitchSourceUseCase @Inject constructor(
     private val seriesRepository: SeriesRepository
 ) {
     suspend operator fun invoke(sourceId: Long) {
-        sourceRepository.switchSource(sourceId)
-        liveTvRepository.refreshAll()
-        vodRepository.refreshAll()
-        seriesRepository.refreshAll()
+        supervisorScope {
+            sourceRepository.switchSource(sourceId)
+            launch { runCatching { liveTvRepository.refreshAll() } }
+            launch { runCatching { vodRepository.refreshAll() } }
+            launch { runCatching { seriesRepository.refreshAll() } }
+        }
     }
 }

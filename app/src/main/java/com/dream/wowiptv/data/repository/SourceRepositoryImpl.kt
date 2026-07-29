@@ -68,7 +68,7 @@ class SourceRepositoryImpl @Inject constructor(
 
     override suspend fun deleteSource(id: Long) {
         val wasActive = sourceDao.getById(id)?.isActive == true
-        sourceDao.delete(SourceEntity(id = id, name = "", serverUrl = "", port = 0, username = "", password = ""))
+        sourceDao.deleteById(id)
 
         if (wasActive) {
             sourceDao.deactivateAll()

@@ -143,7 +143,7 @@ fun SeriesInfoDto.toDomain(): SeriesInfo {
         }?.mapValues { entry ->
             entry.value.map { episodeDto ->
                 Episode(
-                    id = episodeDto.id?.toIntOrNull() ?: 0,
+                    id = episodeDto.id ?: "",
                     seasonNum = episodeDto.season ?: 0,
                     episodeNum = episodeDto.episodeNum?.toIntOrNull() ?: 0,
                     title = episodeDto.title.orEmpty(),
@@ -297,7 +297,7 @@ fun Season.toEntity(seriesId: Int, sourceId: Long): SeasonEntity {
 
 fun Episode.toEntity(seriesId: Int, sourceId: Long): EpisodeEntity {
     return EpisodeEntity(
-        episodeId = id.toString(),
+        episodeId = id,
         seriesId = seriesId,
         seasonNum = seasonNum,
         episodeNum = episodeNum,
@@ -392,7 +392,7 @@ fun SeasonEntity.toDomain(): Season {
 
 fun EpisodeEntity.toDomain(): Episode {
     return Episode(
-        id = episodeId.toIntOrNull() ?: 0,
+        id = episodeId,
         seasonNum = seasonNum ?: 0,
         episodeNum = episodeNum ?: 0,
         title = title.orEmpty(),

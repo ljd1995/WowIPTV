@@ -61,7 +61,7 @@ class SeriesRepositoryImpl @Inject constructor(
             return SeriesInfo(
                 seasons = seasons,
                 episodes = episodes,
-                info = seriesDao.getBySourceAndCategory(source.id, null).first().find { it.seriesId == seriesId }?.toDomain()
+                info = seriesDao.getBySourceAndId(source.id, seriesId)?.toDomain()
                     ?: SeriesItem(id = seriesId, name = "", cover = null, plot = null, cast = null, director = null, genre = null, rating = null, categoryId = 0)
             )
         }

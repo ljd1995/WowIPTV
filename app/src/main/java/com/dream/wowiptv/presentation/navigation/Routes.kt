@@ -9,7 +9,7 @@ object Routes {
     const val SOURCE_ADD = "source_add"
     const val SOURCE_EDIT = "source_edit/{sourceId}"
 
-    fun playerRoute(streamType: String, streamId: Int) = "player/$streamType/$streamId"
+    fun playerRoute(streamType: String, streamId: String) = "player/$streamType/$streamId"
     fun epgRoute(streamId: Int) = "epg/$streamId"
     fun vodRoute(vodId: Int) = "vod/$vodId"
     fun seriesRoute(seriesId: Int) = "series/$seriesId"

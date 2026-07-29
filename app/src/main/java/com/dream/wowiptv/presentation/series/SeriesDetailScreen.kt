@@ -82,7 +82,7 @@ fun SeriesDetailScreen(
     seriesId: Int,
     viewModel: SeriesDetailViewModel = hiltViewModel(),
     onBack: () -> Unit,
-    onPlayEpisode: (episodeId: Int) -> Unit
+    onPlayEpisode: (episodeId: String) -> Unit
 ) {
     val infoState by viewModel.info.collectAsState()
 
@@ -106,7 +106,7 @@ fun SeriesDetailScreen(
 private fun SeriesDetailContent(
     info: SeriesInfo,
     onBack: () -> Unit,
-    onPlayEpisode: (episodeId: Int) -> Unit
+    onPlayEpisode: (episodeId: String) -> Unit
 ) {
     val series = info.info
 
@@ -218,7 +218,7 @@ private fun SeriesDetailContent(
 private fun SeasonCard(
     season: Season,
     episodes: List<Episode>,
-    onPlayEpisode: (episodeId: Int) -> Unit,
+    onPlayEpisode: (episodeId: String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }

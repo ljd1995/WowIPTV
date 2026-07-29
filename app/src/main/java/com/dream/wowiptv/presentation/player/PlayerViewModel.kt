@@ -21,7 +21,7 @@ class PlayerViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val streamType: String = savedStateHandle["streamType"] ?: "live"
-    private val streamId: Int = savedStateHandle["streamId"] ?: 0
+    private val streamId: String = savedStateHandle["streamId"] ?: "0"
 
     private val _streamUrl = MutableStateFlow("")
     val streamUrl: StateFlow<String> = _streamUrl.asStateFlow()
@@ -41,11 +41,12 @@ class PlayerViewModel @Inject constructor(
 
     private fun loadStreamUrl() {
         viewModelScope.launch {
+            val idNum = streamId.toIntOrNull() ?: 0
             val type = when (streamType) {
-                "live" -> PlayStreamUseCase.StreamType.Live(streamId)
-                "vod" -> PlayStreamUseCase.StreamType.Vod(streamId)
+                "live" -> PlayStreamUseCase.StreamType.Live(idNum)
+                "vod" -> PlayStreamUseCase.StreamType.Vod(idNum)
                 "series" -> PlayStreamUseCase.StreamType.Series(streamId)
-                else -> PlayStreamUseCase.StreamType.Live(streamId)
+                else -> PlayStreamUseCase.StreamType.Live(idNum)
             }
             _streamUrl.value = playStreamUseCase(type)
         }
@@ -53,7 +54,7 @@ class PlayerViewModel @Inject constructor(
 
     private fun observeEpg() {
         viewModelScope.launch {
-            getShortEpgUseCase(streamId).collect { entries ->
+            getShortEpgUseCase(streamId.toIntOrNull() ?: 0).collect { entries ->
                 _epgEntries.value = entries
             }
         }

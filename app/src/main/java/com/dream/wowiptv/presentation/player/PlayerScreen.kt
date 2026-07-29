@@ -44,7 +44,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun PlayerScreen(
     streamType: String,
-    streamId: Int,
+    streamId: String,
     onBack: () -> Unit,
     viewModel: PlayerViewModel = hiltViewModel()
 ) {

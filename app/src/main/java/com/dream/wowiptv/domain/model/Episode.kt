@@ -1,7 +1,7 @@
 package com.dream.wowiptv.domain.model
 
 data class Episode(
-    val id: Int,
+    val id: String,
     val seasonNum: Int,
     val episodeNum: Int,
     val title: String,

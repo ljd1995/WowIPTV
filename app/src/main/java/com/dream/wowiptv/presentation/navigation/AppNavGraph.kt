@@ -27,11 +27,11 @@ fun AppNavGraph(navController: NavHostController) {
             route = Routes.PLAYER,
             arguments = listOf(
                 navArgument("streamType") { type = NavType.StringType },
-                navArgument("streamId") { type = NavType.IntType }
+                navArgument("streamId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val streamType = backStackEntry.arguments?.getString("streamType") ?: "live"
-            val streamId = backStackEntry.arguments?.getInt("streamId") ?: 0
+            val streamId = backStackEntry.arguments?.getString("streamId") ?: "0"
             PlayerScreen(
                 streamType = streamType,
                 streamId = streamId,
@@ -48,7 +48,7 @@ fun AppNavGraph(navController: NavHostController) {
             EpgTimelineScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onPlayChannel = { streamId ->
-                    navController.navigate(Routes.playerRoute("live", streamId))
+                    navController.navigate(Routes.playerRoute("live", streamId.toString()))
                 }
             )
         }
@@ -62,7 +62,7 @@ fun AppNavGraph(navController: NavHostController) {
             MovieDetailScreen(
                 onBack = { navController.popBackStack() },
                 onPlay = { vodId ->
-                    navController.navigate(Routes.playerRoute("vod", vodId))
+                    navController.navigate(Routes.playerRoute("vod", vodId.toString()))
                 }
             )
         }

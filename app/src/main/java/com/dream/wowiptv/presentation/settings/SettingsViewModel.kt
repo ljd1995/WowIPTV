@@ -32,18 +32,14 @@ class SettingsViewModel @Inject constructor(
         .map { it?.id }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    fun addSource(name: String, serverUrl: String, port: Int, username: String, password: String) {
-        viewModelScope.launch {
-            manageSourcesUseCase.addSource(name, serverUrl, port, username, password)
-        }
+    suspend fun addSource(name: String, serverUrl: String, port: Int, username: String, password: String) {
+        manageSourcesUseCase.addSource(name, serverUrl, port, username, password)
     }
 
-    fun updateSource(id: Long, name: String, serverUrl: String, port: Int, username: String, password: String) {
-        viewModelScope.launch {
-            manageSourcesUseCase.updateSource(
-                XtreamSource(id, name, serverUrl, port, username, password)
-            )
-        }
+    suspend fun updateSource(id: Long, name: String, serverUrl: String, port: Int, username: String, password: String) {
+        manageSourcesUseCase.updateSource(
+            XtreamSource(id, name, serverUrl, port, username, password)
+        )
     }
 
     fun deleteSource(id: Long) {
