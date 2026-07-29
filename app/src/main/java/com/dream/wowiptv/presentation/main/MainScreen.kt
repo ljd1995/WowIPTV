@@ -19,8 +19,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dream.wowiptv.presentation.live.LiveScreen
+import com.dream.wowiptv.presentation.movies.MoviesScreen
 import com.dream.wowiptv.presentation.navigation.BottomNavItem
 import com.dream.wowiptv.presentation.navigation.Routes
+import com.dream.wowiptv.presentation.series.SeriesScreen
 import com.dream.wowiptv.presentation.settings.SettingsScreen
 
 @Composable
@@ -67,14 +69,18 @@ fun MainScreen(outerNavController: NavHostController) {
                 )
             }
             composable(BottomNavItem.Movies.route) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("电影")
-                }
+                MoviesScreen(
+                    onMovieClick = { vodId ->
+                        outerNavController.navigate(Routes.vodRoute(vodId))
+                    }
+                )
             }
             composable(BottomNavItem.Series.route) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("剧集")
-                }
+                SeriesScreen(
+                    onSeriesClick = { seriesId ->
+                        outerNavController.navigate(Routes.seriesRoute(seriesId))
+                    }
+                )
             }
             composable(BottomNavItem.Settings.route) {
                 SettingsScreen(

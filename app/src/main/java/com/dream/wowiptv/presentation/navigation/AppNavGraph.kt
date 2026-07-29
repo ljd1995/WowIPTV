@@ -1,11 +1,6 @@
 package com.dream.wowiptv.presentation.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -13,7 +8,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.dream.wowiptv.presentation.epg.EpgTimelineScreen
 import com.dream.wowiptv.presentation.main.MainScreen
+import com.dream.wowiptv.presentation.movies.MovieDetailScreen
 import com.dream.wowiptv.presentation.player.PlayerScreen
+import com.dream.wowiptv.presentation.series.SeriesDetailScreen
 import com.dream.wowiptv.presentation.settings.SourceFormScreen
 
 @Composable
@@ -62,9 +59,12 @@ fun AppNavGraph(navController: NavHostController) {
                 navArgument("vodId") { type = NavType.IntType }
             )
         ) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("VOD Screen")
-            }
+            MovieDetailScreen(
+                onBack = { navController.popBackStack() },
+                onPlay = { vodId ->
+                    navController.navigate(Routes.playerRoute("vod", vodId))
+                }
+            )
         }
 
         composable(
@@ -72,10 +72,15 @@ fun AppNavGraph(navController: NavHostController) {
             arguments = listOf(
                 navArgument("seriesId") { type = NavType.IntType }
             )
-        ) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Series Screen")
-            }
+        ) { backStackEntry ->
+            val seriesId = backStackEntry.arguments?.getInt("seriesId") ?: 0
+            SeriesDetailScreen(
+                seriesId = seriesId,
+                onBack = { navController.popBackStack() },
+                onPlayEpisode = { episodeId ->
+                    navController.navigate(Routes.playerRoute("series", episodeId))
+                }
+            )
         }
 
         composable(Routes.SOURCE_ADD) {
