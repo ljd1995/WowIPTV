@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.dream.wowiptv.presentation.main.MainScreen
+import com.dream.wowiptv.presentation.settings.SourceFormScreen
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -20,7 +21,7 @@ fun AppNavGraph(navController: NavHostController) {
         startDestination = Routes.MAIN
     ) {
         composable(Routes.MAIN) {
-            MainScreen()
+            MainScreen(outerNavController = navController)
         }
 
         composable(
@@ -69,9 +70,7 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable(Routes.SOURCE_ADD) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Add Source Screen")
-            }
+            SourceFormScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(
@@ -79,10 +78,12 @@ fun AppNavGraph(navController: NavHostController) {
             arguments = listOf(
                 navArgument("sourceId") { type = NavType.IntType }
             )
-        ) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Edit Source Screen")
-            }
+        ) { backStackEntry ->
+            val sourceId = backStackEntry.arguments?.getInt("sourceId")?.toLong()
+            SourceFormScreen(
+                sourceId = sourceId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

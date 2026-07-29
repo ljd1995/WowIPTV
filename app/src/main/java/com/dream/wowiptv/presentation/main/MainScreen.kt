@@ -13,14 +13,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.dream.wowiptv.presentation.live.LiveScreen
 import com.dream.wowiptv.presentation.navigation.BottomNavItem
+import com.dream.wowiptv.presentation.navigation.Routes
+import com.dream.wowiptv.presentation.settings.SettingsScreen
 
 @Composable
-fun MainScreen() {
+fun MainScreen(outerNavController: NavHostController) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -53,9 +57,14 @@ fun MainScreen() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(BottomNavItem.Live.route) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("直播")
-                }
+                LiveScreen(
+                    onPlayStream = { streamId ->
+                        outerNavController.navigate(Routes.playerRoute("live", streamId))
+                    },
+                    onNavigateToEpg = { streamId ->
+                        outerNavController.navigate(Routes.epgRoute(streamId))
+                    }
+                )
             }
             composable(BottomNavItem.Movies.route) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -68,9 +77,10 @@ fun MainScreen() {
                 }
             }
             composable(BottomNavItem.Settings.route) {
-                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("设置")
-                }
+                SettingsScreen(
+                    onAddSource = { outerNavController.navigate(Routes.SOURCE_ADD) },
+                    onEditSource = { sourceId -> outerNavController.navigate(Routes.sourceEditRoute(sourceId.toInt())) }
+                )
             }
         }
     }
