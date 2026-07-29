@@ -11,7 +11,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.dream.wowiptv.presentation.epg.EpgTimelineScreen
 import com.dream.wowiptv.presentation.main.MainScreen
+import com.dream.wowiptv.presentation.player.PlayerScreen
 import com.dream.wowiptv.presentation.settings.SourceFormScreen
 
 @Composable
@@ -30,10 +32,14 @@ fun AppNavGraph(navController: NavHostController) {
                 navArgument("streamType") { type = NavType.StringType },
                 navArgument("streamId") { type = NavType.IntType }
             )
-        ) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Player Screen")
-            }
+        ) { backStackEntry ->
+            val streamType = backStackEntry.arguments?.getString("streamType") ?: "live"
+            val streamId = backStackEntry.arguments?.getInt("streamId") ?: 0
+            PlayerScreen(
+                streamType = streamType,
+                streamId = streamId,
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(
@@ -42,9 +48,12 @@ fun AppNavGraph(navController: NavHostController) {
                 navArgument("streamId") { type = NavType.IntType }
             )
         ) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("EPG Screen")
-            }
+            EpgTimelineScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onPlayChannel = { streamId ->
+                    navController.navigate(Routes.playerRoute("live", streamId))
+                }
+            )
         }
 
         composable(
