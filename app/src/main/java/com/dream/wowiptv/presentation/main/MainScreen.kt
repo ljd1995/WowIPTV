@@ -25,6 +25,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import com.dream.wowiptv.presentation.home.HomeScreen
 import com.dream.wowiptv.presentation.live.LiveScreen
 import com.dream.wowiptv.presentation.movies.MoviesScreen
 import com.dream.wowiptv.presentation.navigation.BottomNavItem
@@ -71,9 +72,23 @@ fun MainScreen(outerNavController: NavHostController) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = BottomNavItem.Live.route,
+            startDestination = BottomNavItem.Home.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(
+                route = BottomNavItem.Home.route,
+                enterTransition = { EnterTransition.None },
+                exitTransition = { ExitTransition.None }
+            ) {
+                HomeScreen(
+                    onMovieClick = { vodId ->
+                        outerNavController.navigate(Routes.vodRoute(vodId))
+                    },
+                    onSeriesClick = { seriesId ->
+                        outerNavController.navigate(Routes.seriesRoute(seriesId))
+                    }
+                )
+            }
             composable(
                 route = BottomNavItem.Live.route,
                 enterTransition = { EnterTransition.None },
