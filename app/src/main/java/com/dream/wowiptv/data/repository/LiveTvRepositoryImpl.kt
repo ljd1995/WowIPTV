@@ -31,7 +31,11 @@ class LiveTvRepositoryImpl @Inject constructor(
 ) : LiveTvRepository {
 
     override fun getCategories(): Flow<List<LiveCategory>> = flow {
-        val source = sourceRepository.getActiveSource().first() ?: return@flow
+        val source = sourceRepository.getActiveSource().first()
+        if (source == null) {
+            emit(emptyList())
+            return@flow
+        }
         emitAll(
             liveCategoryDao.getBySource(source.id).map { entities ->
                 entities.map { it.toDomain() }
@@ -40,7 +44,11 @@ class LiveTvRepositoryImpl @Inject constructor(
     }
 
     override fun getStreams(categoryId: Int?): Flow<List<LiveStream>> = flow {
-        val source = sourceRepository.getActiveSource().first() ?: return@flow
+        val source = sourceRepository.getActiveSource().first()
+        if (source == null) {
+            emit(emptyList())
+            return@flow
+        }
         emitAll(
             liveStreamDao.getBySourceAndCategory(source.id, categoryId).map { entities ->
                 entities.map { it.toDomain() }
@@ -49,7 +57,11 @@ class LiveTvRepositoryImpl @Inject constructor(
     }
 
     override fun getShortEpg(streamId: Int): Flow<List<EpgEntry>> = flow {
-        val source = sourceRepository.getActiveSource().first() ?: return@flow
+        val source = sourceRepository.getActiveSource().first()
+        if (source == null) {
+            emit(emptyList())
+            return@flow
+        }
         emitAll(
             epgDao.getByStream(streamId, source.id).map { entities ->
                 entities.map { it.toDomain() }

@@ -92,7 +92,7 @@ fun VodInfoDto.toDomain(): VodInfo {
         id = movieData?.streamId ?: 0,
         name = movieData?.name.orEmpty(),
         cover = infoData?.movieImage,
-        backdropPath = infoData?.backdropPath,
+        backdropPath = infoData?.backdropPath?.firstOrNull(),
         plot = infoData?.plot,
         cast = infoData?.cast,
         director = infoData?.director,

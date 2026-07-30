@@ -32,7 +32,11 @@ class VodRepositoryImpl @Inject constructor(
 ) : VodRepository {
 
     override fun getCategories(): Flow<List<VodCategory>> = flow {
-        val source = sourceRepository.getActiveSource().first() ?: return@flow
+        val source = sourceRepository.getActiveSource().first()
+        if (source == null) {
+            emit(emptyList())
+            return@flow
+        }
         emitAll(
             vodCategoryDao.getBySource(source.id).map { entities ->
                 entities.map { it.toDomain() }
@@ -41,7 +45,11 @@ class VodRepositoryImpl @Inject constructor(
     }
 
     override fun getStreams(categoryId: Int?): Flow<List<VodStream>> = flow {
-        val source = sourceRepository.getActiveSource().first() ?: return@flow
+        val source = sourceRepository.getActiveSource().first()
+        if (source == null) {
+            emit(emptyList())
+            return@flow
+        }
         emitAll(
             vodStreamDao.getBySourceAndCategory(source.id, categoryId).map { entities ->
                 entities.map { it.toDomain() }

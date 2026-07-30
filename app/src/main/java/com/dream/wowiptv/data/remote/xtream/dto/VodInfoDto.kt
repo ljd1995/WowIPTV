@@ -14,7 +14,7 @@ data class VodInfoData(
     @SerializedName("tmdb_id")
     val tmdbId: String? = null,
     @SerializedName("backdrop_path")
-    val backdropPath: String? = null,
+    val backdropPath: List<String>? = null,
     @SerializedName("youtube_trailer")
     val youtubeTrailer: String? = null,
     val genre: String? = null,

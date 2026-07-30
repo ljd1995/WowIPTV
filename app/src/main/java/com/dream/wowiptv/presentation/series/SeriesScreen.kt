@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.dream.wowiptv.domain.model.SeriesCategory
 import com.dream.wowiptv.domain.model.SeriesItem
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
@@ -60,8 +61,9 @@ fun SeriesScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        when (val cats = categoriesState) {
-            is UiState.Success -> {
+        if (categoriesState is UiState.Success) {
+            val cats = (categoriesState as UiState.Success<List<SeriesCategory>>).data
+            if (cats.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
@@ -73,25 +75,11 @@ fun SeriesScreen(
                             label = { Text("全部") }
                         )
                     }
-                    items(cats.data, key = { it.id }) { category ->
+                    items(cats, key = { it.id }) { category ->
                         FilterChip(
                             selected = selectedCategoryId == category.id,
                             onClick = { viewModel.selectCategory(category.id) },
                             label = { Text(category.name) }
-                        )
-                    }
-                }
-            }
-            else -> {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    item {
-                        FilterChip(
-                            selected = true,
-                            onClick = { viewModel.selectCategory(null) },
-                            label = { Text("全部") }
                         )
                     }
                 }

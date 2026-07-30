@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -31,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -40,6 +40,7 @@ import com.dream.wowiptv.domain.model.XtreamSource
 import kotlinx.coroutines.launch
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
+import java.net.URI
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,12 +66,13 @@ fun SourceFormScreen(
         SourceFormInner(
             initialSource = editingSource,
             isEditing = sourceId != null,
-            onSave = { name, serverUrl, port, username, password ->
+            onSave = { name, serverUrl, username, password ->
                 scope.launch {
+                    val (host, port) = parseServerUrl(serverUrl)
                     if (sourceId != null) {
-                        viewModel.updateSource(sourceId, name, serverUrl, port, username, password)
+                        viewModel.updateSource(sourceId, name, host, port, username, password)
                     } else {
-                        viewModel.addSource(name, serverUrl, port, username, password)
+                        viewModel.addSource(name, host, port, username, password)
                     }
                     onNavigateBack()
                 }
@@ -85,12 +87,12 @@ fun SourceFormScreen(
 private fun SourceFormInner(
     initialSource: XtreamSource?,
     isEditing: Boolean,
-    onSave: (name: String, serverUrl: String, port: Int, username: String, password: String) -> Unit,
+    onSave: (name: String, serverUrl: String, username: String, password: String) -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val initialUrl = if (initialSource != null) "http://${initialSource.serverUrl}:${initialSource.port}" else ""
     var name by remember { mutableStateOf(initialSource?.name ?: "") }
-    var serverUrl by remember { mutableStateOf(initialSource?.serverUrl ?: "") }
-    var port by remember { mutableStateOf(initialSource?.port?.toString() ?: "25461") }
+    var serverUrl by remember { mutableStateOf(initialUrl) }
     var username by remember { mutableStateOf(initialSource?.username ?: "") }
     var password by remember { mutableStateOf(initialSource?.password ?: "") }
     var saving by remember { mutableStateOf(false) }
@@ -128,15 +130,8 @@ private fun SourceFormInner(
                 value = serverUrl,
                 onValueChange = { serverUrl = it },
                 label = { Text("服务器地址") },
+                placeholder = { Text("http://example.com:25461") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = port,
-                onValueChange = { port = it.filter { c -> c.isDigit() } },
-                label = { Text("端口") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
@@ -159,8 +154,7 @@ private fun SourceFormInner(
             Button(
                 onClick = {
                     saving = true
-                    val portNum = port.toIntOrNull() ?: 25461
-                    onSave(name.trim(), serverUrl.trim(), portNum, username.trim(), password.trim())
+                    onSave(name.trim(), serverUrl.trim(), username.trim(), password.trim())
                 },
                 enabled = isValid && !saving,
                 modifier = Modifier
@@ -179,4 +173,15 @@ private fun SourceFormInner(
             }
         }
     }
+}
+
+private fun parseServerUrl(input: String): Pair<String, Int> {
+    var url = input.trim()
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "http://$url"
+    }
+    val uri = URI(url)
+    val host = uri.host ?: ""
+    val port = if (uri.port > 0) uri.port else 80
+    return Pair(host, port)
 }

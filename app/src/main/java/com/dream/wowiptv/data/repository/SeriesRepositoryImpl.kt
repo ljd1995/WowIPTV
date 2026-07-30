@@ -31,7 +31,11 @@ class SeriesRepositoryImpl @Inject constructor(
 ) : SeriesRepository {
 
     override fun getCategories(): Flow<List<SeriesCategory>> = flow {
-        val source = sourceRepository.getActiveSource().first() ?: return@flow
+        val source = sourceRepository.getActiveSource().first()
+        if (source == null) {
+            emit(emptyList())
+            return@flow
+        }
         emitAll(
             seriesCategoryDao.getBySource(source.id).map { entities ->
                 entities.map { it.toDomain() }
@@ -40,7 +44,11 @@ class SeriesRepositoryImpl @Inject constructor(
     }
 
     override fun getSeries(categoryId: Int?): Flow<List<SeriesItem>> = flow {
-        val source = sourceRepository.getActiveSource().first() ?: return@flow
+        val source = sourceRepository.getActiveSource().first()
+        if (source == null) {
+            emit(emptyList())
+            return@flow
+        }
         emitAll(
             seriesDao.getBySourceAndCategory(source.id, categoryId).map { entities ->
                 entities.map { it.toDomain() }

@@ -33,7 +33,8 @@ class SettingsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     suspend fun addSource(name: String, serverUrl: String, port: Int, username: String, password: String) {
-        manageSourcesUseCase.addSource(name, serverUrl, port, username, password)
+        val newId = manageSourcesUseCase.addSource(name, serverUrl, port, username, password)
+        switchSourceUseCase(newId)
     }
 
     suspend fun updateSource(id: Long, name: String, serverUrl: String, port: Int, username: String, password: String) {
@@ -49,6 +50,12 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun switchSource(id: Long) {
+        viewModelScope.launch {
+            switchSourceUseCase(id)
+        }
+    }
+
+    fun syncSource(id: Long) {
         viewModelScope.launch {
             switchSourceUseCase(id)
         }

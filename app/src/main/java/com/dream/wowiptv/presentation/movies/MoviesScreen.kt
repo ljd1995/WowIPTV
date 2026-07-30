@@ -63,8 +63,9 @@ fun MoviesScreen(
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        when (val cats = categoriesState) {
-            is UiState.Success -> {
+        if (categoriesState is UiState.Success) {
+            val cats = (categoriesState as UiState.Success<List<VodCategory>>).data
+            if (cats.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
@@ -76,39 +77,11 @@ fun MoviesScreen(
                             label = { Text("全部") }
                         )
                     }
-                    items(cats.data, key = { it.id }) { category ->
+                    items(cats, key = { it.id }) { category ->
                         FilterChip(
                             selected = selectedCategoryId == category.id,
                             onClick = { viewModel.selectCategory(category.id) },
                             label = { Text(category.name) }
-                        )
-                    }
-                }
-            }
-            is UiState.Loading -> {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    item {
-                        FilterChip(
-                            selected = true,
-                            onClick = { viewModel.selectCategory(null) },
-                            label = { Text("全部") }
-                        )
-                    }
-                }
-            }
-            else -> {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    item {
-                        FilterChip(
-                            selected = true,
-                            onClick = { viewModel.selectCategory(null) },
-                            label = { Text("全部") }
                         )
                     }
                 }

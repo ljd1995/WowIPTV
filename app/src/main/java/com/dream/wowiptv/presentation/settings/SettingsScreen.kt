@@ -3,6 +3,7 @@ package com.dream.wowiptv.presentation.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -59,7 +61,10 @@ fun SettingsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("设置") })
+            TopAppBar(
+                title = { Text("设置") },
+                windowInsets = WindowInsets(0, 0, 0, 0)
+            )
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -100,6 +105,7 @@ fun SettingsScreen(
                         source = source,
                         isActive = source.id == activeSourceId,
                         onEdit = { onEditSource(source.id) },
+                        onSync = { viewModel.syncSource(source.id) },
                         onDelete = { viewModel.deleteSource(source.id) },
                         onSwitch = { viewModel.switchSource(source.id) }
                     )
@@ -114,6 +120,7 @@ private fun SourceItem(
     source: XtreamSource,
     isActive: Boolean,
     onEdit: () -> Unit,
+    onSync: () -> Unit,
     onDelete: () -> Unit,
     onSwitch: () -> Unit
 ) {
@@ -173,6 +180,13 @@ private fun SourceItem(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+            IconButton(onClick = onSync) {
+                Icon(
+                    Icons.Default.Refresh,
+                    contentDescription = "同步",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
             IconButton(onClick = onDelete) {
                 Icon(
