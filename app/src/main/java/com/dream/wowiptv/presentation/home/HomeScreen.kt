@@ -78,7 +78,7 @@ fun HomeScreen(
                     if (items.isEmpty()) {
                         Text("暂无收藏", color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
                     } else {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             items(items.take(10), key = { it.hashCode() }) { item ->
                                 when (item) {
                                     is FavoriteStreamEntity -> FavCard(name = item.name, icon = item.iconUrl)
@@ -90,6 +90,8 @@ fun HomeScreen(
                         }
                     }
                 }
+
+                item { Spacer(modifier = Modifier.height(8.dp)) }
 
                 item {
                     SectionHeader(title = "最近添加", onViewAll = onViewAllRecent)
@@ -135,38 +137,38 @@ private fun SectionHeader(title: String, onViewAll: () -> Unit) {
 
 @Composable
 private fun FavCard(name: String, icon: String? = null, onClick: () -> Unit = {}) {
-    Box(modifier = Modifier.width(90.dp).clip(RoundedCornerShape(6.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
+    Box(modifier = Modifier.width(105.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
         Box(modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f)) {
             if (!icon.isNullOrEmpty()) {
                 AsyncImage(model = icon, contentDescription = name,
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp)),
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
                     contentScale = ContentScale.Crop)
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
                 }
             }
         }
-        Text(text = name, color = Color(0xFFDDDDDD), fontSize = 10.sp, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 4.dp, vertical = 3.dp))
+        Text(text = name, color = Color(0xFFDDDDDD), fontSize = 11.sp, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp))
     }
 }
 
 @Composable
 private fun RecentCard(name: String, icon: String? = null, onClick: () -> Unit = {}) {
-    Box(modifier = Modifier.width(90.dp).clip(RoundedCornerShape(6.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
+    Box(modifier = Modifier.width(105.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
         Box(modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f)) {
             if (!icon.isNullOrEmpty()) {
                 AsyncImage(model = icon, contentDescription = name,
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp)),
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
                     contentScale = ContentScale.Crop)
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(24.dp))
+                    Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
                 }
             }
         }
-        Text(text = name, color = Color(0xFFDDDDDD), fontSize = 10.sp, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 4.dp, vertical = 3.dp))
+        Text(text = name, color = Color(0xFFDDDDDD), fontSize = 11.sp, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp))
     }
 }

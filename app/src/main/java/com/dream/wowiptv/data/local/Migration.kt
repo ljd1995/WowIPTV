@@ -30,3 +30,20 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         )
     }
 }
+
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("""CREATE TABLE favorite_vod_new (
+            vodId INTEGER NOT NULL,
+            sourceId INTEGER NOT NULL,
+            type TEXT NOT NULL,
+            name TEXT NOT NULL,
+            icon TEXT,
+            categoryId INTEGER NOT NULL,
+            PRIMARY KEY(vodId, sourceId, type)
+        )""")
+        db.execSQL("INSERT OR IGNORE INTO favorite_vod_new SELECT * FROM favorite_vod")
+        db.execSQL("DROP TABLE favorite_vod")
+        db.execSQL("ALTER TABLE favorite_vod_new RENAME TO favorite_vod")
+    }
+}

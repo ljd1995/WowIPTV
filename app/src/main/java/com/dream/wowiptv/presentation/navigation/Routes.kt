@@ -2,8 +2,12 @@ package com.dream.wowiptv.presentation.navigation
 
 object Routes {
     const val MAIN = "main"
-    const val ALL_ITEMS = "all_items"
+    const val ALL_ITEMS = "all_items/{tab}"
+    const val ALL_FAVORITES = "all_favorites"
+    const val ALL_RECENT = "all_recent"
     const val SETTINGS = "settings"
+
+    fun allItemsRoute(tab: Int) = "all_items/$tab"
     const val PLAYER = "player/{streamType}/{streamId}?name={name}"
     const val EPG = "epg/{streamId}"
     const val VOD = "vod/{vodId}"

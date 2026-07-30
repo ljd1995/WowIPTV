@@ -43,7 +43,7 @@ import com.dream.wowiptv.data.local.entity.VodStreamEntity
         FavoriteStreamEntity::class,
         FavoriteVodEntity::class
     ],
-    version = 5
+    version = 6
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun sourceDao(): SourceDao

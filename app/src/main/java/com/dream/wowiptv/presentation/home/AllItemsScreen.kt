@@ -57,13 +57,14 @@ import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllItemsScreen(
+    initialTab: Int = 0,
     viewModel: HomeViewModel = hiltViewModel(),
     onBack: () -> Unit,
     onMovieClick: (Int) -> Unit,
     onSeriesClick: (Int) -> Unit
 ) {
     val data by viewModel.data.collectAsState()
-    var tab by remember { mutableIntStateOf(0) }
+    var tab by remember { mutableIntStateOf(initialTab) }
     val tabs = listOf("全部", "直播", "电影", "剧集")
 
     MaterialTheme(colorScheme = DarkColorScheme) {

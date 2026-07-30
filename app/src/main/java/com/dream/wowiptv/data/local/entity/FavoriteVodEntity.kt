@@ -2,7 +2,7 @@ package com.dream.wowiptv.data.local.entity
 
 import androidx.room.Entity
 
-@Entity(tableName = "favorite_vod", primaryKeys = ["vodId", "sourceId"])
+@Entity(tableName = "favorite_vod", primaryKeys = ["vodId", "sourceId", "type"])
 data class FavoriteVodEntity(
     val vodId: Int,
     val sourceId: Long,

@@ -88,8 +88,13 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        composable(Routes.ALL_ITEMS) {
+        composable(
+            route = Routes.ALL_ITEMS,
+            arguments = listOf(navArgument("tab") { type = NavType.IntType; defaultValue = 0 })
+        ) { backStackEntry ->
+            val tab = backStackEntry.arguments?.getInt("tab") ?: 0
             AllItemsScreen(
+                initialTab = tab,
                 onBack = { navController.popBackStack() },
                 onMovieClick = { vodId ->
                     navController.navigate(Routes.vodRoute(vodId))
