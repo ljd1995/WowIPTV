@@ -40,6 +40,7 @@ fun MainScreen(outerNavController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     var hideBottomBar by remember { mutableStateOf(false) }
+    var pendingLiveStream by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         containerColor = Color(0xFF1A1A1A),
@@ -87,14 +88,13 @@ fun MainScreen(outerNavController: NavHostController) {
                     onSeriesClick = { seriesId ->
                         outerNavController.navigate(Routes.seriesRoute(seriesId))
                     },
-                    onPlayMovie = { vodId, name, position ->
-                        outerNavController.navigate(Routes.playerRoute("vod", vodId.toString(), name, position))
-                    },
-                    onPlaySeries = { episodeId, name, position ->
-                        outerNavController.navigate(Routes.playerRoute("series", episodeId, name, position))
-                    },
                     onLiveClick = { streamId, name ->
-                        outerNavController.navigate(Routes.playerRoute("live", streamId.toString(), name))
+                        pendingLiveStream = streamId
+                        navController.navigate(BottomNavItem.Live.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                     onViewAllFavorites = {
                         outerNavController.navigate(Routes.ALL_FAVORITES)
@@ -113,6 +113,8 @@ fun MainScreen(outerNavController: NavHostController) {
                 exitTransition = { ExitTransition.None }
             ) {
                 LiveScreen(
+                    pendingStreamId = pendingLiveStream,
+                    onStreamPlayed = { pendingLiveStream = null },
                     onFullscreenChanged = { fullscreen ->
                         hideBottomBar = fullscreen
                     }

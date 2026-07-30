@@ -56,8 +56,6 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onMovieClick: (Int) -> Unit,
     onSeriesClick: (Int) -> Unit,
-    onPlayMovie: (Int, String, Long) -> Unit,
-    onPlaySeries: (String, String, Long) -> Unit,
     onLiveClick: (Int, String) -> Unit,
     onViewAllFavorites: () -> Unit,
     onViewAllRecent: () -> Unit,
@@ -93,8 +91,8 @@ fun HomeScreen(
                                         onClick = {
                                             val idStr = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_")
                                             when (wp.contentType) {
-                                                "vod" -> idStr.toIntOrNull()?.let { onPlayMovie(it, wp.name, wp.position) }
-                                                "series" -> onPlaySeries(idStr, wp.name, wp.position)
+                                                "vod" -> idStr.toIntOrNull()?.let { onMovieClick(it) }
+                                                "series" -> idStr.toIntOrNull()?.let { onSeriesClick(it) }
                                                 "live" -> idStr.toIntOrNull()?.let { onLiveClick(it, wp.name) }
                                             }
                                         }

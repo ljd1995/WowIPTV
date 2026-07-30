@@ -90,6 +90,8 @@ private val DarkTextSecondary = Color(0xFF999999)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiveScreen(
+    pendingStreamId: Int? = null,
+    onStreamPlayed: () -> Unit = {},
     onFullscreenChanged: (Boolean) -> Unit = {},
     viewModel: LiveViewModel = hiltViewModel()
 ) {
@@ -109,6 +111,19 @@ fun LiveScreen(
     val activity = context as? ComponentActivity
 
     var isRefreshing by remember { mutableStateOf(false) }
+
+    LaunchedEffect(pendingStreamId, streamsState) {
+        if (pendingStreamId != null) {
+            val s = streamsState
+            if (s is UiState.Success) {
+                val stream = s.data.find { it.id == pendingStreamId }
+                if (stream != null) {
+                    viewModel.playStream(stream)
+                    onStreamPlayed()
+                }
+            }
+        }
+    }
 
     LaunchedEffect(streamsState) {
         if (streamsState !is UiState.Loading) {
