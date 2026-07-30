@@ -118,6 +118,7 @@ fun PlayerScreen(
     val contentId = when (streamType) {
         "vod" -> "vod_$streamId"
         "series" -> "series_$streamId"
+        "live" -> "live_$streamId"
         else -> ""
     }
 

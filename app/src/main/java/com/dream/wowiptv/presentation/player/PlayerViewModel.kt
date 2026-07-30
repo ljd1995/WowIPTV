@@ -65,16 +65,15 @@ class PlayerViewModel @Inject constructor(
 
     fun saveProgress(contentId: String, position: Long, duration: Long) {
         viewModelScope.launch {
-            if (streamType != "live" && duration > 0) {
-                watchProgressUseCase.saveProgress(
-                    contentId = contentId,
-                    contentType = streamType,
-                    name = streamName,
-                    icon = null,
-                    position = position,
-                    duration = duration
-                )
-            }
+            val pos = if (streamType == "live") System.currentTimeMillis() / 1000 else position
+            watchProgressUseCase.saveProgress(
+                contentId = contentId,
+                contentType = streamType,
+                name = streamName,
+                icon = null,
+                position = pos,
+                duration = duration
+            )
         }
     }
 

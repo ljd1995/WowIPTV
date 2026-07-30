@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -61,6 +62,27 @@ class HomeViewModel @Inject constructor(
     private fun loadData() {
         viewModelScope.launch {
             val source = sourceRepository.getActiveSource().first() ?: return@launch
+
+            launch {
+                while (true) {
+                    val progress = watchProgressDao.getAllBySource(source.id).first()
+                    val live = liveStreamDao.getBySource(source.id).first()
+                    val vod = vodStreamDao.getBySource(source.id).first()
+                    val series = seriesDao.getBySource(source.id).first()
+                    val enriched = progress.map { wp ->
+                        val icon = when (wp.contentType) {
+                            "vod" -> vod.find { it.streamId == wp.contentId.removePrefix("vod_").toIntOrNull() }?.streamIcon
+                            "series" -> series.find { it.seriesId == wp.contentId.removePrefix("series_").toIntOrNull() }?.cover
+                            "live" -> live.find { it.streamId == wp.contentId.removePrefix("live_").toIntOrNull() }?.streamIcon
+                            else -> null
+                        }
+                        wp.copy(icon = icon ?: wp.icon)
+                    }
+                    _data.value = _data.value.copy(continueWatching = enriched.take(10))
+                    delay(3000)
+                }
+            }
+
             while (true) {
                 val favStreams = favoriteStreamDao.getAllBySource(source.id).first()
                 val favVods = favoriteVodDao.getAllBySource(source.id).first()
@@ -79,17 +101,7 @@ class HomeViewModel @Inject constructor(
                     } ?: false
                 }.ifEmpty { vod.take(10) }
 
-                val watchProgress = watchProgressDao.getAllBySource(source.id).first()
-                val enrichedProgress = watchProgress.map { wp ->
-                    val icon = when {
-                        wp.contentType == "vod" -> vod.find { it.streamId == wp.contentId.removePrefix("vod_").toIntOrNull() }?.streamIcon
-                        wp.contentType == "series" -> series.find { it.seriesId == wp.contentId.removePrefix("series_").toIntOrNull() }?.cover
-                        else -> null
-                    }
-                    wp.copy(icon = icon ?: wp.icon)
-                }
-                _data.value = HomeSection(
-                    continueWatching = enrichedProgress.take(10),
+                _data.value = _data.value.copy(
                     favoriteStreams = favStreams,
                     favoriteMovies = favVods.filter { it.type == "movie" },
                     favoriteSeries = favVods.filter { it.type == "series" },
@@ -98,7 +110,7 @@ class HomeViewModel @Inject constructor(
                     recentSeries = series.take(10)
                 )
                 _isRefreshing.value = false
-                kotlinx.coroutines.delay(2000)
+                delay(2000)
             }
         }
     }
@@ -107,11 +119,12 @@ class HomeViewModel @Inject constructor(
         _isRefreshing.value = true
         viewModelScope.launch {
             val source = sourceRepository.getActiveSource().first() ?: return@launch
-            val favStreams = favoriteStreamDao.getAllBySource(source.id).first()
-            val favVods = favoriteVodDao.getAllBySource(source.id).first()
+            val progress = watchProgressDao.getAllBySource(source.id).first()
             val live = liveStreamDao.getBySource(source.id).first()
             val vod = vodStreamDao.getBySource(source.id).first()
             val series = seriesDao.getBySource(source.id).first()
+            val favStreams = favoriteStreamDao.getAllBySource(source.id).first()
+            val favVods = favoriteVodDao.getAllBySource(source.id).first()
 
             val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
             val cal = Calendar.getInstance()
@@ -124,7 +137,18 @@ class HomeViewModel @Inject constructor(
                 } ?: false
             }.ifEmpty { vod.take(10) }
 
+            val enriched = progress.map { wp ->
+                val icon = when (wp.contentType) {
+                    "vod" -> vod.find { it.streamId == wp.contentId.removePrefix("vod_").toIntOrNull() }?.streamIcon
+                    "series" -> series.find { it.seriesId == wp.contentId.removePrefix("series_").toIntOrNull() }?.cover
+                    "live" -> live.find { it.streamId == wp.contentId.removePrefix("live_").toIntOrNull() }?.streamIcon
+                    else -> null
+                }
+                wp.copy(icon = icon ?: wp.icon)
+            }
+
             _data.value = HomeSection(
+                continueWatching = enriched.take(10),
                 favoriteStreams = favStreams,
                 favoriteMovies = favVods.filter { it.type == "movie" },
                 favoriteSeries = favVods.filter { it.type == "series" },
