@@ -59,7 +59,8 @@ fun AllHistoryScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onBack: () -> Unit,
     onMovieClick: (Int) -> Unit,
-    onSeriesClick: (Int) -> Unit
+    onSeriesClick: (Int) -> Unit,
+    onLiveClick: (Int, String) -> Unit
 ) {
     val data by viewModel.data.collectAsState()
 
@@ -89,7 +90,12 @@ fun AllHistoryScreen(
                     modifier = Modifier.fillMaxSize().padding(innerPadding)
                 ) {
                     items(data.continueWatching, key = { it.contentId }) { item ->
-                        HistoryGridCell(item.copy(name = decodeName(item.name)))
+                        HistoryGridCell(
+                            item = item.copy(name = decodeName(item.name)),
+                            onMovieClick = onMovieClick,
+                            onSeriesClick = onSeriesClick,
+                            onLiveClick = onLiveClick
+                        )
                     }
                 }
             }
@@ -98,14 +104,26 @@ fun AllHistoryScreen(
 }
 
 @Composable
-private fun HistoryGridCell(item: WatchProgressEntity) {
+private fun HistoryGridCell(
+    item: WatchProgressEntity,
+    onMovieClick: (Int) -> Unit,
+    onSeriesClick: (Int) -> Unit,
+    onLiveClick: (Int, String) -> Unit
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(2f / 3f)
             .clip(RoundedCornerShape(8.dp))
             .background(Color(0xFF2D2D3A))
-            .clickable { }
+            .clickable {
+                val idStr = item.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_")
+                when (item.contentType) {
+                    "vod" -> idStr.toIntOrNull()?.let { onMovieClick(it) }
+                    "series" -> idStr.toIntOrNull()?.let { onSeriesClick(it) }
+                    "live" -> idStr.toIntOrNull()?.let { onLiveClick(it, item.name) }
+                }
+            }
     ) {
         if (!item.icon.isNullOrEmpty()) {
             AsyncImage(
