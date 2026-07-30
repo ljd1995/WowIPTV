@@ -397,42 +397,48 @@ private fun ContinueCard(name: String, icon: String? = null, isLive: Boolean = f
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        listOf(
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.7f),
-                            Color.Black.copy(alpha = 0.85f)
-                        )
-                    )
-                )
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            contentAlignment = Alignment.CenterStart
         ) {
-            Text(
-                text = name,
-                color = Color.White,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        if (duration > 0) {
-            val progress = (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .fillMaxWidth()
-                    .height(4.dp)
-                    .background(Color(0xFF555555).copy(alpha = 0.5f))
-            ) {
+            Column {
+                if (duration > 0) {
+                    val progress = (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .background(Color(0xFF555555).copy(alpha = 0.5f))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .fillMaxWidth(progress)
+                                .background(Color(0xFF6366F1))
+                        )
+                    }
+                }
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .fillMaxWidth(progress)
-                        .background(Color(0xFF6366F1))
-                )
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.7f),
+                                    Color.Black.copy(alpha = 0.85f)
+                                )
+                            )
+                        )
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Text(
+                        text = name,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }
