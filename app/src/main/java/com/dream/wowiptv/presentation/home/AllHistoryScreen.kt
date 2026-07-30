@@ -36,8 +36,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -96,23 +98,91 @@ fun AllHistoryScreen(
 
 @Composable
 private fun HistoryGridCell(item: WatchProgressEntity) {
-    Box(modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable { }) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(2f / 3f)
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0xFF2D2D3A))
+            .clickable { }
+    ) {
         if (!item.icon.isNullOrEmpty()) {
-            AsyncImage(model = item.icon, contentDescription = item.name,
-                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            AsyncImage(
+                model = item.icon,
+                contentDescription = item.name,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
+                Icon(
+                    Icons.Default.Movie,
+                    contentDescription = null,
+                    tint = Color(0xFF666666).copy(alpha = 0.5f),
+                    modifier = Modifier.size(36.dp)
+                )
             }
         }
-        Box(modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = 4.dp, vertical = 2.dp)) {
-            Text(text = item.name, color = Color.White, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (item.contentType == "live") {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .background(
+                        color = Color(0xFFEF4444),
+                        shape = RoundedCornerShape(topEnd = 8.dp, bottomStart = 4.dp)
+                    )
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = "LIVE",
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+            }
         }
         if (item.duration > 0) {
             val p = (item.position.toFloat() / item.duration.toFloat()).coerceIn(0f, 1f)
-            Box(modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.dp).background(Color(0xFF555555))) {
-                Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(p).background(Color(0xFF1E88E5)))
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .background(Color(0xFF555555).copy(alpha = 0.5f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(p)
+                        .background(Color(0xFF6366F1))
+                )
             }
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.7f),
+                            Color.Black.copy(alpha = 0.85f)
+                        )
+                    )
+                )
+                .padding(horizontal = 6.dp, vertical = 4.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = item.name,
+                color = Color.White,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
