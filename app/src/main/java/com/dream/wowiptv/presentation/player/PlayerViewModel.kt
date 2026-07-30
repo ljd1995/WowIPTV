@@ -36,6 +36,7 @@ class PlayerViewModel @Inject constructor(
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
     init {
+        android.util.Log.d("PlayerVM", "init streamType=$streamType streamId=$streamId name=$streamName")
         loadStreamUrl()
         if (streamType == "live") {
             observeEpg()
@@ -44,14 +45,25 @@ class PlayerViewModel @Inject constructor(
 
     private fun loadStreamUrl() {
         viewModelScope.launch {
-            val idNum = streamId.toIntOrNull() ?: 0
-            val type = when (streamType) {
-                "live" -> PlayStreamUseCase.StreamType.Live(idNum)
-                "vod" -> PlayStreamUseCase.StreamType.Vod(idNum)
-                "series" -> PlayStreamUseCase.StreamType.Series(streamId)
-                else -> PlayStreamUseCase.StreamType.Live(idNum)
+            try {
+                val idNum = streamId.toIntOrNull() ?: 0
+                val type = when (streamType) {
+                    "live" -> PlayStreamUseCase.StreamType.Live(idNum)
+                    "vod" -> PlayStreamUseCase.StreamType.Vod(idNum)
+                    "series" -> PlayStreamUseCase.StreamType.Series(streamId)
+                    else -> PlayStreamUseCase.StreamType.Live(idNum)
+                }
+                _streamUrl.value = playStreamUseCase(type)
+                android.util.Log.d("PlayerVM", "URL loaded for $streamType $streamId")
+                if (streamType == "live") {
+                    val contentId = "live_$streamId"
+                    val pos = System.currentTimeMillis() / 1000
+                    watchProgressUseCase.saveProgress(contentId, "live", streamName, null, pos, 0L)
+                    android.util.Log.d("PlayerVM", "saved live $contentId pos=$pos")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("PlayerVM", "loadStreamUrl failed", e)
             }
-            _streamUrl.value = playStreamUseCase(type)
         }
     }
 
