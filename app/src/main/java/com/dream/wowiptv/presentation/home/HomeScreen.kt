@@ -329,11 +329,11 @@ private fun LiveBadge() {
 }
 
 @Composable
-private fun TypeBadge(text: String, bgColor: Color) {
+private fun TypeBadge(text: String) {
     Box(
         modifier = Modifier
             .padding(start = 4.dp, top = 4.dp)
-            .background(bgColor, RoundedCornerShape(3.dp))
+            .background(Color(0xFF000000).copy(alpha = 0.55f), RoundedCornerShape(3.dp))
             .padding(horizontal = 5.dp, vertical = 2.dp)
     ) {
         Text(
@@ -375,10 +375,7 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
         }
         if (!badge.isNullOrEmpty()) {
             Box(modifier = Modifier.align(Alignment.TopStart)) {
-                TypeBadge(
-                    text = badge,
-                    bgColor = if (badge == "LIVE") Color(0xFFEF4444) else Color(0xFF000000).copy(alpha = 0.6f)
-                )
+                TypeBadge(text = badge)
             }
         }
         Box(
@@ -454,10 +451,7 @@ private fun ContinueCard(name: String, icon: String? = null, badge: String? = nu
         }
         if (!badge.isNullOrEmpty()) {
             Box(modifier = Modifier.align(Alignment.TopStart)) {
-                TypeBadge(
-                    text = badge,
-                    bgColor = if (badge == "LIVE") Color(0xFFEF4444) else Color(0xFF000000).copy(alpha = 0.6f)
-                )
+                TypeBadge(text = badge)
             }
         }
         Box(

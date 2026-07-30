@@ -150,12 +150,11 @@ private fun HistoryGridCell(
             else -> null
         }
         if (badgeText != null) {
-            val badgeColor = if (badgeText == "LIVE") Color(0xFFEF4444) else Color(0xFF000000).copy(alpha = 0.6f)
             Box(modifier = Modifier.align(Alignment.TopStart)) {
                 Box(
                     modifier = Modifier
                         .padding(start = 4.dp, top = 4.dp)
-                        .background(badgeColor, RoundedCornerShape(3.dp))
+                        .background(Color(0xFF000000).copy(alpha = 0.55f), RoundedCornerShape(3.dp))
                         .padding(horizontal = 5.dp, vertical = 2.dp)
                 ) {
                     Text(

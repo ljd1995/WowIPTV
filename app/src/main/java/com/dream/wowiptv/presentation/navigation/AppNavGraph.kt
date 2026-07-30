@@ -123,6 +123,9 @@ fun AppNavGraph(navController: NavHostController) {
                 },
                 onSeriesClick = { seriesId ->
                     navController.navigate(Routes.seriesRoute(seriesId))
+                },
+                onLiveClick = { streamId, _ ->
+                    navController.navigate(Routes.mainRoute(streamId))
                 }
             )
         }
