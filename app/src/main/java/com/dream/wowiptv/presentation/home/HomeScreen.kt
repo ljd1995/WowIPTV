@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -46,6 +47,7 @@ import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
 import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
+import androidx.compose.foundation.Canvas
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
@@ -55,6 +57,9 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onMovieClick: (Int) -> Unit,
     onSeriesClick: (Int) -> Unit,
+    onPlayMovie: (Int) -> Unit,
+    onPlaySeries: (String) -> Unit,
+    onLiveClick: (Int) -> Unit,
     onViewAllFavorites: () -> Unit,
     onViewAllRecent: () -> Unit,
     onViewAllHistory: () -> Unit
@@ -80,8 +85,21 @@ fun HomeScreen(
                             SectionHeader(title = "继续观看", onViewAll = onViewAllHistory)
                             Spacer(modifier = Modifier.height(10.dp))
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                items(data.continueWatching, key = { it.contentId }) { item ->
-                                    FavCard(name = item.name, icon = item.icon)
+                                items(data.continueWatching, key = { it.contentId }) { wp ->
+                                    ContinueCard(
+                                        name = wp.name,
+                                        icon = wp.icon,
+                                        position = wp.position,
+                                        duration = wp.duration,
+                                        onClick = {
+                                            val idStr = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_")
+                                            when (wp.contentType) {
+                                                "vod" -> idStr.toIntOrNull()?.let { onPlayMovie(it) }
+                                                "series" -> onPlaySeries(idStr)
+                                                "live" -> idStr.toIntOrNull()?.let { onLiveClick(it) }
+                                            }
+                                        }
+                                    )
                                 }
                             }
                         }
@@ -171,6 +189,33 @@ private fun FavCard(name: String, icon: String? = null, onClick: () -> Unit = {}
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
+                }
+            }
+        }
+        Text(text = name, color = Color(0xFFDDDDDD), fontSize = 11.sp, maxLines = 1,
+            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp))
+    }
+}
+
+@Composable
+private fun ContinueCard(name: String, icon: String? = null, position: Long = 0L, duration: Long = 0L, onClick: () -> Unit = {}) {
+    Box(modifier = Modifier.width(105.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
+        Box(modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f)) {
+            if (!icon.isNullOrEmpty()) {
+                AsyncImage(model = icon, contentDescription = name,
+                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
+                    contentScale = ContentScale.Crop)
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
+                }
+            }
+            if (duration > 0) {
+                val progress = (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+                Box(
+                    modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.dp).background(Color(0xFF555555))
+                ) {
+                    Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color(0xFF1E88E5)))
                 }
             }
         }
