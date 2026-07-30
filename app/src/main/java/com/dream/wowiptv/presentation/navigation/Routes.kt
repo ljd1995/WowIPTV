@@ -2,6 +2,7 @@ package com.dream.wowiptv.presentation.navigation
 
 object Routes {
     const val MAIN = "main"
+    const val ALL_ITEMS = "all_items"
     const val SETTINGS = "settings"
     const val PLAYER = "player/{streamType}/{streamId}?name={name}"
     const val EPG = "epg/{streamId}"

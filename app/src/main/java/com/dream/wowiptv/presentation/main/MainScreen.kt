@@ -86,6 +86,9 @@ fun MainScreen(outerNavController: NavHostController) {
                     },
                     onSeriesClick = { seriesId ->
                         outerNavController.navigate(Routes.seriesRoute(seriesId))
+                    },
+                    onViewAll = {
+                        outerNavController.navigate(Routes.ALL_ITEMS)
                     }
                 )
             }
