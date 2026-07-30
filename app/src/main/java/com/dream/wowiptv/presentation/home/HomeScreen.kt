@@ -5,11 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,7 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,13 +30,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -53,7 +47,6 @@ import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
 import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
-import kotlinx.coroutines.delay
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
@@ -84,40 +77,55 @@ fun HomeScreen(
                 item { Spacer(modifier = Modifier.height(8.dp)) }
 
                 item {
-                    val fmt = remember { java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
-                    var timeStr by remember { mutableStateOf(fmt.format(java.util.Date())) }
-                    LaunchedEffect(Unit) {
-                        while (true) {
-                            timeStr = fmt.format(java.util.Date())
-                            delay(30000)
-                        }
-                    }
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A2E)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        listOf(
+                                            Color(0xFF6366F1),
+                                            Color(0xFF8B5CF6),
+                                            Color(0xFFA855F7)
+                                        )
+                                    )
+                                )
+                                .padding(24.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Hello ${data.username}",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = timeStr,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color(0xFF999999)
-                                )
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                StatItem(value = data.liveCount, label = "直播")
-                                StatItem(value = data.movieCount, label = "电影")
-                                StatItem(value = data.seriesCount, label = "剧集")
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Hello, ${data.username}",
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 20.sp
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = if (data.expiryDate.length > 0) "VIP 到期: ${data.expiryDate}" else "VIP 未设置",
+                                            color = Color.White.copy(alpha = 0.9f),
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        StatItem(value = data.liveCount, label = "直播")
+                                        StatItem(value = data.movieCount, label = "电影")
+                                        StatItem(value = data.seriesCount, label = "剧集")
+                                    }
+                                }
                             }
                         }
                     }
@@ -129,12 +137,13 @@ fun HomeScreen(
                     item {
                         Column {
                             SectionHeader(title = "继续观看", onViewAll = onViewAllHistory)
-                            Spacer(modifier = Modifier.height(10.dp))
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 items(data.continueWatching, key = { it.contentId }) { wp ->
                                     ContinueCard(
                                         name = decodeName(wp.name),
                                         icon = wp.icon,
+                                        isLive = wp.contentType == "live",
                                         position = wp.position,
                                         duration = wp.duration,
                                         onClick = {
@@ -150,21 +159,23 @@ fun HomeScreen(
                             }
                         }
                     }
-                    item { Spacer(modifier = Modifier.height(4.dp)) }
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
 
                 item {
                     Column {
                         SectionHeader(title = "收藏", onViewAll = onViewAllFavorites)
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         val items = data.favoriteStreams + data.favoriteMovies + data.favoriteSeries
                         if (items.isEmpty()) {
                             Text("暂无收藏", color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
                         } else {
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 items(items.take(10), key = { it.hashCode() }) { item ->
                                     when (item) {
-                                        is FavoriteStreamEntity -> FavCard(name = item.name, icon = item.iconUrl, onClick = { onLiveClick(item.streamId, item.name) })
+                                        is FavoriteStreamEntity -> FavCard(name = item.name, icon = item.iconUrl, isLive = true, onClick = { onLiveClick(item.streamId, item.name) })
                                         is FavoriteVodEntity -> FavCard(name = item.name, icon = item.icon, onClick = {
                                             if (item.type == "movie") onMovieClick(item.vodId) else onSeriesClick(item.vodId)
                                         })
@@ -175,22 +186,22 @@ fun HomeScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(4.dp)) }
+                item { Spacer(modifier = Modifier.height(8.dp)) }
 
                 item {
                     Column {
                         SectionHeader(title = "最近添加", onViewAll = onViewAllRecent)
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         val all = data.recentLive + data.recentMovies + data.recentSeries
                         if (all.isEmpty()) {
                             Text("暂无内容", color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
                         } else {
-                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                                 items(all.take(10), key = { it.hashCode() }) { item ->
                                     when (item) {
-                                    is LiveStreamEntity -> RecentCard(name = item.name, icon = item.streamIcon, onClick = { onLiveClick(item.streamId, item.name) })
-                                    is VodStreamEntity -> RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, onClick = { onMovieClick(item.streamId) })
-                                    is SeriesEntity -> RecentCard(name = item.name.orEmpty(), icon = item.cover, onClick = { onSeriesClick(item.seriesId) })
+                                        is LiveStreamEntity -> RecentCard(name = item.name, icon = item.streamIcon, isLive = true, onClick = { onLiveClick(item.streamId, item.name) })
+                                        is VodStreamEntity -> RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, onClick = { onMovieClick(item.streamId) })
+                                        is SeriesEntity -> RecentCard(name = item.name.orEmpty(), icon = item.cover, onClick = { onSeriesClick(item.seriesId) })
                                     }
                                 }
                             }
@@ -210,9 +221,22 @@ private fun decodeName(raw: String): String {
 
 @Composable
 private fun StatItem(value: Int, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(text = value.toString(), color = Color(0xFF1E88E5), fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Text(text = label, color = Color(0xFF999999), fontSize = 11.sp)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(horizontal = 4.dp)
+    ) {
+        Text(
+            text = value.toString(),
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp
+        )
+        Text(
+            text = label,
+            color = Color.White.copy(alpha = 0.7f),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 
@@ -223,72 +247,198 @@ private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text(
+            text = title,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp
+        )
         if (onViewAll != null) {
+            Row(
+                modifier = Modifier.clickable(onClick = onViewAll),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = "查看全部",
+                    color = Color(0xFF8B5CF6),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "›",
+                    color = Color(0xFF8B5CF6),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LiveBadge() {
+    Box(
+        modifier = Modifier
+            .background(
+                color = Color(0xFFEF4444),
+                shape = RoundedCornerShape(topEnd = 12.dp, bottomStart = 4.dp)
+            )
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    ) {
+        Text(
+            text = "LIVE",
+            color = Color.White,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp
+        )
+    }
+}
+
+@Composable
+private fun MediaCard(name: String, icon: String? = null, isLive: Boolean = false, onClick: () -> Unit = {}) {
+    Box(
+        modifier = Modifier
+            .width(110.dp)
+            .aspectRatio(2f / 3f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF2D2D3A))
+            .clickable(onClick = onClick)
+    ) {
+        if (!icon.isNullOrEmpty()) {
+            AsyncImage(
+                model = icon,
+                contentDescription = name,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Default.Movie,
+                    contentDescription = null,
+                    tint = Color(0xFF666666).copy(alpha = 0.5f),
+                    modifier = Modifier.size(36.dp)
+                )
+            }
+        }
+        if (isLive) {
+            Box(modifier = Modifier.align(Alignment.TopEnd)) {
+                LiveBadge()
+            }
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.7f),
+                            Color.Black.copy(alpha = 0.85f)
+                        )
+                    )
+                )
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
             Text(
-                text = "查看全部",
-                color = Color(0xFF1E88E5),
-                fontSize = 13.sp,
+                text = name,
+                color = Color.White,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
-                modifier = Modifier.clickable(onClick = onViewAll)
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
 }
 
 @Composable
-private fun FavCard(name: String, icon: String? = null, onClick: () -> Unit = {}) {
-    Box(modifier = Modifier.width(105.dp).aspectRatio(2f / 3f).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
-        if (!icon.isNullOrEmpty()) {
-            AsyncImage(model = icon, contentDescription = name,
-                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
-            }
-        }
-        Box(modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = 4.dp, vertical = 2.dp)) {
-            Text(text = name, color = Color.White, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
+private fun FavCard(name: String, icon: String? = null, isLive: Boolean = false, onClick: () -> Unit = {}) {
+    MediaCard(name, icon, isLive, onClick)
 }
 
 @Composable
-private fun ContinueCard(name: String, icon: String? = null, position: Long = 0L, duration: Long = 0L, onClick: () -> Unit = {}) {
-    Box(modifier = Modifier.width(105.dp).aspectRatio(2f / 3f).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
+private fun ContinueCard(name: String, icon: String? = null, isLive: Boolean = false, position: Long = 0L, duration: Long = 0L, onClick: () -> Unit = {}) {
+    Box(
+        modifier = Modifier
+            .width(110.dp)
+            .aspectRatio(2f / 3f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFF2D2D3A))
+            .clickable(onClick = onClick)
+    ) {
         if (!icon.isNullOrEmpty()) {
-            AsyncImage(model = icon, contentDescription = name,
-                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            AsyncImage(
+                model = icon,
+                contentDescription = name,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
+                Icon(
+                    Icons.Default.Movie,
+                    contentDescription = null,
+                    tint = Color(0xFF666666).copy(alpha = 0.5f),
+                    modifier = Modifier.size(36.dp)
+                )
             }
         }
-        Box(modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = 4.dp, vertical = 2.dp)) {
-            Text(text = name, color = Color.White, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (isLive) {
+            Box(modifier = Modifier.align(Alignment.TopEnd)) {
+                LiveBadge()
+            }
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.7f),
+                            Color.Black.copy(alpha = 0.85f)
+                        )
+                    )
+                )
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = name,
+                color = Color.White,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
         if (duration > 0) {
             val progress = (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
-            Box(modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.dp).background(Color(0xFF555555))) {
-                Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color(0xFF1E88E5)))
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .background(Color(0xFF555555).copy(alpha = 0.5f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .fillMaxWidth(progress)
+                        .background(Color(0xFF6366F1))
+                )
             }
         }
     }
 }
 
 @Composable
-private fun RecentCard(name: String, icon: String? = null, onClick: () -> Unit = {}) {
-    Box(modifier = Modifier.width(105.dp).aspectRatio(2f / 3f).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
-        if (!icon.isNullOrEmpty()) {
-            AsyncImage(model = icon, contentDescription = name,
-                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-        } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
-            }
-        }
-        Box(modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = 4.dp, vertical = 2.dp)) {
-            Text(text = name, color = Color.White, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
+private fun RecentCard(name: String, icon: String? = null, isLive: Boolean = false, onClick: () -> Unit = {}) {
+    MediaCard(name, icon, isLive, onClick)
 }

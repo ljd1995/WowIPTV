@@ -15,6 +15,7 @@ import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.data.local.dao.WatchProgressDao
 import com.dream.wowiptv.domain.repository.SourceRepository
+import com.dream.wowiptv.domain.usecase.GetUserInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +30,7 @@ import javax.inject.Inject
 
 data class HomeSection(
     val username: String = "",
+    val expiryDate: String = "",
     val liveCount: Int = 0,
     val movieCount: Int = 0,
     val seriesCount: Int = 0,
@@ -50,7 +52,8 @@ class HomeViewModel @Inject constructor(
     private val seriesDao: SeriesDao,
     private val favoriteStreamDao: FavoriteStreamDao,
     private val favoriteVodDao: FavoriteVodDao,
-    private val watchProgressDao: WatchProgressDao
+    private val watchProgressDao: WatchProgressDao,
+    private val getUserInfoUseCase: GetUserInfoUseCase
 ) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -60,6 +63,7 @@ class HomeViewModel @Inject constructor(
     val data: StateFlow<HomeSection> = _data.asStateFlow()
 
     init {
+        loadUserInfo()
         loadData()
     }
 
@@ -122,6 +126,25 @@ class HomeViewModel @Inject constructor(
                 delay(2000)
             }
         }
+    }
+
+    private fun loadUserInfo() {
+        viewModelScope.launch {
+            val info = getUserInfoUseCase()
+            if (info != null) {
+                _data.value = _data.value.copy(expiryDate = formatExpiry(info.expDate))
+            }
+        }
+    }
+
+    private fun formatExpiry(dateStr: String?): String {
+        if (dateStr == null || dateStr.isBlank()) return ""
+        val timestamp = dateStr.toLongOrNull()
+        if (timestamp != null) {
+            val cal = java.util.Calendar.getInstance().apply { timeInMillis = timestamp * 1000 }
+            return "%04d-%02d-%02d".format(cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH) + 1, cal.get(java.util.Calendar.DAY_OF_MONTH))
+        }
+        return dateStr.take(10)
     }
 
     fun refresh() {
