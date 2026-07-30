@@ -143,31 +143,28 @@ private fun HistoryGridCell(
                 )
             }
         }
-        Box(modifier = Modifier.align(Alignment.TopStart)) {
-            if (item.contentType == "live") {
+        val badgeText = when (item.contentType) {
+            "vod" -> "MOVIE"
+            "series" -> "SERIES"
+            "live" -> "LIVE"
+            else -> null
+        }
+        if (badgeText != null) {
+            val badgeColor = if (badgeText == "LIVE") Color(0xFFEF4444) else Color(0xFF000000).copy(alpha = 0.6f)
+            Box(modifier = Modifier.align(Alignment.TopStart)) {
                 Box(
                     modifier = Modifier
                         .padding(start = 4.dp, top = 4.dp)
-                        .background(Color(0xFFEF4444), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                        .background(badgeColor, RoundedCornerShape(3.dp))
+                        .padding(horizontal = 5.dp, vertical = 2.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .background(Color.White, RoundedCornerShape(3.dp))
-                        )
-                        Text(
-                            text = "LIVE",
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                    }
+                    Text(
+                        text = badgeText,
+                        color = Color.White,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
                 }
             }
         }
@@ -208,30 +205,15 @@ private fun HistoryGridCell(
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    Column {
+                    Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                         Text(
                             text = item.name,
                             color = Color.White,
-                            fontSize = 11.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
-                        val categoryLabel = when (item.contentType) {
-                            "vod" -> "电影"
-                            "series" -> "剧集"
-                            "live" -> "直播"
-                            else -> ""
-                        }
-                        if (categoryLabel.isNotEmpty()) {
-                            Text(
-                                text = categoryLabel,
-                                color = Color(0xFF999999),
-                                fontSize = 9.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
                     }
                 }
             }

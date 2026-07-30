@@ -4,8 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
 import com.dream.wowiptv.data.local.dao.FavoriteVodDao
+import com.dream.wowiptv.data.local.dao.LiveCategoryDao
 import com.dream.wowiptv.data.local.dao.LiveStreamDao
+import com.dream.wowiptv.data.local.dao.SeriesCategoryDao
 import com.dream.wowiptv.data.local.dao.SeriesDao
+import com.dream.wowiptv.data.local.dao.VodCategoryDao
 import com.dream.wowiptv.data.local.dao.VodStreamDao
 import com.dream.wowiptv.data.local.entity.FavoriteStreamEntity
 import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
@@ -41,6 +44,9 @@ data class HomeSection(
     val recentLive: List<LiveStreamEntity> = emptyList(),
     val recentMovies: List<VodStreamEntity> = emptyList(),
     val recentSeries: List<SeriesEntity> = emptyList(),
+    val liveCategoryNames: Map<Int, String> = emptyMap(),
+    val vodCategoryNames: Map<Int, String> = emptyMap(),
+    val seriesCategoryNames: Map<Int, String> = emptyMap(),
     val isRefreshing: Boolean = false
 )
 
@@ -53,6 +59,9 @@ class HomeViewModel @Inject constructor(
     private val favoriteStreamDao: FavoriteStreamDao,
     private val favoriteVodDao: FavoriteVodDao,
     private val watchProgressDao: WatchProgressDao,
+    private val liveCategoryDao: LiveCategoryDao,
+    private val vodCategoryDao: VodCategoryDao,
+    private val seriesCategoryDao: SeriesCategoryDao,
     private val getUserInfoUseCase: GetUserInfoUseCase
 ) : ViewModel() {
 
@@ -110,6 +119,10 @@ class HomeViewModel @Inject constructor(
                     } ?: false
                 }.ifEmpty { vod.take(10) }
 
+                val liveCatMap = liveCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
+                val vodCatMap = vodCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
+                val seriesCatMap = seriesCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
+
                 _data.value = _data.value.copy(
                     username = source.username,
                     liveCount = live.size,
@@ -120,7 +133,10 @@ class HomeViewModel @Inject constructor(
                     favoriteSeries = favVods.filter { it.type == "series" },
                     recentLive = live.take(10),
                     recentMovies = recentMovies,
-                    recentSeries = series.take(10)
+                    recentSeries = series.take(10),
+                    liveCategoryNames = liveCatMap,
+                    vodCategoryNames = vodCatMap,
+                    seriesCategoryNames = seriesCatMap
                 )
                 _isRefreshing.value = false
                 delay(2000)
@@ -179,6 +195,10 @@ class HomeViewModel @Inject constructor(
                 wp.copy(icon = icon ?: wp.icon)
             }
 
+            val liveCatMap = liveCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
+            val vodCatMap = vodCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
+            val seriesCatMap = seriesCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
+
             _data.value = HomeSection(
                 continueWatching = enriched.take(10),
                 favoriteStreams = favStreams,
@@ -186,7 +206,10 @@ class HomeViewModel @Inject constructor(
                 favoriteSeries = favVods.filter { it.type == "series" },
                 recentLive = live.take(10),
                 recentMovies = recentMovies,
-                recentSeries = series.take(10)
+                recentSeries = series.take(10),
+                liveCategoryNames = liveCatMap,
+                vodCategoryNames = vodCatMap,
+                seriesCategoryNames = seriesCatMap
             )
             _isRefreshing.value = false
         }

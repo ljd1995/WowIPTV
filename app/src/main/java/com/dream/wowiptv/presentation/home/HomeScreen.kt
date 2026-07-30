@@ -73,9 +73,9 @@ fun HomeScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item { Spacer(modifier = Modifier.height(8.dp)) }
+                item { Spacer(modifier = Modifier.height(4.dp)) }
 
                 item {
                     Card(
@@ -141,17 +141,16 @@ fun HomeScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 items(data.continueWatching, key = { it.contentId }) { wp ->
-                                    val categoryLabel = when (wp.contentType) {
-                                        "vod" -> "电影"
-                                        "series" -> "剧集"
-                                        "live" -> "直播"
+                                    val badgeLabel = when (wp.contentType) {
+                                        "vod" -> "MOVIE"
+                                        "series" -> "SERIES"
+                                        "live" -> "LIVE"
                                         else -> ""
                                     }
                                     ContinueCard(
                                         name = decodeName(wp.name),
                                         icon = wp.icon,
-                                        isLive = wp.contentType == "live",
-                                        categoryName = categoryLabel,
+                                        badge = badgeLabel,
                                         position = wp.position,
                                         duration = wp.duration,
                                         onClick = {
@@ -183,10 +182,12 @@ fun HomeScreen(
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 items(items.take(10), key = { it.hashCode() }) { item ->
                                     when (item) {
-                                        is FavoriteStreamEntity -> FavCard(name = item.name, icon = item.iconUrl, isLive = true, onClick = { onLiveClick(item.streamId, item.name) })
+                                        is FavoriteStreamEntity -> FavCard(name = item.name, icon = item.iconUrl, badge = "LIVE", onClick = { onLiveClick(item.streamId, item.name) })
                                         is FavoriteVodEntity -> {
-                                            val category = if (item.type == "movie") "电影" else "剧集"
-                                            FavCard(name = item.name, icon = item.icon, categoryName = category, onClick = {
+                                            val catMap = if (item.type == "movie") data.vodCategoryNames else data.seriesCategoryNames
+                                            val catName = catMap[item.categoryId]
+                                            val badge = if (item.type == "movie") "MOVIE" else "SERIES"
+                                            FavCard(name = item.name, icon = item.icon, badge = badge, categoryName = catName, onClick = {
                                                 if (item.type == "movie") onMovieClick(item.vodId) else onSeriesClick(item.vodId)
                                             })
                                         }
@@ -210,9 +211,18 @@ fun HomeScreen(
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                                 items(all.take(10), key = { it.hashCode() }) { item ->
                                     when (item) {
-                                        is LiveStreamEntity -> RecentCard(name = item.name, icon = item.streamIcon, isLive = true, onClick = { onLiveClick(item.streamId, item.name) })
-                                        is VodStreamEntity -> RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, rating = item.rating, categoryName = "电影", onClick = { onMovieClick(item.streamId) })
-                                        is SeriesEntity -> RecentCard(name = item.name.orEmpty(), icon = item.cover, rating = item.rating, categoryName = "剧集", onClick = { onSeriesClick(item.seriesId) })
+                                        is LiveStreamEntity -> {
+                                            val catName = data.liveCategoryNames[item.categoryId]
+                                            RecentCard(name = item.name, icon = item.streamIcon, badge = "LIVE", categoryName = catName, onClick = { onLiveClick(item.streamId, item.name) })
+                                        }
+                                        is VodStreamEntity -> {
+                                            val catName = data.vodCategoryNames[item.categoryId]
+                                            RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, badge = "MOVIE", categoryName = catName, onClick = { onMovieClick(item.streamId) })
+                                        }
+                                        is SeriesEntity -> {
+                                            val catName = data.seriesCategoryNames[item.categoryId]
+                                            RecentCard(name = item.name.orEmpty(), icon = item.cover, badge = "SERIES", categoryName = catName, onClick = { onSeriesClick(item.seriesId) })
+                                        }
                                     }
                                 }
                             }
@@ -319,38 +329,25 @@ private fun LiveBadge() {
 }
 
 @Composable
-private fun RatingBadge(rating: String) {
+private fun TypeBadge(text: String, bgColor: Color) {
     Box(
         modifier = Modifier
             .padding(start = 4.dp, top = 4.dp)
-            .background(
-                color = Color(0xFF000000).copy(alpha = 0.6f),
-                shape = RoundedCornerShape(4.dp)
-            )
-            .padding(horizontal = 6.dp, vertical = 3.dp)
+            .background(bgColor, RoundedCornerShape(3.dp))
+            .padding(horizontal = 5.dp, vertical = 2.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            Text(
-                text = "★",
-                color = Color(0xFFFFD700),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = rating,
-                color = Color.White,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        Text(
+            text = text,
+            color = Color.White,
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.5.sp
+        )
     }
 }
 
 @Composable
-private fun MediaCard(name: String, icon: String? = null, isLive: Boolean = false, rating: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
+private fun MediaCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .width(110.dp)
@@ -376,11 +373,12 @@ private fun MediaCard(name: String, icon: String? = null, isLive: Boolean = fals
                 )
             }
         }
-        Box(modifier = Modifier.align(Alignment.TopStart)) {
-            if (isLive) {
-                LiveBadge()
-            } else if (!rating.isNullOrEmpty()) {
-                RatingBadge(rating)
+        if (!badge.isNullOrEmpty()) {
+            Box(modifier = Modifier.align(Alignment.TopStart)) {
+                TypeBadge(
+                    text = badge,
+                    bgColor = if (badge == "LIVE") Color(0xFFEF4444) else Color(0xFF000000).copy(alpha = 0.6f)
+                )
             }
         }
         Box(
@@ -396,14 +394,14 @@ private fun MediaCard(name: String, icon: String? = null, isLive: Boolean = fals
                         )
                     )
                 )
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = 6.dp, vertical = 4.dp),
             contentAlignment = Alignment.CenterStart
         ) {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(
                     text = name,
                     color = Color.White,
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Medium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -412,7 +410,7 @@ private fun MediaCard(name: String, icon: String? = null, isLive: Boolean = fals
                     Text(
                         text = categoryName,
                         color = Color(0xFF999999),
-                        fontSize = 9.sp,
+                        fontSize = 8.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -423,12 +421,12 @@ private fun MediaCard(name: String, icon: String? = null, isLive: Boolean = fals
 }
 
 @Composable
-private fun FavCard(name: String, icon: String? = null, isLive: Boolean = false, rating: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
-    MediaCard(name, icon, isLive, rating, categoryName, onClick)
+private fun FavCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
+    MediaCard(name, icon, badge, categoryName, onClick)
 }
 
 @Composable
-private fun ContinueCard(name: String, icon: String? = null, isLive: Boolean = false, rating: String? = null, categoryName: String? = null, position: Long = 0L, duration: Long = 0L, onClick: () -> Unit = {}) {
+private fun ContinueCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, position: Long = 0L, duration: Long = 0L, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .width(110.dp)
@@ -454,11 +452,12 @@ private fun ContinueCard(name: String, icon: String? = null, isLive: Boolean = f
                 )
             }
         }
-        Box(modifier = Modifier.align(Alignment.TopStart)) {
-            if (isLive) {
-                LiveBadge()
-            } else if (!rating.isNullOrEmpty()) {
-                RatingBadge(rating)
+        if (!badge.isNullOrEmpty()) {
+            Box(modifier = Modifier.align(Alignment.TopStart)) {
+                TypeBadge(
+                    text = badge,
+                    bgColor = if (badge == "LIVE") Color(0xFFEF4444) else Color(0xFF000000).copy(alpha = 0.6f)
+                )
             }
         }
         Box(
@@ -513,6 +512,6 @@ private fun ContinueCard(name: String, icon: String? = null, isLive: Boolean = f
 }
 
 @Composable
-private fun RecentCard(name: String, icon: String? = null, isLive: Boolean = false, rating: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
-    MediaCard(name, icon, isLive, rating, categoryName, onClick)
+private fun RecentCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
+    MediaCard(name, icon, badge, categoryName, onClick)
 }
