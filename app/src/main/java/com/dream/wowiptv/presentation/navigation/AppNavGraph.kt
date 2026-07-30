@@ -27,14 +27,17 @@ fun AppNavGraph(navController: NavHostController) {
             route = Routes.PLAYER,
             arguments = listOf(
                 navArgument("streamType") { type = NavType.StringType },
-                navArgument("streamId") { type = NavType.StringType }
+                navArgument("streamId") { type = NavType.StringType },
+                navArgument("name") { type = NavType.StringType; defaultValue = "" }
             )
         ) { backStackEntry ->
             val streamType = backStackEntry.arguments?.getString("streamType") ?: "live"
             val streamId = backStackEntry.arguments?.getString("streamId") ?: "0"
+            val streamName = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("name") ?: "", "UTF-8")
             PlayerScreen(
                 streamType = streamType,
                 streamId = streamId,
+                streamName = streamName,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -61,8 +64,8 @@ fun AppNavGraph(navController: NavHostController) {
         ) {
             MovieDetailScreen(
                 onBack = { navController.popBackStack() },
-                onPlay = { vodId ->
-                    navController.navigate(Routes.playerRoute("vod", vodId.toString()))
+                onPlay = { vodId, name ->
+                    navController.navigate(Routes.playerRoute("vod", vodId.toString(), name))
                 }
             )
         }
@@ -77,8 +80,8 @@ fun AppNavGraph(navController: NavHostController) {
             SeriesDetailScreen(
                 seriesId = seriesId,
                 onBack = { navController.popBackStack() },
-                onPlayEpisode = { episodeId ->
-                    navController.navigate(Routes.playerRoute("series", episodeId))
+                onPlayEpisode = { episodeId, title ->
+                    navController.navigate(Routes.playerRoute("series", episodeId, title))
                 }
             )
         }

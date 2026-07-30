@@ -62,10 +62,8 @@ class SeriesRepositoryImpl @Inject constructor(
         val episodeEntities = seriesDao.getEpisodes(seriesId, source.id)
         if (seasonEntities.isNotEmpty() && episodeEntities.isNotEmpty()) {
             val seasons = seasonEntities.map { it.toDomain() }
-            val episodes = episodeEntities.groupBy(
-                { it.seasonNum ?: 0 },
-                { it.toDomain() }
-            )
+            val allEpisodes = episodeEntities.map { it.toDomain() }
+            val episodes = allEpisodes.groupBy { it.seasonNum }
             return SeriesInfo(
                 seasons = seasons,
                 episodes = episodes,

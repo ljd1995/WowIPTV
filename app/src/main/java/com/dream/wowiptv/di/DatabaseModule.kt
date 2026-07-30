@@ -2,8 +2,11 @@ package com.dream.wowiptv.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.dream.wowiptv.data.local.AppDatabase
 import com.dream.wowiptv.data.local.dao.EpgDao
+import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
 import com.dream.wowiptv.data.local.dao.LiveCategoryDao
 import com.dream.wowiptv.data.local.dao.LiveStreamDao
 import com.dream.wowiptv.data.local.dao.SeriesCategoryDao
@@ -23,6 +26,23 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS `favorite_streams` (
+                    `streamId` INTEGER NOT NULL,
+                    `sourceId` INTEGER NOT NULL,
+                    `name` TEXT NOT NULL,
+                    `iconUrl` TEXT,
+                    `categoryId` INTEGER NOT NULL,
+                    PRIMARY KEY(`streamId`, `sourceId`)
+                )
+                """.trimIndent()
+            )
+        }
+    }
+
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -30,7 +50,7 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "wowiptv.db"
-        ).fallbackToDestructiveMigration(false).build()
+        ).addMigrations(MIGRATION_3_4).build()
     }
 
     @Provides fun provideSourceDao(db: AppDatabase): SourceDao = db.sourceDao()
@@ -42,4 +62,5 @@ object DatabaseModule {
     @Provides fun provideVodInfoDao(db: AppDatabase): VodInfoDao = db.vodInfoDao()
     @Provides fun provideSeriesCategoryDao(db: AppDatabase): SeriesCategoryDao = db.seriesCategoryDao()
     @Provides fun provideSeriesDao(db: AppDatabase): SeriesDao = db.seriesDao()
+    @Provides fun provideFavoriteStreamDao(db: AppDatabase): FavoriteStreamDao = db.favoriteStreamDao()
 }

@@ -2,30 +2,31 @@ package com.dream.wowiptv.presentation.live
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
+import com.dream.wowiptv.data.local.entity.FavoriteStreamEntity
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveCategory
 import com.dream.wowiptv.domain.model.LiveStream
 import com.dream.wowiptv.domain.usecase.GetLiveCategoriesUseCase
 import com.dream.wowiptv.domain.usecase.GetLiveStreamsUseCase
 import com.dream.wowiptv.domain.usecase.GetShortEpgUseCase
+import com.dream.wowiptv.domain.usecase.PlayStreamUseCase
+import com.dream.wowiptv.domain.repository.SourceRepository
 import com.dream.wowiptv.presentation.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -33,8 +34,15 @@ import javax.inject.Inject
 class LiveViewModel @Inject constructor(
     private val getLiveCategoriesUseCase: GetLiveCategoriesUseCase,
     private val getLiveStreamsUseCase: GetLiveStreamsUseCase,
-    private val getShortEpgUseCase: GetShortEpgUseCase
+    private val getShortEpgUseCase: GetShortEpgUseCase,
+    private val playStreamUseCase: PlayStreamUseCase,
+    private val sourceRepository: SourceRepository,
+    private val favoriteStreamDao: FavoriteStreamDao
 ) : ViewModel() {
+
+    companion object {
+        const val FAVORITES_ID = -1
+    }
 
     val categories: StateFlow<UiState<List<LiveCategory>>> = getLiveCategoriesUseCase()
         .map { UiState.Success(it) as UiState<List<LiveCategory>> }
@@ -52,45 +60,141 @@ class LiveViewModel @Inject constructor(
         _refreshTrigger
     ) { categoryId, _ -> categoryId }
         .flatMapLatest { categoryId ->
-            getLiveStreamsUseCase(categoryId)
-                .map { UiState.Success(it) as UiState<List<LiveStream>> }
-                .catch { emit(UiState.Error(it.message ?: "加载频道失败")) }
-                .onStart { emit(UiState.Loading) }
+            if (categoryId == FAVORITES_ID) {
+                getLiveStreamsUseCase(null)
+                    .map { allStreams ->
+                        val favIds = _favoriteIds.value
+                        UiState.Success(allStreams.filter { it.id in favIds }) as UiState<List<LiveStream>>
+                    }
+                    .catch { emit(UiState.Error(it.message ?: "加载收藏失败")) }
+                    .onStart { emit(UiState.Loading) }
+            } else {
+                getLiveStreamsUseCase(categoryId)
+                    .map { UiState.Success(it) as UiState<List<LiveStream>> }
+                    .catch { emit(UiState.Error(it.message ?: "加载频道失败")) }
+                    .onStart { emit(UiState.Loading) }
+            }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
-    private val _epgMap = MutableStateFlow<Map<Int, List<EpgEntry>>>(emptyMap())
-    val epgMap: StateFlow<Map<Int, List<EpgEntry>>> = _epgMap.asStateFlow()
+    private val _favoriteIds = MutableStateFlow<Set<Int>>(emptySet())
+    val favoriteIds: StateFlow<Set<Int>> = _favoriteIds.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    val filteredStreams: StateFlow<UiState<List<LiveStream>>> = combine(
+        streams, _searchQuery
+    ) { s, query ->
+        if (s !is UiState.Success) return@combine s
+        if (query.isBlank()) return@combine s
+        UiState.Success(s.data.filter { it.name.contains(query, ignoreCase = true) })
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
+
+    val categoryCounts: StateFlow<Map<Int, Int>> = streams.map { s ->
+        if (s !is UiState.Success) return@map emptyMap()
+        s.data.groupBy { it.categoryId }.mapValues { it.value.size }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    private val _currentStream = MutableStateFlow<LiveStream?>(null)
+    val currentStream: StateFlow<LiveStream?> = _currentStream.asStateFlow()
+
+    private val _streamUrl = MutableStateFlow("")
+    val streamUrl: StateFlow<String> = _streamUrl.asStateFlow()
+
+    private val _isPlaying = MutableStateFlow(false)
+    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+
+    private val _epgEntries = MutableStateFlow<List<EpgEntry>>(emptyList())
+    val epgEntries: StateFlow<List<EpgEntry>> = _epgEntries.asStateFlow()
+
+    private val _isFullscreen = MutableStateFlow(false)
+    val isFullscreen: StateFlow<Boolean> = _isFullscreen.asStateFlow()
+
+    private var currentSourceId: Long = 0
 
     init {
-        loadEpgForStreams()
+        loadFavoriteIds()
+    }
+
+    private fun loadFavoriteIds() {
+        viewModelScope.launch {
+            val source = sourceRepository.getActiveSource().first()
+            if (source != null) {
+                currentSourceId = source.id
+                val ids = favoriteStreamDao.getFavoriteIdsBySource(source.id)
+                _favoriteIds.value = ids.toSet()
+            }
+        }
     }
 
     fun selectCategory(id: Int?) {
         _selectedCategoryId.value = id
     }
 
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
     fun refresh() {
         _refreshTrigger.value = System.currentTimeMillis()
     }
 
-    private fun loadEpgForStreams() {
+    fun playStream(stream: LiveStream) {
+        _currentStream.value = stream
+        _isPlaying.value = true
         viewModelScope.launch {
-            streams.collect { state ->
-                if (state is UiState.Success) {
-                    val result: Map<Int, List<EpgEntry>> = coroutineScope {
-                        state.data.map { stream ->
-                            async {
-                                stream.id to try {
-                                    getShortEpgUseCase(stream.id).first()
-                                } catch (_: Exception) {
-                                    emptyList()
-                                }
-                            }
-                        }.awaitAll().toMap()
-                    }
-                    _epgMap.value = result
+            try {
+                val url = playStreamUseCase(PlayStreamUseCase.StreamType.Live(stream.id))
+                _streamUrl.value = url
+            } catch (_: Exception) {
+                _streamUrl.value = ""
+            }
+        }
+        loadEpg(stream.id)
+    }
+
+    fun togglePlay() {
+        _isPlaying.value = !_isPlaying.value
+    }
+
+    fun toggleFullscreen() {
+        _isFullscreen.value = !_isFullscreen.value
+    }
+
+    fun exitFullscreen() {
+        _isFullscreen.value = false
+    }
+
+    fun toggleFavorite(stream: LiveStream) {
+        viewModelScope.launch {
+            sourceRepository.getActiveSource().first()?.let { source ->
+                if (_favoriteIds.value.contains(stream.id)) {
+                    favoriteStreamDao.delete(stream.id, source.id)
+                    _favoriteIds.value = _favoriteIds.value - stream.id
+                } else {
+                    favoriteStreamDao.insert(
+                        FavoriteStreamEntity(
+                            streamId = stream.id,
+                            sourceId = source.id,
+                            name = stream.name,
+                            iconUrl = stream.iconUrl,
+                            categoryId = stream.categoryId
+                        )
+                    )
+                    _favoriteIds.value = _favoriteIds.value + stream.id
                 }
+            }
+        }
+    }
+
+    private fun loadEpg(streamId: Int) {
+        viewModelScope.launch {
+            try {
+                val entries = getShortEpgUseCase(streamId).first()
+                _epgEntries.value = entries
+            } catch (_: Exception) {
+                _epgEntries.value = emptyList()
             }
         }
     }

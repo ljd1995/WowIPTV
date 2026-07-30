@@ -46,6 +46,7 @@ import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.AccentBlue
+import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -77,7 +78,7 @@ class MovieDetailViewModel @Inject constructor(
 @Composable
 fun MovieDetailScreen(
     onBack: () -> Unit,
-    onPlay: (Int) -> Unit,
+    onPlay: (Int, String) -> Unit,
     viewModel: MovieDetailViewModel = hiltViewModel()
 ) {
     val vodInfoState by viewModel.vodInfo.collectAsState()
@@ -92,25 +93,24 @@ fun MovieDetailScreen(
         is UiState.Success -> {
             val info = state.data
 
-            Box(modifier = Modifier.fillMaxSize()) {
+            MaterialTheme(colorScheme = DarkColorScheme) {
+            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(250.dp)
+                            .statusBarsPadding()
                     ) {
                         AsyncImage(
                             model = info.cover,
                             contentDescription = info.name,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)),
+                            modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .statusBarsPadding()
                                 .background(Color.Black.copy(alpha = 0.3f))
                         ) {
                             IconButton(onClick = onBack) {
@@ -249,7 +249,7 @@ fun MovieDetailScreen(
                         .padding(16.dp)
                 ) {
                     Button(
-                        onClick = { onPlay(info.id) },
+                        onClick = { onPlay(info.id, info.name) },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(24.dp),
                         colors = ButtonDefaults.buttonColors(
@@ -264,6 +264,7 @@ fun MovieDetailScreen(
                         Text(text = "播放")
                     }
                 }
+            }
             }
         }
     }

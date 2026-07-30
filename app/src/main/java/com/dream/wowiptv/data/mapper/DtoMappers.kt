@@ -141,10 +141,11 @@ fun SeriesInfoDto.toDomain(): SeriesInfo {
         episodes = episodes?.mapKeys { entry ->
             entry.key.toIntOrNull() ?: 0
         }?.mapValues { entry ->
+            val seasonKey = entry.key
             entry.value.map { episodeDto ->
                 Episode(
                     id = episodeDto.id ?: "",
-                    seasonNum = episodeDto.season ?: 0,
+                    seasonNum = episodeDto.season ?: seasonKey,
                     episodeNum = episodeDto.episodeNum?.toIntOrNull() ?: 0,
                     title = episodeDto.title.orEmpty(),
                     containerExtension = episodeDto.containerExtension.orEmpty(),

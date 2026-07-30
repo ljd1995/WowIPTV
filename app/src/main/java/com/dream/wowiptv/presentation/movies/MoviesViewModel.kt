@@ -51,8 +51,28 @@ class MoviesViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    val filteredStreams: StateFlow<UiState<List<VodStream>>> = combine(
+        streams, _searchQuery
+    ) { s, query ->
+        if (s !is UiState.Success) return@combine s
+        if (query.isBlank()) return@combine s
+        UiState.Success(s.data.filter { it.name.contains(query, ignoreCase = true) })
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
+
+    val categoryCounts: StateFlow<Map<Int, Int>> = streams.map { s ->
+        if (s !is UiState.Success) return@map emptyMap()
+        s.data.groupBy { it.categoryId }.mapValues { it.value.size }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
     fun selectCategory(id: Int?) {
         _selectedCategoryId.value = id
+    }
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
     }
 
     fun refresh() {

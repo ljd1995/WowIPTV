@@ -1,9 +1,12 @@
 package com.dream.wowiptv.presentation.series
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,18 +14,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,10 +43,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -49,6 +60,8 @@ import com.dream.wowiptv.domain.usecase.GetSeriesInfoUseCase
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
+import com.dream.wowiptv.presentation.common.theme.AccentBlue
+import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -82,7 +95,7 @@ fun SeriesDetailScreen(
     seriesId: Int,
     viewModel: SeriesDetailViewModel = hiltViewModel(),
     onBack: () -> Unit,
-    onPlayEpisode: (episodeId: String) -> Unit
+    onPlayEpisode: (episodeId: String, episodeTitle: String) -> Unit
 ) {
     val infoState by viewModel.info.collectAsState()
 
@@ -102,185 +115,212 @@ fun SeriesDetailScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SeriesDetailContent(
     info: SeriesInfo,
     onBack: () -> Unit,
-    onPlayEpisode: (episodeId: String) -> Unit
+    onPlayEpisode: (episodeId: String, episodeTitle: String) -> Unit
 ) {
     val series = info.info
+    val allEpisodes = info.episodes.values.flatten()
 
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            AsyncImage(
-                model = series.cover,
-                contentDescription = series.name,
+    MaterialTheme(colorScheme = DarkColorScheme) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(250.dp)
-                    .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)),
-                contentScale = ContentScale.Crop
-            )
-        }
+                    .statusBarsPadding()
+            ) {
+                AsyncImage(
+                    model = series.cover,
+                    contentDescription = series.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
 
-        item {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Text(
                     text = series.name,
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (series.rating != null) {
+                    series.rating?.let { rating ->
                         Icon(
                             imageVector = Icons.Filled.Star,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
+                            tint = Color(0xFFFFC107),
+                            modifier = Modifier.height(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = series.rating,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                    }
-                    if (series.genre != null) {
-                        Text(
-                            text = series.genre,
+                            text = rating,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                if (!series.plot.isNullOrBlank()) {
+                series.genre?.let { genreStr ->
                     Spacer(modifier = Modifier.height(12.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        genreStr.split(",").forEach { tag ->
+                            SuggestionChip(
+                                onClick = { },
+                                label = {
+                                    Text(
+                                        text = tag.trim(),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+
+                series.plot?.let { plot ->
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = series.plot,
+                        text = "剧情简介",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = plot,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                if (!series.cast.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                series.cast?.let { cast ->
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "主演: ${series.cast}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                if (!series.director.isNullOrBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "导演: ${series.director}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "剧集列表",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        }
-
-        items(info.seasons, key = { it.id }) { season ->
-            SeasonCard(
-                season = season,
-                episodes = info.episodes[season.seasonNumber] ?: emptyList(),
-                onPlayEpisode = onPlayEpisode
-            )
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-    }
-}
-
-@Composable
-private fun SeasonCard(
-    season: Season,
-    episodes: List<Episode>,
-    onPlayEpisode: (episodeId: String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded }
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = season.name,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
+                        text = "演员",
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${season.episodeCount} 集",
-                        style = MaterialTheme.typography.bodySmall,
+                        text = cast,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = if (expanded) "收起" else "展开",
-                    modifier = Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
 
-            AnimatedVisibility(visible = expanded) {
-                Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)) {
-                    if (episodes.isEmpty()) {
+                series.director?.let { director ->
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "导演",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = director,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = "剧集列表",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                val seasons = info.seasons
+                var selectedSeasonIdx by remember { mutableStateOf(0) }
+
+                if (seasons.isNotEmpty()) {
+                    val selectedSeason = seasons.getOrElse(selectedSeasonIdx) { seasons.first() }
+                    var seasonEpisodes = allEpisodes.filter { it.seasonNum == selectedSeason.seasonNumber }
+                    if (seasonEpisodes.isEmpty()) {
+                        seasonEpisodes = allEpisodes.take(selectedSeason.episodeCount)
+                    }
+
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        itemsIndexed(seasons) { idx, season ->
+                            val isSelected = idx == selectedSeasonIdx
+                            Surface(
+                                onClick = { selectedSeasonIdx = idx },
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) Color(0xFF1E88E5) else Color(0xFF2C2C2C)
+                            ) {
+                                Text(
+                                    text = season.name,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    fontSize = 13.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    if (seasonEpisodes.isEmpty()) {
                         Text(
                             text = "暂无剧集",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color(0xFF999999),
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
                     } else {
-                        episodes.forEach { episode ->
-                            EpisodeItem(
-                                episode = episode,
-                                onPlay = { onPlayEpisode(episode.id) }
-                            )
+                        Column(
+                            modifier = Modifier.background(Color(0xFF2C2C2C), RoundedCornerShape(12.dp)).padding(8.dp)
+                        ) {
+                            seasonEpisodes.forEachIndexed { index, episode ->
+                                EpisodeItem(
+                                    episode = episode,
+                                    onPlay = {
+                                        val episodeTitle = "${series.name} - ${selectedSeason.name} E${episode.episodeNum}"
+                                        onPlayEpisode(episode.id, episodeTitle)
+                                    }
+                                )
+                                if (index < seasonEpisodes.lastIndex) {
+                                    HorizontalDivider(color = Color(0xFF444444), thickness = 0.5.dp)
+                                }
+                            }
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
     }
 }
 
@@ -294,14 +334,14 @@ private fun EpisodeItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onPlay)
-            .padding(vertical = 8.dp, horizontal = 4.dp),
+            .padding(vertical = 10.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = episode.episodeNum.toString().padStart(2, '0'),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
+            color = AccentBlue,
             modifier = Modifier.width(28.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -309,7 +349,7 @@ private fun EpisodeItem(
             Text(
                 text = episode.title,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = Color(0xFFDDDDDD),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -317,7 +357,7 @@ private fun EpisodeItem(
                 Text(
                     text = episode.plot,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = Color(0xFF999999),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -327,7 +367,7 @@ private fun EpisodeItem(
         Icon(
             imageVector = Icons.Filled.PlayArrow,
             contentDescription = "播放",
-            tint = MaterialTheme.colorScheme.primary,
+            tint = AccentBlue,
             modifier = Modifier.size(20.dp)
         )
     }

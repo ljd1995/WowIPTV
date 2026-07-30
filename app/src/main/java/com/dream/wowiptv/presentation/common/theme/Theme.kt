@@ -20,7 +20,7 @@ private val LightColorScheme = lightColorScheme(
     outline = LightOutline
 )
 
-private val DarkColorScheme = darkColorScheme(
+val DarkColorScheme = darkColorScheme(
     primary = AccentBlue,
     onPrimary = OnAccentBlue,
     primaryContainer = AccentBlueVariant,
