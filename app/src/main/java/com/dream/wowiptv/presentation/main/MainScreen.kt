@@ -88,7 +88,7 @@ fun MainScreen(outerNavController: NavHostController) {
                         outerNavController.navigate(Routes.seriesRoute(seriesId))
                     },
                     onViewAllFavorites = {
-                        outerNavController.navigate(Routes.allItemsRoute(0))
+                        outerNavController.navigate(Routes.ALL_FAVORITES)
                     },
                     onViewAllRecent = {
                         outerNavController.navigate(Routes.allItemsRoute(0))

@@ -89,9 +89,8 @@ fun HomeScreen(
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
-
-                item { Spacer(modifier = Modifier.height(8.dp)) }
 
                 item {
                     SectionHeader(title = "最近添加", onViewAll = onViewAllRecent)
@@ -109,6 +108,7 @@ fun HomeScreen(
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
                 item { Spacer(modifier = Modifier.height(16.dp)) }

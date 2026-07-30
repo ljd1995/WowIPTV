@@ -4,7 +4,6 @@ object Routes {
     const val MAIN = "main"
     const val ALL_ITEMS = "all_items/{tab}"
     const val ALL_FAVORITES = "all_favorites"
-    const val ALL_RECENT = "all_recent"
     const val SETTINGS = "settings"
 
     fun allItemsRoute(tab: Int) = "all_items/$tab"

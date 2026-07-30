@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.dream.wowiptv.presentation.epg.EpgTimelineScreen
+import com.dream.wowiptv.presentation.home.AllFavoritesScreen
 import com.dream.wowiptv.presentation.home.AllItemsScreen
 import com.dream.wowiptv.presentation.main.MainScreen
 import com.dream.wowiptv.presentation.movies.MovieDetailScreen
@@ -84,6 +85,18 @@ fun AppNavGraph(navController: NavHostController) {
                 onBack = { navController.popBackStack() },
                 onPlayEpisode = { episodeId, title ->
                     navController.navigate(Routes.playerRoute("series", episodeId, title))
+                }
+            )
+        }
+
+        composable(Routes.ALL_FAVORITES) {
+            AllFavoritesScreen(
+                onBack = { navController.popBackStack() },
+                onMovieClick = { vodId ->
+                    navController.navigate(Routes.vodRoute(vodId))
+                },
+                onSeriesClick = { seriesId ->
+                    navController.navigate(Routes.seriesRoute(seriesId))
                 }
             )
         }
