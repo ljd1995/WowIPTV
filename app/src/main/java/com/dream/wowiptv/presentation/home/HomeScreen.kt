@@ -86,7 +86,7 @@ fun HomeScreen(
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 items(data.continueWatching, key = { it.contentId }) { wp ->
                                     ContinueCard(
-                                        name = wp.name,
+                                        name = decodeName(wp.name),
                                         icon = wp.icon,
                                         position = wp.position,
                                         duration = wp.duration,
@@ -117,7 +117,7 @@ fun HomeScreen(
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 items(items.take(10), key = { it.hashCode() }) { item ->
                                     when (item) {
-                                        is FavoriteStreamEntity -> FavCard(name = item.name, icon = item.iconUrl)
+                                        is FavoriteStreamEntity -> FavCard(name = item.name, icon = item.iconUrl, onClick = { onLiveClick(item.streamId, item.name) })
                                         is FavoriteVodEntity -> FavCard(name = item.name, icon = item.icon, onClick = {
                                             if (item.type == "movie") onMovieClick(item.vodId) else onSeriesClick(item.vodId)
                                         })
@@ -157,6 +157,10 @@ fun HomeScreen(
     }
 }
 
+private fun decodeName(raw: String): String {
+    return try { java.net.URLDecoder.decode(raw, "UTF-8") } catch (_: Exception) { raw }
+}
+
 @Composable
 private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
     Row(
@@ -179,20 +183,18 @@ private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
 
 @Composable
 private fun FavCard(name: String, icon: String? = null, onClick: () -> Unit = {}) {
-    Box(modifier = Modifier.width(105.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
-        Box(modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f)) {
-            if (!icon.isNullOrEmpty()) {
-                AsyncImage(model = icon, contentDescription = name,
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
-                    contentScale = ContentScale.Crop)
-            } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
-                }
+    Box(modifier = Modifier.width(105.dp).aspectRatio(2f / 3f).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
+        if (!icon.isNullOrEmpty()) {
+            AsyncImage(model = icon, contentDescription = name,
+                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        } else {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
             }
         }
-        Text(text = name, color = Color(0xFFDDDDDD), fontSize = 11.sp, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp))
+        Box(modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = 4.dp, vertical = 2.dp)) {
+            Text(text = name, color = Color.White, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
 }
 
@@ -221,19 +223,17 @@ private fun ContinueCard(name: String, icon: String? = null, position: Long = 0L
 
 @Composable
 private fun RecentCard(name: String, icon: String? = null, onClick: () -> Unit = {}) {
-    Box(modifier = Modifier.width(105.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
-        Box(modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f)) {
-            if (!icon.isNullOrEmpty()) {
-                AsyncImage(model = icon, contentDescription = name,
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
-                    contentScale = ContentScale.Crop)
-            } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
-                }
+    Box(modifier = Modifier.width(105.dp).aspectRatio(2f / 3f).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
+        if (!icon.isNullOrEmpty()) {
+            AsyncImage(model = icon, contentDescription = name,
+                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        } else {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
             }
         }
-        Text(text = name, color = Color(0xFFDDDDDD), fontSize = 11.sp, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp))
+        Box(modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = 4.dp, vertical = 2.dp)) {
+            Text(text = name, color = Color.White, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
     }
 }

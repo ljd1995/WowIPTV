@@ -46,6 +46,10 @@ import coil.compose.AsyncImage
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
+private fun decodeName(raw: String): String {
+    return try { java.net.URLDecoder.decode(raw, "UTF-8") } catch (_: Exception) { raw }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllHistoryScreen(
@@ -82,7 +86,7 @@ fun AllHistoryScreen(
                     modifier = Modifier.fillMaxSize().padding(innerPadding)
                 ) {
                     items(data.continueWatching, key = { it.contentId }) { item ->
-                        HistoryGridCell(item)
+                        HistoryGridCell(item.copy(name = decodeName(item.name)))
                     }
                 }
             }
