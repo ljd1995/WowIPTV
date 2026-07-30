@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.clickable
@@ -142,23 +143,32 @@ private fun HistoryGridCell(
                 )
             }
         }
-        if (item.contentType == "live") {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .background(
-                        color = Color(0xFFEF4444),
-                        shape = RoundedCornerShape(topEnd = 8.dp, bottomStart = 4.dp)
-                    )
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    text = "LIVE",
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
+        Box(modifier = Modifier.align(Alignment.TopStart)) {
+            if (item.contentType == "live") {
+                Box(
+                    modifier = Modifier
+                        .padding(start = 4.dp, top = 4.dp)
+                        .background(Color(0xFFEF4444), RoundedCornerShape(4.dp))
+                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .background(Color.White, RoundedCornerShape(3.dp))
+                        )
+                        Text(
+                            text = "LIVE",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
             }
         }
         Box(
@@ -198,14 +208,31 @@ private fun HistoryGridCell(
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    Text(
-                        text = item.name,
-                        color = Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Column {
+                        Text(
+                            text = item.name,
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        val categoryLabel = when (item.contentType) {
+                            "vod" -> "电影"
+                            "series" -> "剧集"
+                            "live" -> "直播"
+                            else -> ""
+                        }
+                        if (categoryLabel.isNotEmpty()) {
+                            Text(
+                                text = categoryLabel,
+                                color = Color(0xFF999999),
+                                fontSize = 9.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                 }
             }
         }
