@@ -69,6 +69,7 @@ class HomeViewModel @Inject constructor(
                     val live = liveStreamDao.getBySource(source.id).first()
                     val vod = vodStreamDao.getBySource(source.id).first()
                     val series = seriesDao.getBySource(source.id).first()
+                    android.util.Log.d("HomeVM", "continue watching: ${progress.size} items")
                     val enriched = progress.map { wp ->
                         val icon = when (wp.contentType) {
                             "vod" -> vod.find { it.streamId == wp.contentId.removePrefix("vod_").toIntOrNull() }?.streamIcon

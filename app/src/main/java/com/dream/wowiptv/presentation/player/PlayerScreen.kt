@@ -122,9 +122,17 @@ fun PlayerScreen(
         else -> ""
     }
 
+    LaunchedEffect(streamUrl) {
+        if (streamUrl.isNotEmpty()) {
+            if (streamType == "live") {
+                viewModel.saveProgress(contentId, 0L, 0L)
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         while (true) {
-            delay(5000)
+            delay(10000)
             if (exoPlayer.isPlaying) {
                 if (streamType == "live") {
                     viewModel.saveProgress(contentId, 0L, 0L)
