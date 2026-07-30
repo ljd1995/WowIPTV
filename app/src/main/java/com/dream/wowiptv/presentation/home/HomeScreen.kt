@@ -76,7 +76,7 @@ fun HomeScreen(
                 if (data.continueWatching.isNotEmpty()) {
                     item {
                         Column {
-                            SectionHeader(title = "继续观看", onViewAll = onViewAllFavorites)
+                            SectionHeader(title = "继续观看", onViewAll = { })
                             Spacer(modifier = Modifier.height(10.dp))
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 items(data.continueWatching, key = { it.contentId }) { item ->

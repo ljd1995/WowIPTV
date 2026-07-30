@@ -125,8 +125,12 @@ fun PlayerScreen(
     LaunchedEffect(Unit) {
         while (true) {
             delay(5000)
-            if (exoPlayer.isPlaying && duration > 0) {
-                viewModel.saveProgress(contentId, exoPlayer.currentPosition, duration.toLong())
+            if (exoPlayer.isPlaying) {
+                if (streamType == "live") {
+                    viewModel.saveProgress(contentId, 0L, 0L)
+                } else if (duration > 0) {
+                    viewModel.saveProgress(contentId, exoPlayer.currentPosition, duration.toLong())
+                }
             }
         }
     }
@@ -168,11 +172,9 @@ fun PlayerScreen(
     LaunchedEffect(Unit) {
         while (true) {
             delay(250)
-            val pos = exoPlayer.currentPosition
-            val dur = exoPlayer.duration
-            if (dur > 0) {
-                position = (pos.toFloat() / dur.toFloat()).coerceIn(0f, 1f)
-                duration = dur.toFloat()
+            if (exoPlayer.duration > 0) {
+                position = (exoPlayer.currentPosition.toFloat() / exoPlayer.duration.toFloat()).coerceIn(0f, 1f)
+                duration = exoPlayer.duration.toFloat()
             }
         }
     }
