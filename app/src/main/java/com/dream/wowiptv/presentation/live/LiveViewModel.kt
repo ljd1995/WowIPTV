@@ -11,6 +11,7 @@ import com.dream.wowiptv.domain.usecase.GetLiveCategoriesUseCase
 import com.dream.wowiptv.domain.usecase.GetLiveStreamsUseCase
 import com.dream.wowiptv.domain.usecase.GetShortEpgUseCase
 import com.dream.wowiptv.domain.usecase.PlayStreamUseCase
+import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.domain.repository.SourceRepository
 import com.dream.wowiptv.presentation.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,7 +38,8 @@ class LiveViewModel @Inject constructor(
     private val getShortEpgUseCase: GetShortEpgUseCase,
     private val playStreamUseCase: PlayStreamUseCase,
     private val sourceRepository: SourceRepository,
-    private val favoriteStreamDao: FavoriteStreamDao
+    private val favoriteStreamDao: FavoriteStreamDao,
+    private val watchProgressUseCase: WatchProgressUseCase
 ) : ViewModel() {
 
     companion object {
@@ -149,6 +151,13 @@ class LiveViewModel @Inject constructor(
                 _streamUrl.value = url
             } catch (_: Exception) {
                 _streamUrl.value = ""
+            }
+            try {
+                val contentId = "live_${stream.id}"
+                watchProgressUseCase.saveProgress(contentId, "live", stream.name, stream.iconUrl, System.currentTimeMillis() / 1000, 0L)
+                android.util.Log.d("PlayerVM", "saved live $contentId name=${stream.name}")
+            } catch (e: Exception) {
+                android.util.Log.e("PlayerVM", "save live failed", e)
             }
         }
         loadEpg(stream.id)
