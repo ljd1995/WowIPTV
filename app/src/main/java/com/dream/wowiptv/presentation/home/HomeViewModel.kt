@@ -80,8 +80,16 @@ class HomeViewModel @Inject constructor(
                 }.ifEmpty { vod.take(10) }
 
                 val watchProgress = watchProgressDao.getAllBySource(source.id).first()
+                val enrichedProgress = watchProgress.map { wp ->
+                    val icon = when {
+                        wp.contentType == "vod" -> vod.find { it.streamId == wp.contentId.removePrefix("vod_").toIntOrNull() }?.streamIcon
+                        wp.contentType == "series" -> series.find { it.seriesId == wp.contentId.removePrefix("series_").toIntOrNull() }?.cover
+                        else -> null
+                    }
+                    wp.copy(icon = icon ?: wp.icon)
+                }
                 _data.value = HomeSection(
-                    continueWatching = watchProgress.take(10),
+                    continueWatching = enrichedProgress.take(10),
                     favoriteStreams = favStreams,
                     favoriteMovies = favVods.filter { it.type == "movie" },
                     favoriteSeries = favVods.filter { it.type == "series" },

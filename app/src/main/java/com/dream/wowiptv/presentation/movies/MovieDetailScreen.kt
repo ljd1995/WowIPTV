@@ -32,6 +32,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -84,11 +85,7 @@ class MovieDetailViewModel @Inject constructor(
     private val _savedPosition = MutableStateFlow(0L)
     val savedPosition: StateFlow<Long> = _savedPosition.asStateFlow()
 
-    init {
-        loadSavedPosition()
-    }
-
-    private fun loadSavedPosition() {
+    fun refreshPosition() {
         viewModelScope.launch {
             _savedPosition.value = watchProgressUseCase.getProgress("vod_$vodId")
         }
@@ -103,6 +100,10 @@ fun MovieDetailScreen(
     viewModel: MovieDetailViewModel = hiltViewModel()
 ) {
     val vodInfoState by viewModel.vodInfo.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshPosition()
+    }
 
     when (val state = vodInfoState) {
         is UiState.Loading -> LoadingIndicator()
