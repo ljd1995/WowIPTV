@@ -33,9 +33,16 @@ class SettingsViewModel @Inject constructor(
     private val _userInfo = MutableStateFlow<UserInfo?>(null)
     val userInfo: StateFlow<UserInfo?> = _userInfo.asStateFlow()
 
+    init {
+        refreshUserInfo()
+    }
+
     fun refreshUserInfo() {
         viewModelScope.launch {
-            _userInfo.value = getUserInfoUseCase()
+            val result = getUserInfoUseCase()
+            if (result != null) {
+                _userInfo.value = result
+            }
         }
     }
 

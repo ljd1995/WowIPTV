@@ -127,7 +127,7 @@ fun SeriesDto.toDomain(): SeriesItem {
     )
 }
 
-fun SeriesInfoDto.toDomain(): SeriesInfo {
+fun SeriesInfoDto.toDomain(seriesId: Int = 0): SeriesInfo {
     val infoData = info
     return SeriesInfo(
         seasons = seasons?.map { seasonDto ->
@@ -157,7 +157,7 @@ fun SeriesInfoDto.toDomain(): SeriesInfo {
             }
         } ?: emptyMap(),
         info = SeriesItem(
-            id = 0,
+            id = seriesId,
             name = infoData?.name.orEmpty(),
             cover = infoData?.cover,
             plot = infoData?.plot,
