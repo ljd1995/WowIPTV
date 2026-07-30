@@ -47,3 +47,21 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
         db.execSQL("ALTER TABLE favorite_vod_new RENAME TO favorite_vod")
     }
 }
+
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS watch_progress (
+                contentId TEXT NOT NULL,
+                sourceId INTEGER NOT NULL,
+                contentType TEXT NOT NULL,
+                name TEXT NOT NULL,
+                icon TEXT,
+                position INTEGER NOT NULL,
+                duration INTEGER NOT NULL,
+                lastWatched INTEGER NOT NULL,
+                PRIMARY KEY(contentId, sourceId)
+            )"""
+        )
+    }
+}

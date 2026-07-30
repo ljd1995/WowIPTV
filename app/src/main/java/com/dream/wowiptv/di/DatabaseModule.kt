@@ -7,6 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.dream.wowiptv.data.local.AppDatabase
 import com.dream.wowiptv.data.local.MIGRATION_4_5
 import com.dream.wowiptv.data.local.MIGRATION_5_6
+import com.dream.wowiptv.data.local.MIGRATION_6_7
 import com.dream.wowiptv.data.local.dao.EpgDao
 import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
 import com.dream.wowiptv.data.local.dao.FavoriteVodDao
@@ -18,6 +19,7 @@ import com.dream.wowiptv.data.local.dao.SourceDao
 import com.dream.wowiptv.data.local.dao.VodCategoryDao
 import com.dream.wowiptv.data.local.dao.VodInfoDao
 import com.dream.wowiptv.data.local.dao.VodStreamDao
+import com.dream.wowiptv.data.local.dao.WatchProgressDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -51,7 +53,7 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "wowiptv.db"
-        ).addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build()
+        ).addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
     }
 
     @Provides fun provideSourceDao(db: AppDatabase): SourceDao = db.sourceDao()
@@ -65,4 +67,5 @@ object DatabaseModule {
     @Provides fun provideSeriesDao(db: AppDatabase): SeriesDao = db.seriesDao()
     @Provides fun provideFavoriteStreamDao(db: AppDatabase): FavoriteStreamDao = db.favoriteStreamDao()
     @Provides fun provideFavoriteVodDao(db: AppDatabase): FavoriteVodDao = db.favoriteVodDao()
+    @Provides fun provideWatchProgressDao(db: AppDatabase): WatchProgressDao = db.watchProgressDao()
 }

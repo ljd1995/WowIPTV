@@ -57,6 +57,7 @@ import com.dream.wowiptv.domain.model.Episode
 import com.dream.wowiptv.domain.model.Season
 import com.dream.wowiptv.domain.model.SeriesInfo
 import com.dream.wowiptv.domain.usecase.GetSeriesInfoUseCase
+import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
@@ -71,11 +72,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SeriesDetailViewModel @Inject constructor(
-    private val getSeriesInfoUseCase: GetSeriesInfoUseCase
+    private val getSeriesInfoUseCase: GetSeriesInfoUseCase,
+    private val watchProgressUseCase: WatchProgressUseCase
 ) : ViewModel() {
 
     private val _info = MutableStateFlow<UiState<SeriesInfo>>(UiState.Loading)
     val info: StateFlow<UiState<SeriesInfo>> = _info.asStateFlow()
+
+    private val _episodePositions = MutableStateFlow<Map<String, Long>>(emptyMap())
+    val episodePositions: StateFlow<Map<String, Long>> = _episodePositions.asStateFlow()
 
     fun load(seriesId: Int) {
         viewModelScope.launch {
@@ -83,6 +88,12 @@ class SeriesDetailViewModel @Inject constructor(
             try {
                 val result = getSeriesInfoUseCase(seriesId)
                 _info.value = UiState.Success(result)
+                val positions = mutableMapOf<String, Long>()
+                result.episodes.values.flatten().forEach { ep ->
+                    val pos = watchProgressUseCase.getProgress("series_${ep.id}")
+                    if (pos > 0) positions[ep.id] = pos
+                }
+                _episodePositions.value = positions
             } catch (e: Exception) {
                 _info.value = UiState.Error(e.message ?: "加载失败")
             }
@@ -95,7 +106,7 @@ fun SeriesDetailScreen(
     seriesId: Int,
     viewModel: SeriesDetailViewModel = hiltViewModel(),
     onBack: () -> Unit,
-    onPlayEpisode: (episodeId: String, episodeTitle: String) -> Unit
+    onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long) -> Unit
 ) {
     val infoState by viewModel.info.collectAsState()
 
@@ -109,6 +120,7 @@ fun SeriesDetailScreen(
         is UiState.Empty -> ErrorView(message = "暂无数据", onRetry = { viewModel.load(seriesId) })
         is UiState.Success -> SeriesDetailContent(
             info = state.data,
+            episodePositions = viewModel.episodePositions.collectAsState().value,
             onBack = onBack,
             onPlayEpisode = onPlayEpisode
         )
@@ -119,8 +131,9 @@ fun SeriesDetailScreen(
 @Composable
 private fun SeriesDetailContent(
     info: SeriesInfo,
+    episodePositions: Map<String, Long> = emptyMap(),
     onBack: () -> Unit,
-    onPlayEpisode: (episodeId: String, episodeTitle: String) -> Unit
+    onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long) -> Unit
 ) {
     val series = info.info
     val allEpisodes = info.episodes.values.flatten()
@@ -312,9 +325,10 @@ private fun SeriesDetailContent(
                             seasonEpisodes.forEachIndexed { index, episode ->
                                 EpisodeItem(
                                     episode = episode,
+                                    savedPosition = episodePositions[episode.id] ?: 0L,
                                     onPlay = {
                                         val episodeTitle = "${series.name} - ${selectedSeason.name} E${episode.episodeNum}"
-                                        onPlayEpisode(episode.id, episodeTitle)
+                                        onPlayEpisode(episode.id, episodeTitle, episodePositions[episode.id] ?: 0L)
                                     }
                                 )
                                 if (index < seasonEpisodes.lastIndex) {
@@ -335,6 +349,7 @@ private fun SeriesDetailContent(
 @Composable
 private fun EpisodeItem(
     episode: Episode,
+    savedPosition: Long = 0L,
     onPlay: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -349,9 +364,17 @@ private fun EpisodeItem(
             text = episode.episodeNum.toString().padStart(2, '0'),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = AccentBlue,
+            color = if (savedPosition > 0) Color(0xFF4CAF50) else AccentBlue,
             modifier = Modifier.width(28.dp)
         )
+        if (savedPosition > 0) {
+            Text(
+                text = "▶",
+                color = Color(0xFF4CAF50),
+                fontSize = 10.sp,
+                modifier = Modifier.width(14.dp)
+            )
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(

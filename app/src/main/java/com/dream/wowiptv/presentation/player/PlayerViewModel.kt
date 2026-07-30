@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.usecase.GetShortEpgUseCase
 import com.dream.wowiptv.domain.usecase.PlayStreamUseCase
+import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,11 +18,13 @@ import javax.inject.Inject
 class PlayerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val playStreamUseCase: PlayStreamUseCase,
-    private val getShortEpgUseCase: GetShortEpgUseCase
+    private val getShortEpgUseCase: GetShortEpgUseCase,
+    private val watchProgressUseCase: WatchProgressUseCase
 ) : ViewModel() {
 
-    private val streamType: String = savedStateHandle["streamType"] ?: "live"
-    private val streamId: String = savedStateHandle["streamId"] ?: "0"
+    val streamType: String = savedStateHandle["streamType"] ?: "live"
+    val streamId: String = savedStateHandle["streamId"] ?: "0"
+    val streamName: String = savedStateHandle["name"] ?: ""
 
     private val _streamUrl = MutableStateFlow("")
     val streamUrl: StateFlow<String> = _streamUrl.asStateFlow()
@@ -56,6 +59,21 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch {
             getShortEpgUseCase(streamId.toIntOrNull() ?: 0).collect { entries ->
                 _epgEntries.value = entries
+            }
+        }
+    }
+
+    fun saveProgress(contentId: String, position: Long, duration: Long) {
+        viewModelScope.launch {
+            if (streamType != "live" && duration > 0) {
+                watchProgressUseCase.saveProgress(
+                    contentId = contentId,
+                    contentType = streamType,
+                    name = streamName,
+                    icon = null,
+                    position = position,
+                    duration = duration
+                )
             }
         }
     }

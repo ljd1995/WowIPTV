@@ -31,16 +31,19 @@ fun AppNavGraph(navController: NavHostController) {
             arguments = listOf(
                 navArgument("streamType") { type = NavType.StringType },
                 navArgument("streamId") { type = NavType.StringType },
-                navArgument("name") { type = NavType.StringType; defaultValue = "" }
+                navArgument("name") { type = NavType.StringType; defaultValue = "" },
+                navArgument("position") { type = NavType.LongType; defaultValue = 0L }
             )
         ) { backStackEntry ->
             val streamType = backStackEntry.arguments?.getString("streamType") ?: "live"
             val streamId = backStackEntry.arguments?.getString("streamId") ?: "0"
             val streamName = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("name") ?: "", "UTF-8")
+            val startPosition = backStackEntry.arguments?.getLong("position") ?: 0L
             PlayerScreen(
                 streamType = streamType,
                 streamId = streamId,
                 streamName = streamName,
+                startPosition = startPosition,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -67,8 +70,8 @@ fun AppNavGraph(navController: NavHostController) {
         ) {
             MovieDetailScreen(
                 onBack = { navController.popBackStack() },
-                onPlay = { vodId, name ->
-                    navController.navigate(Routes.playerRoute("vod", vodId.toString(), name))
+                onPlay = { vodId, name, position ->
+                    navController.navigate(Routes.playerRoute("vod", vodId.toString(), name, position))
                 }
             )
         }
@@ -83,8 +86,8 @@ fun AppNavGraph(navController: NavHostController) {
             SeriesDetailScreen(
                 seriesId = seriesId,
                 onBack = { navController.popBackStack() },
-                onPlayEpisode = { episodeId, title ->
-                    navController.navigate(Routes.playerRoute("series", episodeId, title))
+                onPlayEpisode = { episodeId, title, position ->
+                    navController.navigate(Routes.playerRoute("series", episodeId, title, position))
                 }
             )
         }

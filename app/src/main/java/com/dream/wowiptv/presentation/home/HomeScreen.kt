@@ -46,6 +46,7 @@ import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
 import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
+import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,6 +72,21 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item { Spacer(modifier = Modifier.height(8.dp)) }
+
+                if (data.continueWatching.isNotEmpty()) {
+                    item {
+                        Column {
+                            SectionHeader(title = "继续观看", onViewAll = onViewAllFavorites)
+                            Spacer(modifier = Modifier.height(10.dp))
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                items(data.continueWatching, key = { it.contentId }) { item ->
+                                    FavCard(name = item.name, icon = item.icon)
+                                }
+                            }
+                        }
+                    }
+                    item { Spacer(modifier = Modifier.height(4.dp)) }
+                }
 
                 item {
                     Column {

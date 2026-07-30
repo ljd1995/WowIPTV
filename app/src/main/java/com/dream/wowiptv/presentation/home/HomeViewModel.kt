@@ -12,6 +12,8 @@ import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
 import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
+import com.dream.wowiptv.data.local.entity.WatchProgressEntity
+import com.dream.wowiptv.data.local.dao.WatchProgressDao
 import com.dream.wowiptv.domain.repository.SourceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +27,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 data class HomeSection(
+    val continueWatching: List<WatchProgressEntity> = emptyList(),
     val favoriteStreams: List<FavoriteStreamEntity> = emptyList(),
     val favoriteMovies: List<FavoriteVodEntity> = emptyList(),
     val favoriteSeries: List<FavoriteVodEntity> = emptyList(),
@@ -41,7 +44,8 @@ class HomeViewModel @Inject constructor(
     private val vodStreamDao: VodStreamDao,
     private val seriesDao: SeriesDao,
     private val favoriteStreamDao: FavoriteStreamDao,
-    private val favoriteVodDao: FavoriteVodDao
+    private val favoriteVodDao: FavoriteVodDao,
+    private val watchProgressDao: WatchProgressDao
 ) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -75,7 +79,9 @@ class HomeViewModel @Inject constructor(
                     } ?: false
                 }.ifEmpty { vod.take(10) }
 
+                val watchProgress = watchProgressDao.getAllBySource(source.id).first()
                 _data.value = HomeSection(
+                    continueWatching = watchProgress.take(10),
                     favoriteStreams = favStreams,
                     favoriteMovies = favVods.filter { it.type == "movie" },
                     favoriteSeries = favVods.filter { it.type == "series" },

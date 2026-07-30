@@ -63,6 +63,7 @@ fun PlayerScreen(
     streamType: String,
     streamId: String,
     streamName: String = "",
+    startPosition: Long = 0L,
     onBack: () -> Unit,
     viewModel: PlayerViewModel = hiltViewModel()
 ) {
@@ -74,6 +75,7 @@ fun PlayerScreen(
     var duration by remember { mutableFloatStateOf(0f) }
     var playbackSpeed by remember { mutableFloatStateOf(1f) }
     var showSpeedMenu by remember { mutableStateOf(false) }
+    var hasSeeked by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val activity = context as? ComponentActivity
@@ -100,7 +102,31 @@ fun PlayerScreen(
             val mediaItem = MediaItem.fromUri(streamUrl)
             exoPlayer.setMediaItem(mediaItem)
             exoPlayer.prepare()
+            exoPlayer.playWhenReady = true
             viewModel.play()
+        }
+    }
+
+    LaunchedEffect(streamUrl, startPosition) {
+        if (streamUrl.isNotEmpty() && startPosition > 0 && !hasSeeked) {
+            delay(500)
+            exoPlayer.seekTo(startPosition)
+            hasSeeked = true
+        }
+    }
+
+    val contentId = when (streamType) {
+        "vod" -> "vod_$streamId"
+        "series" -> "series_$streamId"
+        else -> ""
+    }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(5000)
+            if (exoPlayer.isPlaying && duration > 0) {
+                viewModel.saveProgress(contentId, exoPlayer.currentPosition, duration.toLong())
+            }
         }
     }
 
@@ -119,6 +145,7 @@ fun PlayerScreen(
 
     DisposableEffect(Unit) {
         onDispose {
+            if (duration > 0) viewModel.saveProgress(contentId, exoPlayer.currentPosition, duration.toLong())
             exoPlayer.stop()
             exoPlayer.release()
             activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -187,6 +214,7 @@ fun PlayerScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     IconButton(onClick = {
+                        if (duration > 0) viewModel.saveProgress(contentId, exoPlayer.currentPosition, duration.toLong())
                         exoPlayer.stop()
                         onBack()
                     }) {
