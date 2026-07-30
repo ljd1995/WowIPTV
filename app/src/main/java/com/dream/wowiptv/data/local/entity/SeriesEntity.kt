@@ -12,6 +12,7 @@ data class SeriesEntity(
     val director: String?,
     val genre: String?,
     val rating: String?,
+    val releaseDate: String?,
     val categoryId: Int?,
     val sourceId: Long
 )

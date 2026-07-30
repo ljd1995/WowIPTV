@@ -9,5 +9,6 @@ data class SeriesItem(
     val director: String?,
     val genre: String?,
     val rating: String?,
+    val releaseDate: String?,
     val categoryId: Int
 )

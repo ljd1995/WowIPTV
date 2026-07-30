@@ -1,5 +1,6 @@
 package com.dream.wowiptv.presentation.settings
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -11,9 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,19 +21,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,10 +46,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -64,6 +64,7 @@ import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.SuccessGreen
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,18 +73,24 @@ fun SettingsScreen(
     onEditSource: (Long) -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val sourcesState by viewModel.sources.collectAsStateWithLifecycle()
     val activeSourceId by viewModel.activeSourceId.collectAsStateWithLifecycle()
     val syncingIds by viewModel.syncingIds.collectAsStateWithLifecycle()
-    val context = LocalContext.current
-    var prevSyncingIds by remember { mutableStateOf(emptySet<Long>()) }
+    val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
+    val prevSyncingIdsState = remember { mutableStateOf<Set<Long>>(emptySet()) }
+    val currentSyncingIds by rememberUpdatedState(syncingIds)
 
-    LaunchedEffect(syncingIds) {
-        val newlyCompleted = prevSyncingIds - syncingIds
-        if (newlyCompleted.isNotEmpty() && prevSyncingIds.isNotEmpty()) {
+    LaunchedEffect(currentSyncingIds) {
+        val newlyCompleted = prevSyncingIdsState.value - currentSyncingIds
+        if (newlyCompleted.isNotEmpty() && prevSyncingIdsState.value.isNotEmpty()) {
             Toast.makeText(context, "同步完成", Toast.LENGTH_SHORT).show()
         }
-        prevSyncingIds = syncingIds
+        prevSyncingIdsState.value = currentSyncingIds
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.refreshUserInfo()
     }
 
     MaterialTheme(colorScheme = DarkColorScheme) {
@@ -91,58 +98,190 @@ fun SettingsScreen(
             topBar = {
                 TopAppBar(
                     title = { Text("设置") },
-                    windowInsets = WindowInsets(0, 0, 0, 0),
+                    windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color(0xFF1A1A1A),
                         titleContentColor = Color.White
                     )
                 )
             },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = onAddSource,
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "添加源")
-                }
-            },
             containerColor = Color(0xFF1E1E1E)
         ) { innerPadding ->
-            when (val state = sourcesState) {
-                is UiState.Loading -> LoadingIndicator(modifier = Modifier.padding(innerPadding))
-                is UiState.Error -> ErrorView(
-                    message = state.message,
-                    onRetry = {},
-                    modifier = Modifier.padding(innerPadding)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp)
+            ) {
+                UserInfoCard(userInfo = userInfo)
+                Spacer(modifier = Modifier.height(12.dp))
+                SourceListCard(
+                    sources = sourcesState,
+                    activeSourceId = activeSourceId,
+                    syncingIds = syncingIds,
+                    onEdit = onEditSource,
+                    onSync = { viewModel.syncSource(it) },
+                    onDelete = { viewModel.deleteSource(it) },
+                    onSwitch = { viewModel.switchSource(it) },
+                    onAddSource = onAddSource
                 )
-                is UiState.Empty -> Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "暂无源，点击右下角添加",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color(0xFFCCCCCC)
+                Spacer(modifier = Modifier.height(12.dp))
+                AboutCard(versionName = viewModel.versionName)
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
+    val sourceName = if (userInfo != null) "当前源信息" else "源未连接"
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = sourceName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            if (userInfo != null) {
+                InfoRow(label = "服务器:", value = "Connected")
+                InfoRow(label = "用户名:", value = userInfo.username ?: "N/A")
+                InfoRow(
+                    label = "状态:",
+                    value = if (userInfo.expDate != null) "Active" else "Trial"
+                )
+                InfoRow(label = "到期:", value = userInfo.expDate ?: "N/A")
+                InfoRow(label = "最大连接:", value = userInfo.maxConnections ?: "1")
+                if (!userInfo.allowedOutputFormats.isNullOrEmpty()) {
+                    InfoRow(
+                        label = "输出格式:",
+                        value = userInfo.allowedOutputFormats.joinToString(", ")
                     )
                 }
-                is UiState.Success -> LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    items(state.data, key = { it.id }) { source ->
-                        SourceItem(
-                            source = source,
-                            isActive = source.id == activeSourceId,
-                            isSyncing = source.id in syncingIds,
-                            onEdit = { onEditSource(source.id) },
-                            onSync = { viewModel.syncSource(source.id) },
-                            onDelete = { viewModel.deleteSource(source.id) },
-                            onSwitch = { viewModel.switchSource(source.id) }
+            } else {
+                Text(
+                    text = "未找到活跃源或连接失败",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF888888)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF888888),
+            modifier = Modifier.width(100.dp)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White
+        )
+    }
+}
+
+@Composable
+private fun SourceListCard(
+    sources: UiState<List<XtreamSource>>,
+    activeSourceId: Long?,
+    syncingIds: Set<Long>,
+    onEdit: (Long) -> Unit,
+    onSync: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
+    onSwitch: (Long) -> Unit,
+    onAddSource: () -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+    ) {
+        Column {
+            Text(
+                text = "源列表",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White,
+                modifier = Modifier.padding(16.dp)
+            )
+            when (val state = sources) {
+                is UiState.Loading -> {
+                    LoadingIndicator(modifier = Modifier.padding(16.dp))
+                }
+                is UiState.Error -> {
+                    ErrorView(
+                        message = state.message,
+                        onRetry = {},
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+                is UiState.Empty -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "暂无源",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = Color(0xFF888888)
                         )
+                    }
+                }
+                is UiState.Success -> {
+                    Column {
+                        state.data.forEach { source ->
+                            val isSrcActive = source.id == activeSourceId
+                            SourceItem(
+                                source = source,
+                                isActive = isSrcActive,
+                                isSyncing = source.id in syncingIds,
+                                onEdit = { onEdit(source.id) },
+                                onSync = { onSync(source.id) },
+                                onDelete = { onDelete(source.id) },
+                                onSwitch = if (!isSrcActive) { { onSwitch(source.id) } } else { null }
+                            )
+                        }
+                        Button(
+                            onClick = onAddSource,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                                .height(56.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("添加源")
+                        }
                     }
                 }
             }
@@ -158,14 +297,14 @@ private fun SourceItem(
     onEdit: () -> Unit,
     onSync: () -> Unit,
     onDelete: () -> Unit,
-    onSwitch: () -> Unit
+    onSwitch: (() -> Unit)?
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "sync")
-    val rotation by animateFloatAsState(
+    val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition(label = "sync")
+    val rotation by androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (isSyncing) 360f else 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            animation = androidx.compose.animation.core.tween(1000, easing = androidx.compose.animation.core.LinearEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Restart
         ),
         label = "rotation"
     )
@@ -173,7 +312,7 @@ private fun SourceItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = 0.dp, vertical = 4.dp)
             .clickable { onEdit() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -189,8 +328,7 @@ private fun SourceItem(
             Box(
                 modifier = Modifier
                     .size(12.dp)
-                    .clip(CircleShape)
-                    .background(if (isActive) SuccessGreen else Color(0xFF444444))
+                    .background(if (isActive) SuccessGreen else Color(0xFF444444), RoundedCornerShape(6.dp))
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -217,9 +355,9 @@ private fun SourceItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            if (!isActive) {
+            if (!isActive && onSwitch != null) {
                 Spacer(modifier = Modifier.width(8.dp))
-                IconButton(onClick = onSwitch) {
+                IconButton(onClick = onSwitch!!) {
                     Icon(
                         Icons.Default.Star,
                         contentDescription = "设为默认",
@@ -232,9 +370,7 @@ private fun SourceItem(
                     Icons.Default.Refresh,
                     contentDescription = "同步",
                     tint = if (isSyncing) Color(0xFF888888) else MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.then(
-                        if (isSyncing) Modifier.rotate(rotation) else Modifier
-                    )
+                    modifier = Modifier.rotate(rotation)
                 )
             }
             IconButton(onClick = onDelete) {
@@ -244,6 +380,32 @@ private fun SourceItem(
                     tint = MaterialTheme.colorScheme.error
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun AboutCard(versionName: String) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "关于",
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
+            )
+            Text(
+                text = "版本: $versionName",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF888888)
+            )
         }
     }
 }

@@ -122,6 +122,7 @@ fun SeriesDto.toDomain(): SeriesItem {
         director = director,
         genre = genre,
         rating = rating,
+        releaseDate = null,
         categoryId = categoryId?.toIntOrNull() ?: 0
     )
 }
@@ -164,6 +165,7 @@ fun SeriesInfoDto.toDomain(): SeriesInfo {
             director = infoData?.director,
             genre = infoData?.genre,
             rating = infoData?.rating,
+            releaseDate = infoData?.releaseDate,
             categoryId = 0
         )
     )
@@ -280,6 +282,7 @@ fun SeriesItem.toEntity(sourceId: Long): SeriesEntity {
         director = director,
         genre = genre,
         rating = rating,
+        releaseDate = releaseDate,
         categoryId = categoryId,
         sourceId = sourceId
     )
@@ -377,6 +380,7 @@ fun SeriesEntity.toDomain(): SeriesItem {
         director = director,
         genre = genre,
         rating = rating,
+        releaseDate = releaseDate,
         categoryId = categoryId ?: 0
     )
 }

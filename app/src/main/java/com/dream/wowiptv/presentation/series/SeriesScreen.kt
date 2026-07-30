@@ -19,12 +19,15 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -54,6 +57,7 @@ import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.theme.LiveRed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +70,7 @@ fun SeriesScreen(
     val seriesListState by viewModel.seriesList.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val categoryCounts by viewModel.categoryCounts.collectAsState()
+    val seriesFavoriteIds by viewModel.favoriteIds.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(seriesListState) {
@@ -187,7 +192,9 @@ fun SeriesScreen(
                                     items(series.data, key = { it.id }) { item ->
                                         SeriesCoverItem(
                                             series = item,
-                                            onClick = { onSeriesClick(item.id) }
+                                            onClick = { onSeriesClick(item.id) },
+                                            isFavorite = seriesFavoriteIds.contains(item.id),
+                                            onToggleFavorite = { viewModel.toggleFavorite(item.id, item.name, item.cover, item.categoryId) }
                                         )
                                     }
                                 }
@@ -204,6 +211,8 @@ fun SeriesScreen(
 private fun SeriesCoverItem(
     series: SeriesItem,
     onClick: () -> Unit,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -223,6 +232,19 @@ private fun SeriesCoverItem(
                     .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
             )
+            IconButton(
+                onClick = onToggleFavorite,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp)
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = if (isFavorite) "取消收藏" else "收藏",
+                    tint = if (isFavorite) LiveRed else Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)

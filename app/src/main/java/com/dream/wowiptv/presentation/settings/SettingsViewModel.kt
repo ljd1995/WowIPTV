@@ -2,7 +2,10 @@ package com.dream.wowiptv.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dream.wowiptv.BuildConfig
+import com.dream.wowiptv.domain.model.UserInfo
 import com.dream.wowiptv.domain.model.XtreamSource
+import com.dream.wowiptv.domain.usecase.GetUserInfoUseCase
 import com.dream.wowiptv.domain.usecase.ManageSourcesUseCase
 import com.dream.wowiptv.domain.usecase.SwitchSourceUseCase
 import com.dream.wowiptv.presentation.common.UiState
@@ -21,8 +24,20 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val manageSourcesUseCase: ManageSourcesUseCase,
-    private val switchSourceUseCase: SwitchSourceUseCase
+    private val switchSourceUseCase: SwitchSourceUseCase,
+    private val getUserInfoUseCase: GetUserInfoUseCase
 ) : ViewModel() {
+
+    val versionName: String = BuildConfig.VERSION_NAME
+
+    private val _userInfo = MutableStateFlow<UserInfo?>(null)
+    val userInfo: StateFlow<UserInfo?> = _userInfo.asStateFlow()
+
+    fun refreshUserInfo() {
+        viewModelScope.launch {
+            _userInfo.value = getUserInfoUseCase()
+        }
+    }
 
     val sources: StateFlow<UiState<List<XtreamSource>>> = manageSourcesUseCase.getSources()
         .map { list ->

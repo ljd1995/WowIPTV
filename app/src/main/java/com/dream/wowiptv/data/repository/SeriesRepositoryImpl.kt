@@ -68,7 +68,7 @@ class SeriesRepositoryImpl @Inject constructor(
                 seasons = seasons,
                 episodes = episodes,
                 info = seriesDao.getBySourceAndId(source.id, seriesId)?.toDomain()
-                    ?: SeriesItem(id = seriesId, name = "", cover = null, plot = null, cast = null, director = null, genre = null, rating = null, categoryId = 0)
+                    ?: SeriesItem(id = seriesId, name = "", cover = null, plot = null, cast = null, director = null, genre = null, rating = null, releaseDate = null, categoryId = 0)
             )
         }
         configureBaseUrl(source.serverUrl, source.port)

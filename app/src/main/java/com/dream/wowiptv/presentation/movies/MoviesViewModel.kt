@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.domain.model.VodCategory
 import com.dream.wowiptv.domain.model.VodStream
+import com.dream.wowiptv.domain.usecase.CreateFavoriteUseCase
 import com.dream.wowiptv.domain.usecase.GetVodCategoriesUseCase
 import com.dream.wowiptv.domain.usecase.GetVodStreamsUseCase
 import com.dream.wowiptv.presentation.common.UiState
@@ -19,13 +20,15 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class MoviesViewModel @Inject constructor(
     private val getVodCategoriesUseCase: GetVodCategoriesUseCase,
-    private val getVodStreamsUseCase: GetVodStreamsUseCase
+    private val getVodStreamsUseCase: GetVodStreamsUseCase,
+    private val createFavoriteUseCase: CreateFavoriteUseCase
 ) : ViewModel() {
 
     val categories: StateFlow<UiState<List<VodCategory>>> = getVodCategoriesUseCase()
@@ -66,6 +69,23 @@ class MoviesViewModel @Inject constructor(
         if (s !is UiState.Success) return@map emptyMap()
         s.data.groupBy { it.categoryId }.mapValues { it.value.size }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    private val _favoriteIds = MutableStateFlow<Set<Int>>(emptySet())
+    val favoriteIds: StateFlow<Set<Int>> = _favoriteIds.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            createFavoriteUseCase.getMovieFavoriteIds().collect { ids ->
+                _favoriteIds.value = ids
+            }
+        }
+    }
+
+    fun toggleFavorite(vodId: Int, name: String, icon: String?, categoryId: Int) {
+        viewModelScope.launch {
+            createFavoriteUseCase.toggleMovie(vodId, name, icon, categoryId)
+        }
+    }
 
     fun selectCategory(id: Int?) {
         _selectedCategoryId.value = id

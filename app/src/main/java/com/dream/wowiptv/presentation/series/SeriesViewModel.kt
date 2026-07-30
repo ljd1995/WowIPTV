@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.domain.model.SeriesCategory
 import com.dream.wowiptv.domain.model.SeriesItem
+import com.dream.wowiptv.domain.usecase.CreateFavoriteUseCase
 import com.dream.wowiptv.domain.usecase.GetSeriesCategoriesUseCase
 import com.dream.wowiptv.domain.usecase.GetSeriesUseCase
 import com.dream.wowiptv.presentation.common.UiState
@@ -19,13 +20,15 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SeriesViewModel @Inject constructor(
     private val getSeriesCategoriesUseCase: GetSeriesCategoriesUseCase,
-    private val getSeriesUseCase: GetSeriesUseCase
+    private val getSeriesUseCase: GetSeriesUseCase,
+    private val createFavoriteUseCase: CreateFavoriteUseCase
 ) : ViewModel() {
 
     val categories: StateFlow<UiState<List<SeriesCategory>>> = getSeriesCategoriesUseCase()
@@ -66,6 +69,23 @@ class SeriesViewModel @Inject constructor(
         if (s !is UiState.Success) return@map emptyMap()
         s.data.groupBy { it.categoryId }.mapValues { it.value.size }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    private val _favoriteIds = MutableStateFlow<Set<Int>>(emptySet())
+    val favoriteIds: StateFlow<Set<Int>> = _favoriteIds.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            createFavoriteUseCase.getSeriesFavoriteIds().collect { ids ->
+                _favoriteIds.value = ids
+            }
+        }
+    }
+
+    fun toggleFavorite(seriesId: Int, name: String, icon: String?, categoryId: Int) {
+        viewModelScope.launch {
+            createFavoriteUseCase.toggleSeries(seriesId, name, icon, categoryId)
+        }
+    }
 
     fun selectCategory(id: Int?) {
         _selectedCategoryId.value = id

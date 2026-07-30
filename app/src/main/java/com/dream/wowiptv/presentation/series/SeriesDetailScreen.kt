@@ -184,6 +184,14 @@ private fun SeriesDetailContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    series.releaseDate?.let { date ->
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = date.take(10),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 series.genre?.let { genreStr ->

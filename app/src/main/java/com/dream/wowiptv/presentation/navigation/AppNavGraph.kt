@@ -12,6 +12,7 @@ import com.dream.wowiptv.presentation.movies.MovieDetailScreen
 import com.dream.wowiptv.presentation.player.PlayerScreen
 import com.dream.wowiptv.presentation.series.SeriesDetailScreen
 import com.dream.wowiptv.presentation.settings.SourceFormScreen
+import com.dream.wowiptv.presentation.settings.SettingsScreen
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -100,6 +101,13 @@ fun AppNavGraph(navController: NavHostController) {
             SourceFormScreen(
                 sourceId = sourceId,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onAddSource = { navController.navigate(Routes.SOURCE_ADD) },
+                onEditSource = { sourceId -> navController.navigate(Routes.sourceEditRoute(sourceId.toInt())) }
             )
         }
     }
