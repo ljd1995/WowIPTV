@@ -1,8 +1,11 @@
 package com.dream.wowiptv.presentation.navigation
 
 object Routes {
-    const val MAIN = "main"
+    const val MAIN = "main?liveStreamId={liveStreamId}"
     const val ALL_ITEMS = "all_items/{tab}"
+
+    fun mainRoute(liveStreamId: Int? = null) =
+        if (liveStreamId != null) "main?liveStreamId=$liveStreamId" else "main"
     const val ALL_FAVORITES = "all_favorites"
     const val ALL_HISTORY = "all_history"
     const val SETTINGS = "settings"

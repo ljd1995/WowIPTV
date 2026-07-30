@@ -139,9 +139,9 @@ fun HomeScreen(
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 items(all.take(10), key = { it.hashCode() }) { item ->
                                     when (item) {
-                                        is LiveStreamEntity -> RecentCard(name = item.name, icon = item.streamIcon)
-                                        is VodStreamEntity -> RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, onClick = { onMovieClick(item.streamId) })
-                                        is SeriesEntity -> RecentCard(name = item.name.orEmpty(), icon = item.cover, onClick = { onSeriesClick(item.seriesId) })
+                                    is LiveStreamEntity -> RecentCard(name = item.name, icon = item.streamIcon, onClick = { onLiveClick(item.streamId, item.name) })
+                                    is VodStreamEntity -> RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, onClick = { onMovieClick(item.streamId) })
+                                    is SeriesEntity -> RecentCard(name = item.name.orEmpty(), icon = item.cover, onClick = { onSeriesClick(item.seriesId) })
                                     }
                                 }
                             }

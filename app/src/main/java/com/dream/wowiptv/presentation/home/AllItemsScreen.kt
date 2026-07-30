@@ -61,7 +61,8 @@ fun AllItemsScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onBack: () -> Unit,
     onMovieClick: (Int) -> Unit,
-    onSeriesClick: (Int) -> Unit
+    onSeriesClick: (Int) -> Unit,
+    onLiveClick: (Int, String) -> Unit = { _, _ -> }
 ) {
     val data by viewModel.data.collectAsState()
     var tab by remember { mutableIntStateOf(initialTab) }
@@ -120,7 +121,7 @@ fun AllItemsScreen(
                         ) {
                             items(items, key = { it.hashCode() }) { item ->
                                 when (item) {
-                                    is LiveStreamEntity -> GridCell(icon = item.streamIcon, name = item.name)
+                                    is LiveStreamEntity -> GridCell(icon = item.streamIcon, name = item.name, onClick = { onLiveClick(item.streamId, item.name) })
                                     is VodStreamEntity -> GridCell(icon = item.streamIcon, name = item.name.orEmpty(), onClick = { onMovieClick(item.streamId) })
                                     is SeriesEntity -> GridCell(icon = item.cover, name = item.name.orEmpty(), onClick = { onSeriesClick(item.seriesId) })
                                 }

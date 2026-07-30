@@ -23,8 +23,15 @@ fun AppNavGraph(navController: NavHostController) {
         navController = navController,
         startDestination = Routes.MAIN
     ) {
-        composable(Routes.MAIN) {
-            MainScreen(outerNavController = navController)
+        composable(
+            route = Routes.MAIN,
+            arguments = listOf(navArgument("liveStreamId") { type = NavType.IntType; defaultValue = -1 })
+        ) { backStackEntry ->
+            val liveStreamId = backStackEntry.arguments?.getInt("liveStreamId") ?: -1
+            MainScreen(
+                outerNavController = navController,
+                pendingLiveStreamArg = if (liveStreamId >= 0) liveStreamId else null
+            )
         }
 
         composable(
@@ -130,6 +137,11 @@ fun AppNavGraph(navController: NavHostController) {
                 },
                 onSeriesClick = { seriesId ->
                     navController.navigate(Routes.seriesRoute(seriesId))
+                },
+                onLiveClick = { streamId, name ->
+                    navController.navigate(Routes.mainRoute(streamId)) {
+                        popUpTo(Routes.MAIN) { inclusive = true }
+                    }
                 }
             )
         }

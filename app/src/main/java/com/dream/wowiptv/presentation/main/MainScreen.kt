@@ -10,6 +10,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,12 +36,22 @@ import com.dream.wowiptv.presentation.settings.SettingsScreen
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
 @Composable
-fun MainScreen(outerNavController: NavHostController) {
+fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int? = null) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     var hideBottomBar by remember { mutableStateOf(false) }
-    var pendingLiveStream by remember { mutableStateOf<Int?>(null) }
+    var pendingLiveStream by remember { mutableStateOf(pendingLiveStreamArg) }
+
+    LaunchedEffect(pendingLiveStreamArg) {
+        if (pendingLiveStreamArg != null) {
+            navController.navigate(BottomNavItem.Live.route) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
 
     Scaffold(
         containerColor = Color(0xFF1A1A1A),
