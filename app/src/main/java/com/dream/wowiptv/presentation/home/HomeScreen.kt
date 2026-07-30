@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -400,7 +401,7 @@ private fun ContinueCard(name: String, icon: String? = null, isLive: Boolean = f
         ) {
             Column {
                 if (duration > 0) {
-                    val progress = (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+                    val p = (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -409,8 +410,8 @@ private fun ContinueCard(name: String, icon: String? = null, isLive: Boolean = f
                     ) {
                         Box(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .fillMaxWidth(progress)
+                                .fillMaxHeight()
+                                .fillMaxWidth(p)
                                 .background(Color(0xFF6366F1))
                         )
                     }

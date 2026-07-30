@@ -175,12 +175,12 @@ private fun HistoryGridCell(
                             .height(3.dp)
                             .background(Color(0xFF555555).copy(alpha = 0.5f))
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .fillMaxWidth(p)
-                                .background(Color(0xFF6366F1))
-                        )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(p)
+                            .background(Color(0xFF6366F1))
+                    )
                     }
                 }
                 Box(
