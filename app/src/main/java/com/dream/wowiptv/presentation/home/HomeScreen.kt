@@ -73,42 +73,48 @@ fun HomeScreen(
                 item { Spacer(modifier = Modifier.height(8.dp)) }
 
                 item {
-                    SectionHeader(title = "收藏", onViewAll = onViewAllFavorites)
-                    val items = data.favoriteStreams + data.favoriteMovies + data.favoriteSeries
-                    if (items.isEmpty()) {
-                        Text("暂无收藏", color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
-                    } else {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            items(items.take(10), key = { it.hashCode() }) { item ->
-                                when (item) {
-                                    is FavoriteStreamEntity -> FavCard(name = item.name, icon = item.iconUrl)
-                                    is FavoriteVodEntity -> FavCard(name = item.name, icon = item.icon, onClick = {
-                                        if (item.type == "movie") onMovieClick(item.vodId) else onSeriesClick(item.vodId)
-                                    })
+                    Column {
+                        SectionHeader(title = "收藏", onViewAll = onViewAllFavorites)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        val items = data.favoriteStreams + data.favoriteMovies + data.favoriteSeries
+                        if (items.isEmpty()) {
+                            Text("暂无收藏", color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
+                        } else {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                items(items.take(10), key = { it.hashCode() }) { item ->
+                                    when (item) {
+                                        is FavoriteStreamEntity -> FavCard(name = item.name, icon = item.iconUrl)
+                                        is FavoriteVodEntity -> FavCard(name = item.name, icon = item.icon, onClick = {
+                                            if (item.type == "movie") onMovieClick(item.vodId) else onSeriesClick(item.vodId)
+                                        })
+                                    }
                                 }
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
+                item { Spacer(modifier = Modifier.height(4.dp)) }
+
                 item {
-                    SectionHeader(title = "最近添加", onViewAll = onViewAllRecent)
-                    val all = data.recentLive + data.recentMovies + data.recentSeries
-                    if (all.isEmpty()) {
-                        Text("暂无内容", color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
-                    } else {
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            items(all.take(10), key = { it.hashCode() }) { item ->
-                                when (item) {
-                                    is LiveStreamEntity -> RecentCard(name = item.name, icon = item.streamIcon)
-                                    is VodStreamEntity -> RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, onClick = { onMovieClick(item.streamId) })
-                                    is SeriesEntity -> RecentCard(name = item.name.orEmpty(), icon = item.cover, onClick = { onSeriesClick(item.seriesId) })
+                    Column {
+                        SectionHeader(title = "最近添加", onViewAll = onViewAllRecent)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        val all = data.recentLive + data.recentMovies + data.recentSeries
+                        if (all.isEmpty()) {
+                            Text("暂无内容", color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
+                        } else {
+                            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                items(all.take(10), key = { it.hashCode() }) { item ->
+                                    when (item) {
+                                        is LiveStreamEntity -> RecentCard(name = item.name, icon = item.streamIcon)
+                                        is VodStreamEntity -> RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, onClick = { onMovieClick(item.streamId) })
+                                        is SeriesEntity -> RecentCard(name = item.name.orEmpty(), icon = item.cover, onClick = { onSeriesClick(item.seriesId) })
+                                    }
                                 }
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
                 item { Spacer(modifier = Modifier.height(16.dp)) }
