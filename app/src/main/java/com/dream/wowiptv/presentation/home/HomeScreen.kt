@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +33,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +53,7 @@ import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
 import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
+import kotlinx.coroutines.delay
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
@@ -74,6 +81,48 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                item { Spacer(modifier = Modifier.height(8.dp)) }
+
+                item {
+                    val fmt = remember { java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()) }
+                    var timeStr by remember { mutableStateOf(fmt.format(java.util.Date())) }
+                    LaunchedEffect(Unit) {
+                        while (true) {
+                            timeStr = fmt.format(java.util.Date())
+                            delay(30000)
+                        }
+                    }
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Hello ${data.username}",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = timeStr,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFF999999)
+                                )
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                StatItem(value = data.liveCount, label = "直播")
+                                StatItem(value = data.movieCount, label = "电影")
+                                StatItem(value = data.seriesCount, label = "剧集")
+                            }
+                        }
+                    }
+                }
+
                 item { Spacer(modifier = Modifier.height(8.dp)) }
 
                 if (data.continueWatching.isNotEmpty()) {
@@ -157,6 +206,14 @@ fun HomeScreen(
 
 private fun decodeName(raw: String): String {
     return try { java.net.URLDecoder.decode(raw, "UTF-8") } catch (_: Exception) { raw }
+}
+
+@Composable
+private fun StatItem(value: Int, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text = value.toString(), color = Color(0xFF1E88E5), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+        Text(text = label, color = Color(0xFF999999), fontSize = 11.sp)
+    }
 }
 
 @Composable

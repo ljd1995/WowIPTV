@@ -28,6 +28,10 @@ import java.util.Locale
 import javax.inject.Inject
 
 data class HomeSection(
+    val username: String = "",
+    val liveCount: Int = 0,
+    val movieCount: Int = 0,
+    val seriesCount: Int = 0,
     val continueWatching: List<WatchProgressEntity> = emptyList(),
     val favoriteStreams: List<FavoriteStreamEntity> = emptyList(),
     val favoriteMovies: List<FavoriteVodEntity> = emptyList(),
@@ -103,6 +107,10 @@ class HomeViewModel @Inject constructor(
                 }.ifEmpty { vod.take(10) }
 
                 _data.value = _data.value.copy(
+                    username = source.username,
+                    liveCount = live.size,
+                    movieCount = vod.size,
+                    seriesCount = series.size,
                     favoriteStreams = favStreams,
                     favoriteMovies = favVods.filter { it.type == "movie" },
                     favoriteSeries = favVods.filter { it.type == "series" },
