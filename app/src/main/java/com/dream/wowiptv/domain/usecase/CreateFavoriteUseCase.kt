@@ -21,8 +21,8 @@ class CreateFavoriteUseCase @Inject constructor(
 
     suspend fun toggleMovie(vodId: Int, name: String, icon: String?, categoryId: Int) {
         val sourceId = getSourceId()
-        if (favoriteVodDao.isFavorite(vodId, sourceId)) {
-            favoriteVodDao.delete(vodId, sourceId)
+        if (favoriteVodDao.isFavorite(vodId, sourceId, "movie")) {
+            favoriteVodDao.delete(vodId, sourceId, "movie")
         } else {
             favoriteVodDao.insert(FavoriteVodEntity(vodId, sourceId, "movie", name, icon, categoryId))
         }
@@ -30,8 +30,8 @@ class CreateFavoriteUseCase @Inject constructor(
 
     suspend fun toggleSeries(seriesId: Int, name: String, icon: String?, categoryId: Int) {
         val sourceId = getSourceId()
-        if (favoriteVodDao.isFavorite(seriesId, sourceId)) {
-            favoriteVodDao.delete(seriesId, sourceId)
+        if (favoriteVodDao.isFavorite(seriesId, sourceId, "series")) {
+            favoriteVodDao.delete(seriesId, sourceId, "series")
         } else {
             favoriteVodDao.insert(FavoriteVodEntity(seriesId, sourceId, "series", name, icon, categoryId))
         }

@@ -19,14 +19,14 @@ interface FavoriteVodDao {
     @Query("SELECT vodId FROM favorite_vod WHERE sourceId = :sourceId AND type = :type")
     fun getFavoriteIdsFlow(sourceId: Long, type: String): Flow<List<Int>>
 
-    @Query("SELECT EXISTS(SELECT 1 FROM favorite_vod WHERE vodId = :vodId AND sourceId = :sourceId)")
-    suspend fun isFavorite(vodId: Int, sourceId: Long): Boolean
+    @Query("SELECT EXISTS(SELECT 1 FROM favorite_vod WHERE vodId = :vodId AND sourceId = :sourceId AND type = :type)")
+    suspend fun isFavorite(vodId: Int, sourceId: Long, type: String): Boolean
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(favorite: FavoriteVodEntity)
 
-    @Query("DELETE FROM favorite_vod WHERE vodId = :vodId AND sourceId = :sourceId")
-    suspend fun delete(vodId: Int, sourceId: Long)
+    @Query("DELETE FROM favorite_vod WHERE vodId = :vodId AND sourceId = :sourceId AND type = :type")
+    suspend fun delete(vodId: Int, sourceId: Long, type: String)
 
     @Query("DELETE FROM favorite_vod WHERE sourceId = :sourceId")
     suspend fun deleteBySource(sourceId: Long)
