@@ -56,7 +56,8 @@ fun HomeScreen(
     onMovieClick: (Int) -> Unit,
     onSeriesClick: (Int) -> Unit,
     onViewAllFavorites: () -> Unit,
-    onViewAllRecent: () -> Unit
+    onViewAllRecent: () -> Unit,
+    onViewAllHistory: () -> Unit
 ) {
     val data by viewModel.data.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -76,7 +77,7 @@ fun HomeScreen(
                 if (data.continueWatching.isNotEmpty()) {
                     item {
                         Column {
-                            SectionHeader(title = "继续观看", onViewAll = { })
+                            SectionHeader(title = "继续观看", onViewAll = onViewAllHistory)
                             Spacer(modifier = Modifier.height(10.dp))
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 items(data.continueWatching, key = { it.contentId }) { item ->
@@ -140,20 +141,22 @@ fun HomeScreen(
 }
 
 @Composable
-private fun SectionHeader(title: String, onViewAll: () -> Unit) {
+private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-        Text(
-            text = "查看全部",
-            color = Color(0xFF1E88E5),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.clickable(onClick = onViewAll)
-        )
+        if (onViewAll != null) {
+            Text(
+                text = "查看全部",
+                color = Color(0xFF1E88E5),
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.clickable(onClick = onViewAll)
+            )
+        }
     }
 }
 

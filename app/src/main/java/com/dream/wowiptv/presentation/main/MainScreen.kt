@@ -92,6 +92,9 @@ fun MainScreen(outerNavController: NavHostController) {
                     },
                     onViewAllRecent = {
                         outerNavController.navigate(Routes.allItemsRoute(0))
+                    },
+                    onViewAllHistory = {
+                        outerNavController.navigate(Routes.ALL_HISTORY)
                     }
                 )
             }
