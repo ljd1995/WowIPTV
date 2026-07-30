@@ -76,6 +76,7 @@ class SeriesRepositoryImpl @Inject constructor(
         val info = dto.toDomain()
         seriesDao.insertAllSeasons(info.seasons.map { it.toEntity(seriesId, source.id) })
         seriesDao.insertAllEpisodes(info.episodes.flatMap { (_, episodes) -> episodes.map { it.toEntity(seriesId, source.id) } })
+        seriesDao.insertAllSeries(listOf(info.info.toEntity(source.id)))
         return info
     }
 

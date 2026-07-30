@@ -134,71 +134,115 @@ fun SettingsScreen(
 
 @Composable
 private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
-    val sourceName = if (userInfo != null) "当前源信息" else "源未连接"
-
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp)
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .background(
+                    brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
+                        colors = if (userInfo != null)
+                            listOf(Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B))
+                        else
+                            listOf(Color(0xFF444444), Color(0xFF333333))
+                    )
+                )
+                .padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = sourceName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null,
+                    tint = if (userInfo != null) Color(0xFFFFD700) else Color(0xFF888888),
+                    modifier = Modifier.size(28.dp)
                 )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = if (userInfo != null) "VIP 会员" else "源未连接",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = if (userInfo != null) Color(0xFFFFF8DC) else Color(0xFF888888),
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                    if (userInfo != null) {
+                        Text(
+                            text = userInfo.username ?: "未知用户",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFFFF8DC).copy(alpha = 0.8f)
+                        )
+                    }
+                }
+                if (userInfo != null) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Active",
+                        tint = Color(0xFFFFD700),
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            if (userInfo != null) {
-                InfoRow(label = "服务器:", value = "Connected")
-                InfoRow(label = "用户名:", value = userInfo.username ?: "N/A")
+        }
+        if (userInfo != null) {
+            Column(modifier = Modifier.background(Color(0xFF2C2C2C)).padding(16.dp)) {
+                InfoRow(icon = Icons.Default.Star, label = "状态", value = "Active", valueColor = Color(0xFF4CAF50))
                 InfoRow(
-                    label = "状态:",
-                    value = if (userInfo.expDate != null) "Active" else "Trial"
+                    icon = Icons.Default.Star,
+                    label = "到期",
+                    value = formatExpDate(userInfo.expDate)
                 )
-                InfoRow(label = "到期:", value = userInfo.expDate ?: "N/A")
-                InfoRow(label = "最大连接:", value = userInfo.maxConnections ?: "1")
+                InfoRow(icon = Icons.Default.Star, label = "最大连接", value = userInfo.maxConnections ?: "1")
                 if (!userInfo.allowedOutputFormats.isNullOrEmpty()) {
                     InfoRow(
-                        label = "输出格式:",
+                        icon = Icons.Default.Star,
+                        label = "输出格式",
                         value = userInfo.allowedOutputFormats.joinToString(", ")
                     )
                 }
-            } else {
-                Text(
-                    text = "未找到活跃源或连接失败",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF888888)
-                )
             }
         }
     }
 }
 
+private fun formatExpDate(dateStr: String?): String {
+    if (dateStr == null || dateStr.isBlank()) return "N/A"
+    val timestamp = dateStr.toLongOrNull()
+    if (timestamp != null) {
+        val cal = java.util.Calendar.getInstance().apply { timeInMillis = timestamp * 1000 }
+        return "%04d-%02d-%02d".format(cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH) + 1, cal.get(java.util.Calendar.DAY_OF_MONTH))
+    }
+    return dateStr.take(10)
+}
+
 @Composable
-private fun InfoRow(label: String, value: String) {
+private fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, valueColor: Color = Color.White) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color(0xFF999999),
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF888888),
-            modifier = Modifier.width(100.dp)
+            color = Color(0xFF999999),
+            modifier = Modifier.width(72.dp)
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            color = Color.White
+            color = valueColor
         )
     }
 }

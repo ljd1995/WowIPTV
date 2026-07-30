@@ -16,6 +16,9 @@ interface FavoriteVodDao {
     @Query("SELECT vodId FROM favorite_vod WHERE sourceId = :sourceId AND type = :type")
     suspend fun getFavoriteIdsBySource(sourceId: Long, type: String): List<Int>
 
+    @Query("SELECT vodId FROM favorite_vod WHERE sourceId = :sourceId AND type = :type")
+    fun getFavoriteIdsFlow(sourceId: Long, type: String): Flow<List<Int>>
+
     @Query("SELECT EXISTS(SELECT 1 FROM favorite_vod WHERE vodId = :vodId AND sourceId = :sourceId)")
     suspend fun isFavorite(vodId: Int, sourceId: Long): Boolean
 
