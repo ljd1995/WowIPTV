@@ -78,16 +78,19 @@ class PlayerViewModel @Inject constructor(
     fun saveProgress(contentId: String, position: Long, duration: Long) {
         viewModelScope.launch {
             try {
+                val name = if (streamName.isNotBlank()) streamName else {
+                    watchProgressUseCase.getProgressName(contentId) ?: streamName
+                }
                 val pos = if (streamType == "live") System.currentTimeMillis() / 1000 else position
                 watchProgressUseCase.saveProgress(
                     contentId = contentId,
                     contentType = streamType,
-                    name = streamName,
+                    name = name,
                     icon = null,
                     position = pos,
                     duration = duration
                 )
-                android.util.Log.d("PlayerVM", "saved $streamType $contentId pos=$pos")
+                android.util.Log.d("PlayerVM", "saved $streamType $contentId pos=$pos name=$name")
             } catch (e: Exception) {
                 android.util.Log.e("PlayerVM", "save failed", e)
             }

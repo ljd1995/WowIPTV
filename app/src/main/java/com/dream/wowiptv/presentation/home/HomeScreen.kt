@@ -58,7 +58,7 @@ fun HomeScreen(
     onSeriesClick: (Int) -> Unit,
     onPlayMovie: (Int, String, Long) -> Unit,
     onPlaySeries: (String, String, Long) -> Unit,
-    onLiveClick: (Int) -> Unit,
+    onLiveClick: (Int, String) -> Unit,
     onViewAllFavorites: () -> Unit,
     onViewAllRecent: () -> Unit,
     onViewAllHistory: () -> Unit
@@ -95,7 +95,7 @@ fun HomeScreen(
                                             when (wp.contentType) {
                                                 "vod" -> idStr.toIntOrNull()?.let { onPlayMovie(it, wp.name, wp.position) }
                                                 "series" -> onPlaySeries(idStr, wp.name, wp.position)
-                                                "live" -> idStr.toIntOrNull()?.let { onLiveClick(it) }
+                                                "live" -> idStr.toIntOrNull()?.let { onLiveClick(it, wp.name) }
                                             }
                                         }
                                     )

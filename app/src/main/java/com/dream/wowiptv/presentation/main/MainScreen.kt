@@ -93,8 +93,8 @@ fun MainScreen(outerNavController: NavHostController) {
                     onPlaySeries = { episodeId, name, position ->
                         outerNavController.navigate(Routes.playerRoute("series", episodeId, name, position))
                     },
-                    onLiveClick = { streamId ->
-                        outerNavController.navigate(Routes.playerRoute("live", streamId.toString()))
+                    onLiveClick = { streamId, name ->
+                        outerNavController.navigate(Routes.playerRoute("live", streamId.toString(), name))
                     },
                     onViewAllFavorites = {
                         outerNavController.navigate(Routes.ALL_FAVORITES)
