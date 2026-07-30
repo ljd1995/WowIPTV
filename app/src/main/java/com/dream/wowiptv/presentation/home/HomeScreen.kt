@@ -47,7 +47,6 @@ import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
 import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
-import androidx.compose.foundation.Canvas
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
@@ -57,8 +56,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onMovieClick: (Int) -> Unit,
     onSeriesClick: (Int) -> Unit,
-    onPlayMovie: (Int) -> Unit,
-    onPlaySeries: (String) -> Unit,
+    onPlayMovie: (Int, Long) -> Unit,
+    onPlaySeries: (String, Long) -> Unit,
     onLiveClick: (Int) -> Unit,
     onViewAllFavorites: () -> Unit,
     onViewAllRecent: () -> Unit,
@@ -94,8 +93,8 @@ fun HomeScreen(
                                         onClick = {
                                             val idStr = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_")
                                             when (wp.contentType) {
-                                                "vod" -> idStr.toIntOrNull()?.let { onPlayMovie(it) }
-                                                "series" -> onPlaySeries(idStr)
+                                                "vod" -> idStr.toIntOrNull()?.let { onPlayMovie(it, wp.position) }
+                                                "series" -> onPlaySeries(idStr, wp.position)
                                                 "live" -> idStr.toIntOrNull()?.let { onLiveClick(it) }
                                             }
                                         }
@@ -199,12 +198,11 @@ private fun FavCard(name: String, icon: String? = null, onClick: () -> Unit = {}
 
 @Composable
 private fun ContinueCard(name: String, icon: String? = null, position: Long = 0L, duration: Long = 0L, onClick: () -> Unit = {}) {
-    Box(modifier = Modifier.width(105.dp).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
-        Box(modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f)) {
+    Column(modifier = Modifier.width(105.dp).clickable(onClick = onClick)) {
+        Box(modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C))) {
             if (!icon.isNullOrEmpty()) {
                 AsyncImage(model = icon, contentDescription = name,
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)),
-                    contentScale = ContentScale.Crop)
+                    modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             } else {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
