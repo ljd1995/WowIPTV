@@ -87,11 +87,11 @@ fun MainScreen(outerNavController: NavHostController) {
                     onSeriesClick = { seriesId ->
                         outerNavController.navigate(Routes.seriesRoute(seriesId))
                     },
-                    onPlayMovie = { vodId, position ->
-                        outerNavController.navigate(Routes.playerRoute("vod", vodId.toString(), position = position))
+                    onPlayMovie = { vodId, name, position ->
+                        outerNavController.navigate(Routes.playerRoute("vod", vodId.toString(), name, position))
                     },
-                    onPlaySeries = { episodeId, position ->
-                        outerNavController.navigate(Routes.playerRoute("series", episodeId, position = position))
+                    onPlaySeries = { episodeId, name, position ->
+                        outerNavController.navigate(Routes.playerRoute("series", episodeId, name, position))
                     },
                     onLiveClick = { streamId ->
                         outerNavController.navigate(Routes.playerRoute("live", streamId.toString()))

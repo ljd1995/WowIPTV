@@ -56,8 +56,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onMovieClick: (Int) -> Unit,
     onSeriesClick: (Int) -> Unit,
-    onPlayMovie: (Int, Long) -> Unit,
-    onPlaySeries: (String, Long) -> Unit,
+    onPlayMovie: (Int, String, Long) -> Unit,
+    onPlaySeries: (String, String, Long) -> Unit,
     onLiveClick: (Int) -> Unit,
     onViewAllFavorites: () -> Unit,
     onViewAllRecent: () -> Unit,
@@ -93,8 +93,8 @@ fun HomeScreen(
                                         onClick = {
                                             val idStr = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_")
                                             when (wp.contentType) {
-                                                "vod" -> idStr.toIntOrNull()?.let { onPlayMovie(it, wp.position) }
-                                                "series" -> onPlaySeries(idStr, wp.position)
+                                                "vod" -> idStr.toIntOrNull()?.let { onPlayMovie(it, wp.name, wp.position) }
+                                                "series" -> onPlaySeries(idStr, wp.name, wp.position)
                                                 "live" -> idStr.toIntOrNull()?.let { onLiveClick(it) }
                                             }
                                         }
@@ -198,27 +198,24 @@ private fun FavCard(name: String, icon: String? = null, onClick: () -> Unit = {}
 
 @Composable
 private fun ContinueCard(name: String, icon: String? = null, position: Long = 0L, duration: Long = 0L, onClick: () -> Unit = {}) {
-    Column(modifier = Modifier.width(105.dp).clickable(onClick = onClick)) {
-        Box(modifier = Modifier.fillMaxWidth().aspectRatio(2f / 3f).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C))) {
-            if (!icon.isNullOrEmpty()) {
-                AsyncImage(model = icon, contentDescription = name,
-                    modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-            } else {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
-                }
-            }
-            if (duration > 0) {
-                val progress = (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
-                Box(
-                    modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.dp).background(Color(0xFF555555))
-                ) {
-                    Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color(0xFF1E88E5)))
-                }
+    Box(modifier = Modifier.width(105.dp).aspectRatio(2f / 3f).clip(RoundedCornerShape(8.dp)).background(Color(0xFF2C2C2C)).clickable(onClick = onClick)) {
+        if (!icon.isNullOrEmpty()) {
+            AsyncImage(model = icon, contentDescription = name,
+                modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        } else {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(Icons.Default.Movie, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(32.dp))
             }
         }
-        Text(text = name, color = Color(0xFFDDDDDD), fontSize = 11.sp, maxLines = 1,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp))
+        Box(modifier = Modifier.align(Alignment.TopStart).fillMaxWidth().background(Color.Black.copy(alpha = 0.5f)).padding(horizontal = 4.dp, vertical = 2.dp)) {
+            Text(text = name, color = Color.White, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (duration > 0) {
+            val progress = (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+            Box(modifier = Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.dp).background(Color(0xFF555555))) {
+                Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(progress).background(Color(0xFF1E88E5)))
+            }
+        }
     }
 }
 
