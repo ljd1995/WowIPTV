@@ -54,6 +54,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -226,11 +227,24 @@ fun LiveScreen(
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
+    val currentStreamUrl by rememberUpdatedState(streamUrl)
+    val currentIsPlaying by rememberUpdatedState(isPlaying)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_STOP) {
-                exoPlayer.stop()
-                exoPlayer.clearMediaItems()
+            when (event) {
+                Lifecycle.Event.ON_STOP -> {
+                    exoPlayer.stop()
+                    exoPlayer.clearMediaItems()
+                }
+                Lifecycle.Event.ON_START -> {
+                    if (currentStreamUrl.isNotEmpty() && currentIsPlaying) {
+                        exoPlayer.setMediaItem(MediaItem.fromUri(currentStreamUrl))
+                        exoPlayer.prepare()
+                        exoPlayer.playWhenReady = true
+                        isBuffering = true
+                    }
+                }
+                else -> {}
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
