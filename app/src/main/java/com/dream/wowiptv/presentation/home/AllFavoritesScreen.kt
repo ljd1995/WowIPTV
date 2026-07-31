@@ -86,12 +86,16 @@ fun AllFavoritesScreen(
                 ) {
                     items(items, key = { it.hashCode() }) { item ->
                         when (item) {
-                            is FavoriteStreamEntity -> FavGridCell(
+                            is FavoriteStreamEntity -> {
+                            val catName = data.liveCategoryNames[item.categoryId]
+                            FavGridCell(
                                 name = item.name,
                                 icon = item.iconUrl,
                                 badge = "LIVE",
+                                categoryName = catName,
                                 onClick = { onLiveClick(item.streamId, item.name) }
                             )
+                        }
                             is FavoriteVodEntity -> {
                                 val badge = if (item.type == "movie") "MOVIE" else "SERIES"
                                 val catName = if (item.type == "movie") data.vodCategoryNames[item.categoryId] else data.seriesCategoryNames[item.categoryId]

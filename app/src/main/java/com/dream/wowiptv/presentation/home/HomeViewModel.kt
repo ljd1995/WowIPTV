@@ -77,38 +77,32 @@ class HomeViewModel @Inject constructor(
         loadData()
     }
 
+    private suspend fun loadCategoryMaps(sourceId: Long): Triple<Map<Int, String>, Map<Int, String>, Map<Int, String>> {
+        val live = liveCategoryDao.getBySource(sourceId).first().associate { it.categoryId to it.name }
+        val vod = vodCategoryDao.getBySource(sourceId).first().associate { it.categoryId to it.name }
+        val series = seriesCategoryDao.getBySource(sourceId).first().associate { it.categoryId to it.name }
+        return Triple(live, vod, series)
+    }
+
     private fun loadData() {
         viewModelScope.launch {
             val source = sourceRepository.getActiveSource().first() ?: return@launch
 
-            data class CategoryMaps(
-                val live: Map<Int, String>,
-                val vod: Map<Int, String>,
-                val series: Map<Int, String>
+            val (liveCatMap, vodCatMap, seriesCatMap) = loadCategoryMaps(source.id)
+            _data.value = _data.value.copy(
+                liveCategoryNames = liveCatMap,
+                vodCategoryNames = vodCatMap,
+                seriesCategoryNames = seriesCatMap
             )
 
-            var catMaps = CategoryMaps(emptyMap(), emptyMap(), emptyMap())
-
             launch {
                 while (true) {
-                    catMaps = CategoryMaps(
-                        live = liveCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name },
-                        vod = vodCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name },
-                        series = seriesCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
-                    )
+                    val (lMap, vMap, sMap) = loadCategoryMaps(source.id)
                     _data.value = _data.value.copy(
-                        liveCategoryNames = catMaps.live,
-                        vodCategoryNames = catMaps.vod,
-                        seriesCategoryNames = catMaps.series
+                        liveCategoryNames = lMap,
+                        vodCategoryNames = vMap,
+                        seriesCategoryNames = sMap
                     )
-                    delay(10000)
-                }
-            }
-
-            delay(500)
-
-            launch {
-                while (true) {
                     val progress = watchProgressDao.getAllBySource(source.id).first()
                     val live = liveStreamDao.getBySource(source.id).first()
                     val vod = vodStreamDao.getBySource(source.id).first()
@@ -126,15 +120,15 @@ class HomeViewModel @Inject constructor(
                     val catNames = progress.associate { wp ->
                         val id = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_").toIntOrNull()
                         val name = when (wp.contentType) {
-                            "live" -> live.find { it.streamId == id }?.categoryId?.let { cid -> catMaps.live[cid] }
-                            "vod" -> vod.find { it.streamId == id }?.categoryId?.let { cid -> catMaps.vod[cid] }
-                            "series" -> series.find { it.seriesId == id }?.categoryId?.let { cid -> catMaps.series[cid] }
+                            "live" -> live.find { it.streamId == id }?.categoryId?.let { cid -> lMap[cid] }
+                            "vod" -> vod.find { it.streamId == id }?.categoryId?.let { cid -> vMap[cid] }
+                            "series" -> series.find { it.seriesId == id }?.categoryId?.let { cid -> sMap[cid] }
                             else -> null
                         }
                         wp.contentId to (name ?: "")
                     }.filter { it.value.isNotEmpty() }
                     _data.value = _data.value.copy(continueWatching = enriched.take(10), continueCategoryNames = catNames)
-                    delay(3000)
+                    delay(5000)
                 }
             }
 
