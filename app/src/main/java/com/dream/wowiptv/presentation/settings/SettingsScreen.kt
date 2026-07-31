@@ -89,10 +89,6 @@ fun SettingsScreen(
         prevSyncingIdsState.value = currentSyncingIds
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.refreshUserInfo()
-    }
-
     MaterialTheme(colorScheme = DarkColorScheme) {
         Scaffold(
             topBar = {
