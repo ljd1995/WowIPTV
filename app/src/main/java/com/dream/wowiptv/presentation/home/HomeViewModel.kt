@@ -17,8 +17,8 @@ import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.data.local.dao.WatchProgressDao
+import com.dream.wowiptv.data.local.SourcePreferences
 import com.dream.wowiptv.domain.repository.SourceRepository
-import com.dream.wowiptv.domain.usecase.GetUserInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -63,7 +63,7 @@ class HomeViewModel @Inject constructor(
     private val liveCategoryDao: LiveCategoryDao,
     private val vodCategoryDao: VodCategoryDao,
     private val seriesCategoryDao: SeriesCategoryDao,
-    private val getUserInfoUseCase: GetUserInfoUseCase
+    private val sourcePreferences: SourcePreferences
 ) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -170,10 +170,12 @@ class HomeViewModel @Inject constructor(
 
     private fun loadUserInfo() {
         viewModelScope.launch {
-            val info = getUserInfoUseCase()
-            if (info != null) {
-                _data.value = _data.value.copy(expiryDate = formatExpiry(info.expDate))
-            }
+            val source = sourceRepository.getActiveSource().first()
+            val expiry = sourcePreferences.expDate.first()
+            _data.value = _data.value.copy(
+                username = source?.username ?: "",
+                expiryDate = formatExpiry(expiry)
+            )
         }
     }
 
