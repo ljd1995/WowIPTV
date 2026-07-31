@@ -47,6 +47,7 @@ import coil.compose.AsyncImage
 import com.dream.wowiptv.R
 import com.dream.wowiptv.data.local.entity.FavoriteStreamEntity
 import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,6 +62,7 @@ fun AllFavoritesScreen(
     val data by viewModel.data.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
+        GradientBackground {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -70,10 +72,10 @@ fun AllFavoritesScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = Color.White)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1A1A1A))
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
             },
-            containerColor = Color(0xFF1E1E1E)
+            containerColor = Color.Transparent
         ) { innerPadding ->
             val items = data.favoriteStreams + data.favoriteMovies + data.favoriteSeries
             if (items.isEmpty()) {
@@ -116,6 +118,7 @@ fun AllFavoritesScreen(
                 }
             }
         }
+    }
     }
 }
 

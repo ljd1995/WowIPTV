@@ -14,11 +14,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -55,6 +54,7 @@ import com.dream.wowiptv.R
 import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 
@@ -75,6 +75,7 @@ fun AllItemsScreen(
     val tabs = listOf(R.string.home_tab_all, R.string.home_tab_live, R.string.home_tab_movies, R.string.home_tab_series)
 
     MaterialTheme(colorScheme = DarkColorScheme) {
+        GradientBackground {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -84,18 +85,34 @@ fun AllItemsScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = Color.White)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1A1A1A))
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
             },
-            containerColor = Color(0xFF1E1E1E)
+            containerColor = Color.Transparent
         ) { innerPadding ->
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            val items: List<Any> = if (sourceType == "m3u") {
+                data.recentLive
+            } else {
+                when (tab) {
+                    1 -> data.recentLive
+                    2 -> data.recentMovies
+                    3 -> data.recentSeries
+                    else -> data.recentLive + data.recentMovies + data.recentSeries
+                }
+            }
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 12.dp),
+                contentPadding = PaddingValues(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 if (sourceType != "m3u") {
-                    item {
-                        Spacer(modifier = Modifier.height(4.dp))
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             tabs.forEachIndexed { idx, label ->
                                 FilterChip(
@@ -108,69 +125,56 @@ fun AllItemsScreen(
                     }
                 }
 
-                val items: List<Any> = if (sourceType == "m3u") {
-                    data.recentLive
-                } else {
-                    when (tab) {
-                        1 -> data.recentLive
-                        2 -> data.recentMovies
-                        3 -> data.recentSeries
-                        else -> data.recentLive + data.recentMovies + data.recentSeries
-                    }
-                }
-
                 if (items.isEmpty()) {
-                    item {
-                        Text(stringResource(R.string.common_empty), color = Color(0xFF888888), modifier = Modifier.padding(vertical = 32.dp))
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Text(
+                            stringResource(R.string.common_empty),
+                            color = Color(0xFF888888),
+                            modifier = Modifier.padding(vertical = 32.dp)
+                        )
                     }
                 } else {
-                    item {
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(3),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth().height(((items.size / 3 + 1) * 180).dp)
-                        ) {
-                            items(items, key = { it.hashCode() }) { item ->
-                                when (item) {
-                                    is LiveStreamEntity -> {
-                                        val catName = data.liveCategoryNames[item.categoryId]
-                                        GridCell(
-                                            icon = item.streamIcon,
-                                            name = item.name,
-                                            badge = "LIVE",
-                                            categoryName = catName,
-                                            onClick = { onLiveClick(item.streamId, item.name) }
-                                        )
-                                    }
-                                    is VodStreamEntity -> {
-                                        val catName = data.vodCategoryNames[item.categoryId]
-                                        GridCell(
-                                            icon = item.streamIcon,
-                                            name = item.name.orEmpty(),
-                                            badge = "MOVIE",
-                                            categoryName = catName,
-                                            onClick = { onMovieClick(item.streamId) }
-                                        )
-                                    }
-                                    is SeriesEntity -> {
-                                        val catName = data.seriesCategoryNames[item.categoryId]
-                                        GridCell(
-                                            icon = item.cover,
-                                            name = item.name.orEmpty(),
-                                            badge = "SERIES",
-                                            categoryName = catName,
-                                            onClick = { onSeriesClick(item.seriesId) }
-                                        )
-                                    }
-                                }
+                    items(items, key = { it.hashCode() }) { item ->
+                        when (item) {
+                            is LiveStreamEntity -> {
+                                val catName = data.liveCategoryNames[item.categoryId]
+                                GridCell(
+                                    icon = item.streamIcon,
+                                    name = item.name,
+                                    badge = "LIVE",
+                                    categoryName = catName,
+                                    onClick = { onLiveClick(item.streamId, item.name) }
+                                )
+                            }
+                            is VodStreamEntity -> {
+                                val catName = data.vodCategoryNames[item.categoryId]
+                                GridCell(
+                                    icon = item.streamIcon,
+                                    name = item.name.orEmpty(),
+                                    badge = "MOVIE",
+                                    categoryName = catName,
+                                    onClick = { onMovieClick(item.streamId) }
+                                )
+                            }
+                            is SeriesEntity -> {
+                                val catName = data.seriesCategoryNames[item.categoryId]
+                                GridCell(
+                                    icon = item.cover,
+                                    name = item.name.orEmpty(),
+                                    badge = "SERIES",
+                                    categoryName = catName,
+                                    onClick = { onSeriesClick(item.seriesId) }
+                                )
                             }
                         }
                     }
                 }
-                item { Spacer(modifier = Modifier.height(16.dp)) }
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
+    }
     }
 }
 

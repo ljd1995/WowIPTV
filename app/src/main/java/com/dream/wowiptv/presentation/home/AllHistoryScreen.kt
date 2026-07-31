@@ -50,6 +50,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.dream.wowiptv.R
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
 private fun decodeName(raw: String): String {
@@ -68,6 +69,7 @@ fun AllHistoryScreen(
     val data by viewModel.data.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
+        GradientBackground {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -77,10 +79,10 @@ fun AllHistoryScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = Color.White)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1A1A1A))
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
             },
-            containerColor = Color(0xFF1E1E1E)
+            containerColor = Color.Transparent
         ) { innerPadding ->
             if (data.continueWatching.isEmpty()) {
                 Text(stringResource(R.string.home_no_history), color = Color(0xFF888888), modifier = Modifier.fillMaxSize().padding(innerPadding).wrapContentSize(Alignment.Center))
@@ -104,6 +106,7 @@ fun AllHistoryScreen(
                 }
             }
         }
+    }
     }
 }
 

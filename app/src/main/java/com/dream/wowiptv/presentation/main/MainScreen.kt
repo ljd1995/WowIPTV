@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -87,6 +88,7 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
 
     Scaffold(
         containerColor = Color(0xFF1A1A1A),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (!hideBottomBar) {
                 MaterialTheme(colorScheme = DarkColorScheme) {

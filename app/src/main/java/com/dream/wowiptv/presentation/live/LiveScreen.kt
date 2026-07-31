@@ -21,6 +21,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -97,6 +99,7 @@ import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
@@ -272,12 +275,13 @@ fun LiveScreen(
             onOpenEpg = { currentStream?.let { onOpenEpg(it.id) } }
         )
     } else {
+        GradientBackground {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
                 title = { Text(stringResource(R.string.live_title), color = Color.White) },
-                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+                windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1A1A1A),
+                    containerColor = Color.Transparent,
                     titleContentColor = Color.White
                 )
             )
@@ -321,6 +325,7 @@ fun LiveScreen(
                 },
                 modifier = Modifier.weight(0.6f)
             )
+        }
         }
     }
 }
@@ -708,7 +713,7 @@ private fun CategorySidebar(
     onSelectCategory: (Int?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxHeight().background(DarkSurface)) {
+    Column(modifier = modifier.fillMaxHeight()) {
         when (categoriesState) {
             is UiState.Loading -> LoadingIndicator()
             is UiState.Error -> ErrorView(message = categoriesState.message, onRetry = {})

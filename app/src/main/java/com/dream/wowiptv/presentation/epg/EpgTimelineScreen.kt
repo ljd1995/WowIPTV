@@ -59,6 +59,7 @@ import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveStream
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.LiveRed
@@ -100,8 +101,9 @@ fun EpgTimelineScreen(
     }
 
     MaterialTheme(colorScheme = DarkColorScheme) {
+        GradientBackground {
         Scaffold(
-            containerColor = Color(0xFF1E1E1E),
+            containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
                     title = { Text("EPG", color = Color.White) },
@@ -134,7 +136,7 @@ fun EpgTimelineScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF1A1A1A),
+                        containerColor = Color.Transparent,
                         titleContentColor = Color.White,
                         navigationIconContentColor = Color.White
                     )
@@ -198,6 +200,7 @@ fun EpgTimelineScreen(
                 ProgramDetailContent(program = program)
             }
         }
+    }
     }
 }
 

@@ -51,6 +51,7 @@ import com.dream.wowiptv.domain.model.VodInfo
 import com.dream.wowiptv.domain.usecase.GetVodInfoUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.AccentBlue
@@ -122,7 +123,8 @@ fun MovieDetailScreen(
             val info = state.data
 
             MaterialTheme(colorScheme = DarkColorScheme) {
-            Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+            GradientBackground {
+            Box(modifier = Modifier.fillMaxSize()) {
                 val savedPos by viewModel.savedPosition.collectAsState()
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(
@@ -309,12 +311,13 @@ fun MovieDetailScreen(
                             Icon(Icons.Filled.PlayArrow, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = stringResource(R.string.common_play))
-                        }
                     }
                 }
             }
             }
         }
+    }
+    }
     }
 }
 

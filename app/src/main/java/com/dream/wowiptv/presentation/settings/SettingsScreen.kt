@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -80,6 +81,7 @@ import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.SuccessGreen
@@ -144,18 +146,19 @@ fun SettingsScreen(
     LaunchedEffect(Unit) { refreshCacheSize() }
 
     MaterialTheme(colorScheme = DarkColorScheme) {
+        GradientBackground {
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.settings_title)) },
-                    windowInsets = WindowInsets(0, 0, 0, 0),
+                    windowInsets = WindowInsets.statusBars,
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFF1A1A1A),
+                        containerColor = Color.Transparent,
                         titleContentColor = Color.White
                     )
                 )
             },
-            containerColor = Color(0xFF1E1E1E)
+            containerColor = Color.Transparent
         ) { innerPadding ->
             Column(
                 modifier = Modifier
@@ -314,6 +317,7 @@ fun SettingsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 AboutCard(versionName = viewModel.versionName)
             }
+        }
         }
     }
 }

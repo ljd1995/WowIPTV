@@ -20,7 +20,6 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         window.setBackgroundDrawable(ColorDrawable(Color.parseColor("#1A1A1A")))
-        window.statusBarColor = Color.parseColor("#1A1A1A")
         window.navigationBarColor = Color.parseColor("#1A1A1A")
         WindowInsetsControllerCompat(window, window.decorView).let { controller ->
             controller.isAppearanceLightStatusBars = false

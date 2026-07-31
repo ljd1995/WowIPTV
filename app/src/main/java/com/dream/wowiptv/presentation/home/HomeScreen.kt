@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -70,6 +72,7 @@ import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.LiveDot
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import kotlinx.coroutines.delay
@@ -94,36 +97,7 @@ fun HomeScreen(
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color(0xFF201E2A), Color(0xFF141318))
-                    )
-                )
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(280.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color(0xFF6366F1).copy(alpha = 0.14f), Color.Transparent)
-                        )
-                    )
-            )
-            Box(
-                modifier = Modifier
-                    .width(240.dp)
-                    .height(320.dp)
-                    .align(Alignment.TopEnd)
-                    .background(
-                        Brush.radialGradient(
-                            listOf(Color(0xFFA855F7).copy(alpha = 0.10f), Color.Transparent)
-                        )
-                    )
-            )
+        GradientBackground {
             Column(modifier = Modifier.fillMaxSize()) {
                 TopAppBar(
                     title = {
@@ -163,7 +137,7 @@ fun HomeScreen(
                             }
                         }
                     },
-                    windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+                    windowInsets = WindowInsets.statusBars,
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
                         titleContentColor = Color.White

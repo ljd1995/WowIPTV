@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -64,6 +66,7 @@ import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.SeriesCategory
 import com.dream.wowiptv.domain.model.SeriesItem
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
@@ -90,12 +93,13 @@ fun SeriesScreen(
     }
 
     MaterialTheme(colorScheme = DarkColorScheme) {
-        Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        GradientBackground {
+        Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
                 title = { Text(stringResource(R.string.series_title), color = Color.White) },
-                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+                windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1A1A1A),
+                    containerColor = Color.Transparent,
                     titleContentColor = Color.White
                 )
             )
@@ -223,6 +227,7 @@ fun SeriesScreen(
                     }
                 }
             }
+        }
         }
     }
 }

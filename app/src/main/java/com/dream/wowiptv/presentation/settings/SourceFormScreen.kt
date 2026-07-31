@@ -57,6 +57,7 @@ import com.dream.wowiptv.R
 import com.dream.wowiptv.data.parser.M3uPlaylistParser
 import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import kotlinx.coroutines.Dispatchers
@@ -190,6 +191,7 @@ private fun SourceFormInner(
     }
 
     MaterialTheme(colorScheme = DarkColorScheme) {
+        GradientBackground {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -200,12 +202,12 @@ private fun SourceFormInner(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1A1A1A),
+                    containerColor = Color.Transparent,
                     titleContentColor = Color.White
                 )
             )
         },
-        containerColor = Color(0xFF1E1E1E)
+        containerColor = Color.Transparent
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -411,6 +413,7 @@ private fun SourceFormInner(
             }
         }
     }
+        }
     }
 }
 

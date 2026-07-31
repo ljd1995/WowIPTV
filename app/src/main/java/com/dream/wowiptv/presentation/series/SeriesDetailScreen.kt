@@ -65,6 +65,7 @@ import com.dream.wowiptv.domain.usecase.GetSeriesInfoUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
+import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.AccentBlue
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
@@ -146,7 +147,8 @@ private fun SeriesDetailContent(
     val allEpisodes = info.episodes.values.flatten()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
-    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    GradientBackground {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
@@ -359,6 +361,7 @@ private fun SeriesDetailContent(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
     }
     }
 }
