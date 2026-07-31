@@ -1,5 +1,8 @@
 package com.dream.wowiptv.presentation.epg
 
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -19,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -52,12 +57,13 @@ import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.LiveRed
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.max
 
 private val hourWidth = 120.dp
-private val totalHours = 6
+private val totalHours = 24
 private val timelineWidth = hourWidth * totalHours
 private val channelRowHeight = 56.dp
 private val channelLabelWidth = 120.dp
@@ -75,6 +81,10 @@ fun EpgTimelineScreen(
 
     var selectedProgram by remember { mutableStateOf<EpgEntry?>(null) }
 
+    val context = LocalContext.current
+    val activity = context as? ComponentActivity
+    val isLandscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     MaterialTheme(colorScheme = DarkColorScheme) {
         Scaffold(
             containerColor = Color(0xFF1E1E1E),
@@ -84,6 +94,22 @@ fun EpgTimelineScreen(
                     navigationIcon = {
                         IconButton(onClick = onNavigateBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            val a = activity ?: return@IconButton
+                            if (isLandscape) {
+                                a.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                            } else {
+                                a.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.ScreenRotation,
+                                contentDescription = "横竖屏切换",
+                                tint = Color.White
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -165,7 +191,14 @@ private fun EpgGrid(
     val timelineScrollState = rememberScrollState()
     val verticalScrollState = rememberScrollState()
     val currentTimeMs = remember { System.currentTimeMillis() }
-    val timelineStartMs = remember { currentTimeMs - 2 * 3600 * 1000L }
+    val timelineStartMs = remember {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        cal.timeInMillis
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -174,7 +207,16 @@ private fun EpgGrid(
                 .horizontalScroll(timelineScrollState)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
-            Spacer(modifier = Modifier.width(channelLabelWidth))
+            Text(
+                text = "All Channels",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .width(channelLabelWidth)
+                    .padding(horizontal = 4.dp, vertical = 6.dp)
+            )
             Row(modifier = Modifier.width(timelineWidth)) {
                 for (i in 0 until totalHours) {
                     val hourTime = timelineStartMs + i * 3600 * 1000L
