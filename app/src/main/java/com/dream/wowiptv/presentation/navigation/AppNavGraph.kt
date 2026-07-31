@@ -16,13 +16,24 @@ import com.dream.wowiptv.presentation.player.PlayerScreen
 import com.dream.wowiptv.presentation.series.SeriesDetailScreen
 import com.dream.wowiptv.presentation.settings.SourceFormScreen
 import com.dream.wowiptv.presentation.settings.SettingsScreen
+import com.dream.wowiptv.presentation.splash.SplashScreen
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Routes.MAIN
+        startDestination = Routes.SPLASH
     ) {
+        composable(Routes.SPLASH) {
+            SplashScreen(
+                onFinished = {
+                    navController.navigate(Routes.mainRoute()) {
+                        popUpTo(Routes.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(
             route = Routes.MAIN,
             arguments = listOf(navArgument("liveStreamId") { type = NavType.IntType; defaultValue = -1 })

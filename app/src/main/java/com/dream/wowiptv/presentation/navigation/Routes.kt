@@ -1,6 +1,7 @@
 package com.dream.wowiptv.presentation.navigation
 
 object Routes {
+    const val SPLASH = "splash"
     const val MAIN = "main?liveStreamId={liveStreamId}"
     const val ALL_ITEMS = "all_items/{tab}"
 
