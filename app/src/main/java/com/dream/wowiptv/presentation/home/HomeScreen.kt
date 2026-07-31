@@ -376,31 +376,32 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
                         )
                     )
                 )
-                .padding(horizontal = 6.dp, vertical = 2.dp),
-            contentAlignment = Alignment.CenterStart
+                .padding(horizontal = 6.dp, vertical = 1.dp),
+            contentAlignment = Alignment.TopStart
         ) {
-            Column {
-                Text(
-                    text = name,
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                if (!categoryName.isNullOrEmpty()) {
-                    Text(
-                        text = categoryName,
-                        color = Color(0xFF999999),
-                        fontSize = 8.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                    Column {
+                        Text(
+                            text = name,
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (!categoryName.isNullOrEmpty()) {
+                            Text(
+                                text = categoryName,
+                                color = Color(0xFF999999),
+                                fontSize = 8.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                lineHeight = 8.sp
+                            )
+                        }
+                    }
             }
         }
     }
-}
 
 @Composable
 private fun FavCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
