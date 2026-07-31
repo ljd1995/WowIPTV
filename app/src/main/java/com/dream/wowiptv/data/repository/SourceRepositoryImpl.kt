@@ -63,6 +63,7 @@ class SourceRepositoryImpl @Inject constructor(
             port = source.port,
             username = source.username,
             password = source.password,
+            type = existing?.type ?: source.type,
             isActive = existing?.isActive ?: false
         )
         sourceDao.update(entity)

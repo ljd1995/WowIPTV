@@ -19,7 +19,8 @@ object M3uPlaylistParser {
             val line = lines[i].trim()
             if (line.startsWith("#EXTINF")) {
                 val attrs = parseAttributes(line)
-                val name = line.substringAfterLast(",").trim().ifBlank { attrs["tvg-name"] ?: "" }
+                val name = attrs["tvg-name"]?.takeIf { it.isNotBlank() }
+                    ?: line.substringAfterLast(",").trim().ifBlank { "频道 ${channels.size + 1}" }
                 var url = ""
                 var j = i + 1
                 while (j < lines.size) {
