@@ -53,11 +53,12 @@ fun LiveStreamDto.toDomain(): LiveStream {
 }
 
 fun ShortEpgResponseDto.toDomain(streamId: Int): List<EpgEntry> {
-    return epgListings?.map { it.toDomain() } ?: emptyList()
+    return epgListings?.map { it.toDomain(streamId) } ?: emptyList()
 }
 
-fun EpgEntryDto.toDomain(): EpgEntry {
+fun EpgEntryDto.toDomain(streamId: Int): EpgEntry {
     return EpgEntry(
+        streamId = streamId,
         title = title.orEmpty(),
         description = description,
         startTime = startTimestamp ?: 0L,
@@ -336,6 +337,7 @@ fun LiveStreamEntity.toDomain(): LiveStream {
 
 fun EpgEntity.toDomain(): EpgEntry {
     return EpgEntry(
+        streamId = streamId,
         title = title.orEmpty(),
         description = description,
         startTime = startTimestamp ?: 0L,

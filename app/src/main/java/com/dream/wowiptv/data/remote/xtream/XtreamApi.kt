@@ -1,6 +1,7 @@
 package com.dream.wowiptv.data.remote.xtream
 
 import com.dream.wowiptv.data.remote.xtream.dto.AuthResponseDto
+import com.dream.wowiptv.data.remote.xtream.dto.EpgEntryDto
 import com.dream.wowiptv.data.remote.xtream.dto.LiveCategoryDto
 import com.dream.wowiptv.data.remote.xtream.dto.LiveStreamDto
 import com.dream.wowiptv.data.remote.xtream.dto.SeriesCategoryDto
@@ -44,6 +45,13 @@ interface XtreamApi {
         @Query("stream_id") streamId: Int,
         @Query("limit") limit: Int = 4
     ): ShortEpgResponseDto
+
+    @GET("player_api.php")
+    suspend fun getSimpleDataTable(
+        @Query("username") username: String,
+        @Query("password") password: String,
+        @Query("action") action: String = "get_simple_data_table"
+    ): Map<String, List<EpgEntryDto>>
 
     @GET("player_api.php")
     suspend fun getVodCategories(

@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface EpgDao {
 
+    @Query("SELECT * FROM epg_entries WHERE sourceId = :sourceId")
+    fun getBySource(sourceId: Long): Flow<List<EpgEntity>>
+
     @Query("SELECT * FROM epg_entries WHERE streamId = :streamId AND sourceId = :sourceId")
     fun getByStream(streamId: Int, sourceId: Long): Flow<List<EpgEntity>>
 
