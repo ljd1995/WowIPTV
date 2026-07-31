@@ -25,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -323,12 +324,21 @@ private fun SeriesDetailContent(
                             modifier = Modifier.background(Color(0xFF2C2C2C), RoundedCornerShape(12.dp)).padding(8.dp)
                         ) {
                             seasonEpisodes.forEachIndexed { index, episode ->
+                                val savedPos = episodePositions[episode.id] ?: 0L
                                 EpisodeItem(
                                     episode = episode,
-                                    savedPosition = episodePositions[episode.id] ?: 0L,
+                                    savedPosition = savedPos,
                                     onPlay = {
                                         val episodeTitle = "${series.name} - ${selectedSeason.name} E${episode.episodeNum}"
-                                        onPlayEpisode(episode.id, episodeTitle, episodePositions[episode.id] ?: 0L)
+                                        onPlayEpisode(episode.id, episodeTitle, 0L)
+                                    },
+                                    onContinue = if (savedPos > 0) {
+                                        {
+                                            val episodeTitle = "${series.name} - ${selectedSeason.name} E${episode.episodeNum}"
+                                            onPlayEpisode(episode.id, episodeTitle, savedPos)
+                                        }
+                                    } else {
+                                        null
                                     }
                                 )
                                 if (index < seasonEpisodes.lastIndex) {
@@ -351,6 +361,7 @@ private fun EpisodeItem(
     episode: Episode,
     savedPosition: Long = 0L,
     onPlay: () -> Unit,
+    onContinue: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -364,17 +375,9 @@ private fun EpisodeItem(
             text = episode.episodeNum.toString().padStart(2, '0'),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = if (savedPosition > 0) Color(0xFF4CAF50) else AccentBlue,
+            color = AccentBlue,
             modifier = Modifier.width(28.dp)
         )
-        if (savedPosition > 0) {
-            Text(
-                text = "▶",
-                color = Color(0xFF4CAF50),
-                fontSize = 10.sp,
-                modifier = Modifier.width(14.dp)
-            )
-        }
         Spacer(modifier = Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
@@ -395,11 +398,33 @@ private fun EpisodeItem(
             }
         }
         Spacer(modifier = Modifier.width(8.dp))
-        Icon(
-            imageVector = Icons.Filled.PlayArrow,
-            contentDescription = "播放",
-            tint = AccentBlue,
-            modifier = Modifier.size(20.dp)
-        )
+        if (savedPosition > 0 && onContinue != null) {
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = "继续播放",
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier
+                    .size(22.dp)
+                    .clickable(onClick = onContinue)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                imageVector = Icons.Filled.Replay,
+                contentDescription = "重新播放",
+                tint = AccentBlue,
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable(onClick = onPlay)
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = "播放",
+                tint = AccentBlue,
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable(onClick = onPlay)
+            )
+        }
     }
 }
