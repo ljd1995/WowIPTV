@@ -5,12 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveStream
+import com.dream.wowiptv.domain.repository.LiveTvRepository
 import com.dream.wowiptv.domain.usecase.GetLiveStreamsUseCase
-import com.dream.wowiptv.domain.usecase.GetShortEpgUseCase
+import com.dream.wowiptv.domain.usecase.RefreshAllEpgUseCase
 import com.dream.wowiptv.presentation.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,7 +29,8 @@ import javax.inject.Inject
 @HiltViewModel
 class EpgViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val getShortEpgUseCase: GetShortEpgUseCase,
+    private val liveTvRepository: LiveTvRepository,
+    private val refreshAllEpgUseCase: RefreshAllEpgUseCase,
     private val getLiveStreamsUseCase: GetLiveStreamsUseCase
 ) : ViewModel() {
 
@@ -38,9 +39,10 @@ class EpgViewModel @Inject constructor(
     private val _selectedChannelId = MutableStateFlow(streamId)
     val selectedChannelId: StateFlow<Int?> = _selectedChannelId.asStateFlow()
 
-    val channels: StateFlow<UiState<List<LiveStream>>>
+    private val _epgData = MutableStateFlow<UiState<Map<Int, List<EpgEntry>>>>(UiState.Loading)
+    val epgData: StateFlow<UiState<Map<Int, List<EpgEntry>>>> = _epgData.asStateFlow()
 
-    val epgEntries: StateFlow<UiState<List<EpgEntry>>>
+    val channels: StateFlow<UiState<List<LiveStream>>>
 
     init {
         val channelsFlow = getLiveStreamsUseCase(null)
@@ -59,18 +61,7 @@ class EpgViewModel @Inject constructor(
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
         }
 
-        epgEntries = _selectedChannelId
-            .flatMapLatest { id ->
-                if (id != null) {
-                    getShortEpgUseCase(id)
-                        .map { UiState.Success(it) as UiState<List<EpgEntry>> }
-                        .catch { emit(UiState.Error(it.message ?: "Failed to load EPG")) }
-                        .onStart { emit(UiState.Loading) }
-                } else {
-                    flowOf(UiState.Empty)
-                }
-            }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
+        loadEpg()
 
         if (streamId == null) {
             viewModelScope.launch {
@@ -82,7 +73,35 @@ class EpgViewModel @Inject constructor(
         }
     }
 
+    private fun loadEpg() {
+        viewModelScope.launch {
+            val cached = runCatching { liveTvRepository.getAllEpg().first() }.getOrNull()
+            if (cached != null && cached.isNotEmpty()) {
+                _epgData.value = UiState.Success(cached)
+                return@launch
+            }
+            _epgData.value = UiState.Loading
+            runCatching { refreshAllEpgUseCase() }
+                .onSuccess {
+                    val refreshed = liveTvRepository.getAllEpg().first()
+                    _epgData.value = UiState.Success(refreshed)
+                }
+                .onFailure { e ->
+                    _epgData.value = UiState.Error(e.message ?: "EPG 加载失败")
+                }
+        }
+    }
+
     fun selectChannel(id: Int) {
-        _selectedChannelId.value = id
+        if (_selectedChannelId.value != id) {
+            _selectedChannelId.value = id
+        }
+        viewModelScope.launch {
+            runCatching { liveTvRepository.refreshEpg(id) }
+            val updated = runCatching { liveTvRepository.getAllEpg().first() }.getOrNull()
+            if (updated != null) {
+                _epgData.value = UiState.Success(updated)
+            }
+        }
     }
 }
