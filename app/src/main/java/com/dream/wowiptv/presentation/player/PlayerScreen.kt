@@ -383,16 +383,55 @@ fun PlayerScreen(
                         modifier = Modifier.width(78.dp)
                     )
 
-                    IconButton(
-                        onClick = { showVolumeSlider = !showVolumeSlider },
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = "音量",
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
+                    Box {
+                        IconButton(
+                            onClick = { showVolumeSlider = !showVolumeSlider },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                contentDescription = "音量",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        if (showOverlay && showVolumeSlider) {
+                            val trackHeight = 160.dp
+                            Box(
+                                modifier = Modifier
+                                    .offset(x = 2.dp, y = (-170).dp)
+                                    .width(24.dp)
+                                    .height(trackHeight)
+                                    .background(Color(0xCC000000), RoundedCornerShape(12.dp))
+                                    .pointerInput(maxVolume) {
+                                        var dragStartVolume = volume
+                                        var totalDragY = 0f
+                                        detectDragGestures(
+                                            onDragStart = {
+                                                dragStartVolume = volume
+                                                totalDragY = 0f
+                                            },
+                                            onDrag = { change, dragAmount ->
+                                                change.consume()
+                                                totalDragY += dragAmount.y
+                                                val newVol = (dragStartVolume - totalDragY / trackHeight.value * maxVolume)
+                                                    .toInt()
+                                                    .coerceIn(0, maxVolume)
+                                                audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
+                                                volume = newVol
+                                            }
+                                        )
+                                    },
+                                contentAlignment = Alignment.BottomCenter
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .fillMaxHeight(volume / maxVolume.toFloat())
+                                        .background(Color(0xFF1E88E5), RoundedCornerShape(12.dp))
+                                )
+                            }
+                        }
                     }
 
                     Box {
@@ -471,50 +510,11 @@ fun PlayerScreen(
                         }
                     }
                 }
-
-                if (showOverlay && showVolumeSlider) {
-                    val trackHeight = 160.dp
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                                .offset(x = (-30).dp, y = (-38).dp)
-                                .width(24.dp)
-                                .height(trackHeight)
-                                .background(Color(0xCC000000), RoundedCornerShape(12.dp))
-                                .pointerInput(maxVolume) {
-                                    var dragStartVolume = volume
-                                    var totalDragY = 0f
-                                    detectDragGestures(
-                                        onDragStart = {
-                                            dragStartVolume = volume
-                                            totalDragY = 0f
-                                        },
-                                        onDrag = { change, dragAmount ->
-                                            change.consume()
-                                            totalDragY += dragAmount.y
-                                            val newVol = (dragStartVolume - totalDragY / trackHeight.value * maxVolume)
-                                                .toInt()
-                                                .coerceIn(0, maxVolume)
-                                            audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
-                                            volume = newVol
-                                        }
-                                    )
-                                },
-                            contentAlignment = Alignment.BottomCenter
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight(volume / maxVolume.toFloat())
-                                    .background(Color(0xFF1E88E5), RoundedCornerShape(12.dp))
-                            )
-                        }
-                    }
-                }
             }
         }
     }
     }
+}
 
 private fun formatTime(ms: Long): String {
     val totalSec = ms / 1000
