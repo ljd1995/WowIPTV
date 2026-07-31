@@ -481,7 +481,26 @@ private fun ContinueCard(name: String, icon: String? = null, badge: String? = nu
                 .fillMaxWidth()
         ) {
             Column {
+                val formattedRating = formatRating(rating)
                 if (duration > 0) {
+                    if (formattedRating != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Star,
+                                contentDescription = null,
+                                tint = Color(0xFFFFD700),
+                                modifier = Modifier.size(9.dp)
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(
+                                text = formattedRating,
+                                color = Color(0xFFFFD700),
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Bold,
+                                lineHeight = 8.sp
+                            )
+                        }
+                    }
                     val p = (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
                     Box(
                         modifier = Modifier
@@ -513,8 +532,7 @@ private fun ContinueCard(name: String, icon: String? = null, badge: String? = nu
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Column {
-                        val formattedRating = formatRating(rating)
-                        if (formattedRating != null) {
+                        if (formattedRating != null && duration <= 0) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     imageVector = Icons.Filled.Star,
