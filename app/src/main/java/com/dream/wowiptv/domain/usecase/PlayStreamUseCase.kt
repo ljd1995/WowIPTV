@@ -8,7 +8,7 @@ class PlayStreamUseCase @Inject constructor(
     private val sourceRepository: SourceRepository
 ) {
     sealed class StreamType {
-        data class Live(val streamId: Int, val containerExtension: String = "ts") : StreamType()
+        data class Live(val streamId: Int, val containerExtension: String = "ts", val m3uUrl: String? = null) : StreamType()
         data class Vod(val vodId: Int, val containerExtension: String = "mp4") : StreamType()
         data class Series(val episodeId: String, val containerExtension: String = "mp4") : StreamType()
     }
@@ -16,6 +16,12 @@ class PlayStreamUseCase @Inject constructor(
     suspend operator fun invoke(type: StreamType): String {
         val source = sourceRepository.getActiveSource().first()
             ?: throw IllegalStateException("No active source selected")
+        if (source.type == "m3u") {
+            return when (type) {
+                is StreamType.Live -> type.m3uUrl ?: throw IllegalStateException("M3U 频道无播放地址")
+                else -> throw IllegalStateException("M3U 源不支持点播/剧集")
+            }
+        }
         val base = "http://${source.serverUrl}:${source.port}"
         val credentials = "${source.username}/${source.password}"
         return when (type) {

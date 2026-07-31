@@ -155,7 +155,7 @@ class LiveViewModel @Inject constructor(
         _streamUrl.value = ""
         viewModelScope.launch {
             try {
-                val url = playStreamUseCase(PlayStreamUseCase.StreamType.Live(stream.id))
+                val url = playStreamUseCase(PlayStreamUseCase.StreamType.Live(stream.id, m3uUrl = stream.m3uUrl))
                 _streamUrl.value = url
             } catch (_: Exception) {
                 _streamUrl.value = ""
