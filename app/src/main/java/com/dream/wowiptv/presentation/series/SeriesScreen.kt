@@ -5,12 +5,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -22,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,8 +47,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -190,11 +196,13 @@ fun SeriesScreen(
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
                                 ) {
                                     items(series.data, key = { it.id }) { item ->
+                                        val catMap = (categoriesState as? UiState.Success)?.data?.associate { it.id to it.name }.orEmpty()
                                         SeriesCoverItem(
                                             series = item,
                                             onClick = { onSeriesClick(item.id) },
                                             isFavorite = seriesFavoriteIds.contains(item.id),
-                                            onToggleFavorite = { viewModel.toggleFavorite(item.id, item.name, item.cover, item.categoryId) }
+                                            onToggleFavorite = { viewModel.toggleFavorite(item.id, item.name, item.cover, item.categoryId) },
+                                            categoryName = catMap[item.categoryId]
                                         )
                                     }
                                 }
@@ -213,6 +221,7 @@ private fun SeriesCoverItem(
     onClick: () -> Unit,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
+    categoryName: String? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -249,19 +258,66 @@ private fun SeriesCoverItem(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.7f),
+                                Color.Black.copy(alpha = 0.85f)
+                            )
+                        )
+                    )
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                contentAlignment = Alignment.CenterStart
             ) {
-                Text(
-                    text = series.name,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column {
+                    val formattedRating = formatRating(series.rating)
+                    if (formattedRating != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Star,
+                                contentDescription = null,
+                                tint = Color(0xFFFFD700),
+                                modifier = Modifier.size(9.dp)
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(
+                                text = formattedRating,
+                                color = Color(0xFFFFD700),
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Bold,
+                                lineHeight = 8.sp
+                            )
+                        }
+                    }
+                    Text(
+                        text = series.name,
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (!categoryName.isNullOrEmpty()) {
+                        Text(
+                            text = categoryName,
+                            color = Color(0xFF999999),
+                            fontSize = 8.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            lineHeight = 8.sp,
+                            modifier = Modifier.padding(bottom = 2.dp)
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+private fun formatRating(raw: String?): String? {
+    if (raw.isNullOrBlank()) return null
+    val d = raw.trim().substringBefore(" ").toDoubleOrNull() ?: return null
+    if (d <= 0) return null
+    return if (d % 1.0 == 0.0) d.toInt().toString() else "%.1f".format(d)
 }

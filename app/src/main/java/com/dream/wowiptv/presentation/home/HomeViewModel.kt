@@ -48,6 +48,8 @@ data class HomeSection(
     val vodCategoryNames: Map<Int, String> = emptyMap(),
     val seriesCategoryNames: Map<Int, String> = emptyMap(),
     val continueCategoryNames: Map<String, String> = emptyMap(),
+    val vodRating: Map<Int, String> = emptyMap(),
+    val seriesRating: Map<Int, String> = emptyMap(),
     val isRefreshing: Boolean = false
 )
 
@@ -107,6 +109,8 @@ class HomeViewModel @Inject constructor(
                     val live = liveStreamDao.getBySource(source.id).first()
                     val vod = vodStreamDao.getBySource(source.id).first()
                     val series = seriesDao.getBySource(source.id).first()
+                    val (vodRatingMap, seriesRatingMap) = buildRatingMaps(vod, series)
+                    _data.value = _data.value.copy(vodRating = vodRatingMap, seriesRating = seriesRatingMap)
                     android.util.Log.d("HomeVM", "continue watching: ${progress.size} items")
                     val enriched = progress.map { wp ->
                         val icon = when (wp.contentType) {
@@ -138,6 +142,7 @@ class HomeViewModel @Inject constructor(
                 val live = liveStreamDao.getBySource(source.id).first()
                 val vod = vodStreamDao.getBySource(source.id).first()
                 val series = seriesDao.getBySource(source.id).first()
+                val (vodRatingMap, seriesRatingMap) = buildRatingMaps(vod, series)
 
                 val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 val cal = Calendar.getInstance()
@@ -160,12 +165,20 @@ class HomeViewModel @Inject constructor(
                     favoriteSeries = favVods.filter { it.type == "series" },
                     recentLive = live.take(10),
                     recentMovies = recentMovies,
-                    recentSeries = series.take(10)
+                    recentSeries = series.take(10),
+                    vodRating = vodRatingMap,
+                    seriesRating = seriesRatingMap
                 )
                 _isRefreshing.value = false
                 delay(2000)
             }
         }
+    }
+
+    private fun buildRatingMaps(vod: List<VodStreamEntity>, series: List<SeriesEntity>): Pair<Map<Int, String>, Map<Int, String>> {
+        val vodMap = vod.filter { !it.rating.isNullOrBlank() }.associate { it.streamId to it.rating!! }
+        val seriesMap = series.filter { !it.rating.isNullOrBlank() }.associate { it.seriesId to it.rating!! }
+        return vodMap to seriesMap
     }
 
     private fun loadUserInfo() {
@@ -224,6 +237,7 @@ class HomeViewModel @Inject constructor(
             val liveCatMap = liveCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
             val vodCatMap = vodCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
             val seriesCatMap = seriesCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
+            val (vodRatingMap, seriesRatingMap) = buildRatingMaps(vod, series)
 
             val catNames = progress.associate { wp ->
                 val id = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_").toIntOrNull()
@@ -247,7 +261,9 @@ class HomeViewModel @Inject constructor(
                 recentSeries = series.take(10),
                 liveCategoryNames = liveCatMap,
                 vodCategoryNames = vodCatMap,
-                seriesCategoryNames = seriesCatMap
+                seriesCategoryNames = seriesCatMap,
+                vodRating = vodRatingMap,
+                seriesRating = seriesRatingMap
             )
             _isRefreshing.value = false
         }

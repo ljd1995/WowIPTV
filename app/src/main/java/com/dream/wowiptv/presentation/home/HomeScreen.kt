@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -147,6 +148,11 @@ fun HomeScreen(
                                         "live" -> "LIVE"
                                         else -> ""
                                     }
+                                    val continueRating = when (wp.contentType) {
+                                        "vod" -> data.vodRating[wp.contentId.removePrefix("vod_").toIntOrNull()]
+                                        "series" -> data.seriesRating[wp.contentId.removePrefix("series_").toIntOrNull()]
+                                        else -> null
+                                    }
                                     ContinueCard(
                                         name = decodeName(wp.name),
                                         icon = wp.icon,
@@ -154,6 +160,7 @@ fun HomeScreen(
                                         categoryName = data.continueCategoryNames[wp.contentId],
                                         position = wp.position,
                                         duration = wp.duration,
+                                        rating = continueRating,
                                         onClick = {
                                             val idStr = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_")
                                             when (wp.contentType) {
@@ -191,7 +198,8 @@ fun HomeScreen(
                                             val catMap = if (item.type == "movie") data.vodCategoryNames else data.seriesCategoryNames
                                             val catName = catMap[item.categoryId]
                                             val badge = if (item.type == "movie") "MOVIE" else "SERIES"
-                                            FavCard(name = item.name, icon = item.icon, badge = badge, categoryName = catName, onClick = {
+                                            val favRating = if (item.type == "movie") data.vodRating[item.vodId] else data.seriesRating[item.vodId]
+                                            FavCard(name = item.name, icon = item.icon, badge = badge, categoryName = catName, rating = favRating, onClick = {
                                                 if (item.type == "movie") onMovieClick(item.vodId) else onSeriesClick(item.vodId)
                                             })
                                         }
@@ -221,11 +229,11 @@ fun HomeScreen(
                                         }
                                         is VodStreamEntity -> {
                                             val catName = data.vodCategoryNames[item.categoryId]
-                                            RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, badge = "MOVIE", categoryName = catName, onClick = { onMovieClick(item.streamId) })
+                                            RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, badge = "MOVIE", categoryName = catName, rating = item.rating, onClick = { onMovieClick(item.streamId) })
                                         }
                                         is SeriesEntity -> {
                                             val catName = data.seriesCategoryNames[item.categoryId]
-                                            RecentCard(name = item.name.orEmpty(), icon = item.cover, badge = "SERIES", categoryName = catName, onClick = { onSeriesClick(item.seriesId) })
+                                            RecentCard(name = item.name.orEmpty(), icon = item.cover, badge = "SERIES", categoryName = catName, rating = item.rating, onClick = { onSeriesClick(item.seriesId) })
                                         }
                                     }
                                 }
@@ -242,6 +250,13 @@ fun HomeScreen(
 
 private fun decodeName(raw: String): String {
     return try { java.net.URLDecoder.decode(raw, "UTF-8") } catch (_: Exception) { raw }
+}
+
+private fun formatRating(raw: String?): String? {
+    if (raw.isNullOrBlank()) return null
+    val d = raw.trim().substringBefore(" ").toDoubleOrNull() ?: return null
+    if (d <= 0) return null
+    return if (d % 1.0 == 0.0) d.toInt().toString() else "%.1f".format(d)
 }
 
 @Composable
@@ -332,7 +347,7 @@ private fun TypeBadge(text: String) {
 }
 
 @Composable
-private fun MediaCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
+private fun MediaCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, rating: String? = null, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .width(110.dp)
@@ -380,6 +395,25 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
             contentAlignment = Alignment.TopStart
         ) {
                     Column {
+                        val formattedRating = formatRating(rating)
+                        if (formattedRating != null) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Filled.Star,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFFD700),
+                                    modifier = Modifier.size(9.dp)
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(
+                                    text = formattedRating,
+                                    color = Color(0xFFFFD700),
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    lineHeight = 8.sp
+                                )
+                            }
+                        }
                         Text(
                             text = name,
                             color = Color.White,
@@ -405,12 +439,12 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
     }
 
 @Composable
-private fun FavCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
-    MediaCard(name, icon, badge, categoryName, onClick)
+private fun FavCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, rating: String? = null, onClick: () -> Unit = {}) {
+    MediaCard(name, icon, badge, categoryName, rating, onClick)
 }
 
 @Composable
-private fun ContinueCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, position: Long = 0L, duration: Long = 0L, onClick: () -> Unit = {}) {
+private fun ContinueCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, position: Long = 0L, duration: Long = 0L, rating: String? = null, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .width(110.dp)
@@ -479,6 +513,25 @@ private fun ContinueCard(name: String, icon: String? = null, badge: String? = nu
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Column {
+                        val formattedRating = formatRating(rating)
+                        if (formattedRating != null) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Filled.Star,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFFD700),
+                                    modifier = Modifier.size(9.dp)
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(
+                                    text = formattedRating,
+                                    color = Color(0xFFFFD700),
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    lineHeight = 8.sp
+                                )
+                            }
+                        }
                         Text(
                             text = name,
                             color = Color.White,
@@ -506,6 +559,6 @@ private fun ContinueCard(name: String, icon: String? = null, badge: String? = nu
 }
 
 @Composable
-private fun RecentCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
-    MediaCard(name, icon, badge, categoryName, onClick)
+private fun RecentCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, rating: String? = null, onClick: () -> Unit = {}) {
+    MediaCard(name, icon, badge, categoryName, rating, onClick)
 }
