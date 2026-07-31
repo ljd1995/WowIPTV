@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -93,6 +94,7 @@ fun LiveScreen(
     pendingStreamId: Int? = null,
     onStreamPlayed: () -> Unit = {},
     onFullscreenChanged: (Boolean) -> Unit = {},
+    onOpenEpg: (Int) -> Unit = {},
     viewModel: LiveViewModel = hiltViewModel()
 ) {
     val categoriesState by viewModel.categories.collectAsState()
@@ -234,6 +236,7 @@ fun LiveScreen(
                 onSelectCategory = { viewModel.selectCategory(it) },
                 onPlayStream = { viewModel.playStream(it) },
                 onToggleFavorite = { stream -> viewModel.toggleFavorite(stream) },
+                onOpenEpg = onOpenEpg,
                 isRefreshing = isRefreshing,
                 onRefresh = {
                     isRefreshing = true
@@ -428,6 +431,7 @@ private fun ContentSection(
     onSelectCategory: (Int?) -> Unit,
     onPlayStream: (LiveStream) -> Unit,
     onToggleFavorite: (LiveStream) -> Unit,
+    onOpenEpg: (Int) -> Unit,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
@@ -458,6 +462,7 @@ private fun ContentSection(
                 onSearchQueryChange = onSearchQueryChange,
                 onPlayStream = onPlayStream,
                 onToggleFavorite = onToggleFavorite,
+                onOpenEpg = onOpenEpg,
                 isRefreshing = isRefreshing,
                 onRefresh = onRefresh,
                 modifier = Modifier.weight(0.7f)
@@ -573,6 +578,7 @@ private fun ChannelList(
     onSearchQueryChange: (String) -> Unit,
     onPlayStream: (LiveStream) -> Unit,
     onToggleFavorite: (LiveStream) -> Unit,
+    onOpenEpg: (Int) -> Unit,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
@@ -656,7 +662,8 @@ private fun ChannelList(
                                     isFavorite = stream.id in favoriteIds,
                                     isSelected = stream.id == currentStream?.id,
                                     onClick = { onPlayStream(stream) },
-                                    onToggleFavorite = { onToggleFavorite(stream) }
+                                    onToggleFavorite = { onToggleFavorite(stream) },
+                                    onOpenEpg = { onOpenEpg(stream.id) }
                                 )
                             }
                         }
@@ -674,7 +681,8 @@ private fun ChannelItem(
     isFavorite: Boolean,
     isSelected: Boolean,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onOpenEpg: () -> Unit
 ) {
     val bgColor = if (isSelected) Color(0xFF333333) else Color.Transparent
     Row(
@@ -727,6 +735,14 @@ private fun ChannelItem(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
+        IconButton(onClick = onOpenEpg) {
+            Icon(
+                imageVector = Icons.Filled.DateRange,
+                contentDescription = "EPG",
+                tint = DarkTextSecondary,
+                modifier = Modifier.size(18.dp)
+            )
+        }
         IconButton(onClick = onToggleFavorite) {
             Icon(
                 imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
