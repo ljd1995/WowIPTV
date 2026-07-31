@@ -17,8 +17,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.dream.wowiptv.R
 import com.dream.wowiptv.presentation.common.theme.AccentBlue
 
 @Composable
@@ -54,7 +56,7 @@ fun ErrorView(
                 containerColor = AccentBlue
             )
         ) {
-            Text("重试")
+            Text(stringResource(R.string.common_retry))
         }
     }
 }

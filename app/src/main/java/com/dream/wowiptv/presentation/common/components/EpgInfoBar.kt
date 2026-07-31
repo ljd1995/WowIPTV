@@ -1,5 +1,6 @@
 package com.dream.wowiptv.presentation.common.components
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,8 +20,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.presentation.common.theme.LiveRed
 import java.text.SimpleDateFormat
@@ -34,6 +37,7 @@ fun EpgInfoBar(
     nextEpg: EpgEntry?,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -60,7 +64,7 @@ fun EpgInfoBar(
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = formatEndTime(currentEpg.endTime),
+                    text = formatEndTime(context, currentEpg.endTime),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -95,9 +99,9 @@ fun EpgInfoBar(
     }
 }
 
-private fun formatEndTime(endTimeMillis: Long): String {
+private fun formatEndTime(context: Context, endTimeMillis: Long): String {
     val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-    return "结束于 ${sdf.format(Date(endTimeMillis))}"
+    return context.getString(R.string.common_ends_at, sdf.format(Date(endTimeMillis)))
 }
 
 private fun formatTime(millis: Long): String {
