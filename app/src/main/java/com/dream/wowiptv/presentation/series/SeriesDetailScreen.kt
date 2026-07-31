@@ -1,5 +1,6 @@
 package com.dream.wowiptv.presentation.series
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -49,12 +50,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil.compose.AsyncImage
+import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.Episode
 import com.dream.wowiptv.domain.model.Season
 import com.dream.wowiptv.domain.model.SeriesInfo
@@ -66,6 +69,7 @@ import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.AccentBlue
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -75,7 +79,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SeriesDetailViewModel @Inject constructor(
     private val getSeriesInfoUseCase: GetSeriesInfoUseCase,
-    private val watchProgressUseCase: WatchProgressUseCase
+    private val watchProgressUseCase: WatchProgressUseCase,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _info = MutableStateFlow<UiState<SeriesInfo>>(UiState.Loading)
@@ -97,7 +102,7 @@ class SeriesDetailViewModel @Inject constructor(
                 }
                 _episodePositions.value = positions
             } catch (e: Exception) {
-                _info.value = UiState.Error(e.message ?: "加载失败")
+                _info.value = UiState.Error(e.message ?: context.getString(R.string.err_load_failed))
             }
         }
     }
@@ -119,7 +124,7 @@ fun SeriesDetailScreen(
     when (val state = infoState) {
         is UiState.Loading -> LoadingIndicator()
         is UiState.Error -> ErrorView(message = state.message, onRetry = { viewModel.load(seriesId) })
-        is UiState.Empty -> ErrorView(message = "暂无数据", onRetry = { viewModel.load(seriesId) })
+        is UiState.Empty -> ErrorView(message = stringResource(R.string.err_no_data), onRetry = { viewModel.load(seriesId) })
         is UiState.Success -> SeriesDetailContent(
             info = state.data,
             episodePositions = viewModel.episodePositions.collectAsState().value,
@@ -232,7 +237,7 @@ private fun SeriesDetailContent(
                 series.plot?.let { plot ->
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "剧情简介",
+                        text = stringResource(R.string.series_overview),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -247,7 +252,7 @@ private fun SeriesDetailContent(
                 series.cast?.let { cast ->
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "演员",
+                        text = stringResource(R.string.series_cast),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -262,7 +267,7 @@ private fun SeriesDetailContent(
                 series.director?.let { director ->
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "导演",
+                        text = stringResource(R.string.series_director),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -276,7 +281,7 @@ private fun SeriesDetailContent(
 
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "剧集列表",
+                    text = stringResource(R.string.series_episodes),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White
                 )
@@ -316,7 +321,7 @@ private fun SeriesDetailContent(
 
                     if (seasonEpisodes.isEmpty()) {
                         Text(
-                            text = "暂无剧集",
+                            text = stringResource(R.string.series_no_episodes),
                             color = Color(0xFF999999),
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
@@ -422,7 +427,7 @@ private fun EpisodeItem(
         if (savedPosition > 0 && onContinue != null) {
             Icon(
                 imageVector = Icons.Filled.PlayArrow,
-                contentDescription = "继续播放",
+                contentDescription = stringResource(R.string.common_continue),
                 tint = Color(0xFF4CAF50),
                 modifier = Modifier
                     .size(22.dp)
@@ -431,7 +436,7 @@ private fun EpisodeItem(
             Spacer(modifier = Modifier.width(16.dp))
             Icon(
                 imageVector = Icons.Filled.Replay,
-                contentDescription = "重新播放",
+                contentDescription = stringResource(R.string.common_restart),
                 tint = AccentBlue,
                 modifier = Modifier
                     .size(20.dp)
@@ -440,7 +445,7 @@ private fun EpisodeItem(
         } else {
             Icon(
                 imageVector = Icons.Filled.PlayArrow,
-                contentDescription = "播放",
+                contentDescription = stringResource(R.string.common_play),
                 tint = AccentBlue,
                 modifier = Modifier
                     .size(20.dp)
