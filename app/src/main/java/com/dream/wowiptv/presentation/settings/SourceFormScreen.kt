@@ -180,7 +180,9 @@ private fun SourceFormInner(
                 if (text != null) {
                     selectedFileContent = text
                     selectedFileName = context.getDisplayName(uri)
-                    val channels = withContext(Dispatchers.IO) { M3uPlaylistParser.parse(text, "") }
+                    val channels = withContext(Dispatchers.IO) {
+                        M3uPlaylistParser.parse(text, "") { n -> context.getString(R.string.common_channel_name, n) }
+                    }
                     importError = if (channels.isEmpty()) context.getString(R.string.form_no_valid_channels) else null
                 }
             }

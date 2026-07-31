@@ -28,7 +28,7 @@ class M3uRepository @Inject constructor(
         val content = loadContent(source.serverUrl)
         val baseUrl = if (source.serverUrl.startsWith("file://")) "" else source.serverUrl
         val channels = M3uPlaylistParser.parse(content, baseUrl)
-        if (channels.isEmpty()) throw IllegalStateException("M3U 解析无频道")
+        if (channels.isEmpty()) throw IllegalStateException("No channels in M3U playlist")
 
         val groups = channels.mapNotNull { it.groupTitle }.distinct()
         val catMap = groups.mapIndexed { index, name -> name to (index + 1) }.toMap()
@@ -61,8 +61,8 @@ class M3uRepository @Inject constructor(
         } else {
             val request = Request.Builder().url(serverUrl).build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw IllegalStateException("下载失败: ${response.code}")
-                response.body?.string() ?: throw IllegalStateException("响应为空")
+                if (!response.isSuccessful) throw IllegalStateException("Download failed: ${response.code}")
+                response.body?.string() ?: throw IllegalStateException("Empty response")
             }
         }
     }

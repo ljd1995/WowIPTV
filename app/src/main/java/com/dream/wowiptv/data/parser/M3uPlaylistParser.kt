@@ -11,7 +11,7 @@ data class M3uChannel(
 
 object M3uPlaylistParser {
 
-    fun parse(content: String, baseUrl: String): List<M3uChannel> {
+    fun parse(content: String, baseUrl: String, nameFormatter: (Int) -> String = { "Channel $it" }): List<M3uChannel> {
         val channels = mutableListOf<M3uChannel>()
         val lines = content.lineSequence().toList()
         var i = 0
@@ -20,7 +20,7 @@ object M3uPlaylistParser {
             if (line.startsWith("#EXTINF")) {
                 val attrs = parseAttributes(line)
                 val name = attrs["tvg-name"]?.takeIf { it.isNotBlank() }
-                    ?: line.substringAfterLast(",").trim().ifBlank { "频道 ${channels.size + 1}" }
+                    ?: line.substringAfterLast(",").trim().ifBlank { nameFormatter(channels.size + 1) }
                 var url = ""
                 var j = i + 1
                 while (j < lines.size) {

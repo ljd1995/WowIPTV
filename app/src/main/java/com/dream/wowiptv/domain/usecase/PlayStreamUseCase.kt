@@ -15,11 +15,11 @@ class PlayStreamUseCase @Inject constructor(
 
     suspend operator fun invoke(type: StreamType): String {
         val source = sourceRepository.getActiveSource().first()
-            ?: throw IllegalStateException("No active source selected")
+            ?: throw NoActiveSourceException()
         if (source.type == "m3u") {
             return when (type) {
-                is StreamType.Live -> type.m3uUrl ?: throw IllegalStateException("M3U 频道无播放地址")
-                else -> throw IllegalStateException("M3U 源不支持点播/剧集")
+                is StreamType.Live -> type.m3uUrl ?: throw SourceNotSupportedException()
+                else -> throw SourceNotSupportedException()
             }
         }
         val base = "http://${source.serverUrl}:${source.port}"
