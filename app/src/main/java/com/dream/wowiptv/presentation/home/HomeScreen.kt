@@ -376,7 +376,7 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
                         )
                     )
                 )
-                .padding(horizontal = 6.dp, vertical = 4.dp),
+                .padding(horizontal = 6.dp, vertical = 2.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Column {
@@ -473,7 +473,7 @@ private fun ContinueCard(name: String, icon: String? = null, badge: String? = nu
                                 )
                             )
                         )
-                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Column {

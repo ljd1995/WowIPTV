@@ -187,7 +187,7 @@ private fun FavGridCell(name: String, icon: String? = null, badge: String? = nul
                         )
                     )
                 )
-                .padding(horizontal = 6.dp, vertical = 4.dp),
+                .padding(horizontal = 6.dp, vertical = 2.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Column {

@@ -233,7 +233,7 @@ private fun GridCell(icon: String? = null, name: String, badge: String? = null, 
                         )
                     )
                 )
-                .padding(horizontal = 6.dp, vertical = 4.dp),
+                .padding(horizontal = 6.dp, vertical = 2.dp),
             contentAlignment = Alignment.CenterStart
         ) {
             Column {
