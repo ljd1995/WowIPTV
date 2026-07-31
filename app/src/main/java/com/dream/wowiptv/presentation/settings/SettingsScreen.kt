@@ -15,27 +15,36 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -52,11 +61,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.imageLoader
 import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
@@ -64,6 +77,7 @@ import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.SuccessGreen
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,9 +92,21 @@ fun SettingsScreen(
     val sourcesState by viewModel.sources.collectAsStateWithLifecycle()
     val activeSourceId by viewModel.activeSourceId.collectAsStateWithLifecycle()
     val syncingIds by viewModel.syncingIds.collectAsStateWithLifecycle()
+    val syncingAll by viewModel.syncingAll.collectAsState()
+    val clearingCache by viewModel.clearingCache.collectAsState()
+    val refreshingUser by viewModel.refreshingUser.collectAsState()
     val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
     val isM3u = sourceType == "m3u"
+
+    val defaultSpeed by viewModel.defaultPlaybackSpeed.collectAsState()
+    val showPlayerStatus by viewModel.showPlayerStatus.collectAsState()
+    val autoplayNext by viewModel.autoplayNextEpisode.collectAsState()
+    val showContinue by viewModel.showContinueWatching.collectAsState()
+    val showFavorites by viewModel.showFavorites.collectAsState()
+    val showRecent by viewModel.showRecent.collectAsState()
+    val splashPreload by viewModel.splashPreload.collectAsState()
+
     val prevSyncingIdsState = remember { mutableStateOf<Set<Long>>(emptySet()) }
     val currentSyncingIds by rememberUpdatedState(syncingIds)
 
@@ -92,12 +118,31 @@ fun SettingsScreen(
         prevSyncingIdsState.value = currentSyncingIds
     }
 
+    val scope = rememberCoroutineScope()
+    var cacheSize by remember { mutableStateOf(0L) }
+    val imageLoader = remember { context.imageLoader }
+
+    fun refreshCacheSize() {
+        scope.launch(Dispatchers.IO) {
+            cacheSize = imageLoader.diskCache?.size ?: 0L
+        }
+    }
+
+    @OptIn(coil.annotation.ExperimentalCoilApi::class)
+    fun clearImageCache() {
+        imageLoader.memoryCache?.clear()
+        imageLoader.diskCache?.clear()
+        refreshCacheSize()
+    }
+
+    LaunchedEffect(Unit) { refreshCacheSize() }
+
     MaterialTheme(colorScheme = DarkColorScheme) {
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text("设置") },
-                    windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+                    windowInsets = WindowInsets(0, 0, 0, 0),
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color(0xFF1A1A1A),
                         titleContentColor = Color.White
@@ -110,16 +155,144 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
                 if (!isM3u) {
-                    UserInfoCard(userInfo = userInfo)
+                    UserInfoCard(
+                        userInfo = userInfo,
+                        refreshing = refreshingUser,
+                        onRefresh = {
+                            viewModel.refreshUserInfo()
+                            Toast.makeText(context, "会员信息已刷新", Toast.LENGTH_SHORT).show()
+                        }
+                    )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+
+                SectionCard(title = "播放器设置", icon = Icons.Default.Speed) {
+                    PlaybackSpeedRow(
+                        selected = defaultSpeed,
+                        onSelect = viewModel::setDefaultPlaybackSpeed
+                    )
+                    SettingSwitchRow(
+                        title = "播放器状态栏",
+                        subtitle = "显示网速、系统时间、电量",
+                        checked = showPlayerStatus,
+                        onCheckedChange = viewModel::setShowPlayerStatus
+                    )
+                    SettingSwitchRow(
+                        title = "自动连播下一集",
+                        subtitle = "剧集播放结束后自动播放下一集",
+                        checked = autoplayNext,
+                        onCheckedChange = viewModel::setAutoplayNextEpisode
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SectionCard(title = "首页设置", icon = Icons.Default.Home) {
+                    SettingSwitchRow(
+                        title = "显示「继续观看」",
+                        subtitle = "首页展示观看进度",
+                        checked = showContinue,
+                        onCheckedChange = viewModel::setShowContinueWatching
+                    )
+                    SettingSwitchRow(
+                        title = "显示「收藏」",
+                        subtitle = "首页展示收藏内容",
+                        checked = showFavorites,
+                        onCheckedChange = viewModel::setShowFavorites
+                    )
+                    SettingSwitchRow(
+                        title = "显示「最近添加」",
+                        subtitle = "首页展示最近添加内容",
+                        checked = showRecent,
+                        onCheckedChange = viewModel::setShowRecent
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SectionCard(title = "启动设置", icon = Icons.Default.Info) {
+                    SettingSwitchRow(
+                        title = "启动预加载",
+                        subtitle = "启动时预热 EPG 与会员信息",
+                        checked = splashPreload,
+                        onCheckedChange = viewModel::setSplashPreload
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                SectionCard(title = "数据管理", icon = Icons.Default.DeleteSweep) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("图片缓存", style = MaterialTheme.typography.bodyLarge, color = Color.White)
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text("占用 ${formatCacheSize(cacheSize)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+                        }
+                        Text(
+                            text = "清除",
+                            color = Color(0xFF6366F1),
+                            modifier = Modifier
+                                .clickable {
+                                    clearImageCache()
+                                    Toast.makeText(context, "图片缓存已清除", Toast.LENGTH_SHORT).show()
+                                }
+                                .padding(8.dp)
+                        )
+                    }
+                    HorizontalDividerItem()
+                    ActionRow(
+                        title = "清空观看历史",
+                        subtitle = "删除所有「继续观看」记录",
+                        enabled = true,
+                        onClick = {
+                            viewModel.clearHistory()
+                            Toast.makeText(context, "观看历史已清空", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                    HorizontalDividerItem()
+                    ActionRow(
+                        title = "清空收藏",
+                        subtitle = "删除所有收藏内容",
+                        enabled = true,
+                        onClick = {
+                            viewModel.clearFavorites()
+                            Toast.makeText(context, "收藏已清空", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                    HorizontalDividerItem()
+                    ActionRow(
+                        title = "清除缓存并重新同步",
+                        subtitle = "清空本地数据后重新拉取当前源",
+                        enabled = !clearingCache,
+                        loading = clearingCache,
+                        onClick = {
+                            viewModel.clearCacheAndResync()
+                            Toast.makeText(context, "缓存已清除，正在重新同步…", Toast.LENGTH_LONG).show()
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 SourceListCard(
                     sources = sourcesState,
                     activeSourceId = activeSourceId,
                     syncingIds = syncingIds,
+                    syncingAll = syncingAll,
+                    onSyncAll = {
+                        viewModel.syncAllSources()
+                        Toast.makeText(context, "正在同步全部源…", Toast.LENGTH_LONG).show()
+                    },
                     onEdit = onEditSource,
                     onSync = { viewModel.syncSource(it) },
                     onDelete = { viewModel.deleteSource(it) },
@@ -133,8 +306,156 @@ fun SettingsScreen(
     }
 }
 
+private fun formatSpeedLabel(speed: Float): String =
+    if (speed % 1f == 0f) "${speed.toInt()}x" else "${speed}x"
+
 @Composable
-private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
+private fun PlaybackSpeedRow(
+    selected: Float,
+    onSelect: (Float) -> Unit
+) {
+    val speeds = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
+    var expanded by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = true }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("默认播放倍速", style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text("新打开播放器时使用的倍速", style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+        }
+        Box {
+            Text(
+                text = formatSpeedLabel(selected),
+                color = Color(0xFF6366F1),
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                speeds.forEach { speed ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = "${formatSpeedLabel(speed)}${if (speed == selected) " ✓" else ""}",
+                                color = Color.White
+                            )
+                        },
+                        onClick = {
+                            onSelect(speed)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionCard(
+    title: String,
+    icon: ImageVector,
+    content: @Composable () -> Unit
+) {
+    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(icon, contentDescription = null, tint = Color(0xFF6366F1), modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = title, style = MaterialTheme.typography.titleMedium, color = Color.White)
+            }
+            androidx.compose.material3.HorizontalDivider(color = Color(0xFF3A3A3A), thickness = 0.5.dp)
+            content()
+        }
+    }
+}
+
+@Composable
+private fun SettingSwitchRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun HorizontalDividerItem() {
+    androidx.compose.material3.HorizontalDivider(color = Color(0xFF3A3A3A), thickness = 0.5.dp)
+}
+
+@Composable
+private fun ActionRow(
+    title: String,
+    subtitle: String,
+    enabled: Boolean,
+    loading: Boolean = false,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (enabled) Color.White else Color(0xFF888888)
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+        }
+        if (loading) {
+            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+        } else {
+            Text(">", color = if (enabled) Color(0xFF6366F1) else Color(0xFF555555), fontSize = 16.sp)
+        }
+    }
+}
+
+private fun formatCacheSize(bytes: Long): String {
+    if (bytes <= 0) return "0 B"
+    val mb = bytes / 1024.0 / 1024.0
+    if (mb >= 1) return String.format("%.1f MB", mb)
+    val kb = bytes / 1024.0
+    if (kb >= 1) return String.format("%.0f KB", kb)
+    return "$bytes B"
+}
+
+@Composable
+private fun UserInfoCard(
+    userInfo: com.dream.wowiptv.domain.model.UserInfo?,
+    refreshing: Boolean,
+    onRefresh: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
@@ -168,7 +489,7 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                         text = if (userInfo != null) "VIP 会员" else "源未连接",
                         style = MaterialTheme.typography.bodyLarge,
                         color = if (userInfo != null) Color.White else Color(0xFF888888),
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        fontWeight = FontWeight.Bold
                     )
                     if (userInfo != null) {
                         Text(
@@ -195,6 +516,18 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                         )
                     }
                 }
+                Spacer(modifier = Modifier.width(8.dp))
+                if (refreshing) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                } else {
+                    IconButton(onClick = onRefresh) {
+                        Icon(
+                            Icons.Default.Refresh,
+                            contentDescription = "刷新会员信息",
+                            tint = Color.White.copy(alpha = 0.9f)
+                        )
+                    }
+                }
             }
         }
     }
@@ -215,6 +548,8 @@ private fun SourceListCard(
     sources: UiState<List<XtreamSource>>,
     activeSourceId: Long?,
     syncingIds: Set<Long>,
+    syncingAll: Boolean,
+    onSyncAll: () -> Unit,
     onEdit: (Long) -> Unit,
     onSync: (Long) -> Unit,
     onDelete: (Long) -> Unit,
@@ -237,12 +572,25 @@ private fun SourceListCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White
                 )
-                IconButton(onClick = onAddSource) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "添加源",
-                        tint = Color(0xFF6366F1)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onSyncAll, enabled = !syncingAll) {
+                        if (syncingAll) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "同步全部源",
+                                tint = Color(0xFF6366F1)
+                            )
+                        }
+                    }
+                    IconButton(onClick = onAddSource) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "添加源",
+                            tint = Color(0xFF6366F1)
+                        )
+                    }
                 }
             }
             when (val state = sources) {
@@ -301,12 +649,12 @@ private fun SourceItem(
     onDelete: () -> Unit,
     onSwitch: (() -> Unit)?
 ) {
-    val infiniteTransition = androidx.compose.animation.core.rememberInfiniteTransition(label = "sync")
-    val rotation by androidx.compose.animation.core.animateFloatAsState(
+    val infiniteTransition = rememberInfiniteTransition(label = "sync")
+    val rotation by animateFloatAsState(
         targetValue = if (isSyncing) 360f else 0f,
-        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-            animation = androidx.compose.animation.core.tween(1000, easing = androidx.compose.animation.core.LinearEasing),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Restart
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
         ),
         label = "rotation"
     )

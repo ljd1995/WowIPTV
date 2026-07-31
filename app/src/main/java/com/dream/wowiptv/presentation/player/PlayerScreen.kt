@@ -87,6 +87,12 @@ fun PlayerScreen(
     viewModel: PlayerViewModel = hiltViewModel()
 ) {
     val streamUrl by viewModel.streamUrl.collectAsState()
+    val defaultSpeed by viewModel.defaultPlaybackSpeed.collectAsState()
+    val showStatus by viewModel.showPlayerStatus.collectAsState()
+    val autoplayNext by viewModel.autoplayNextEpisode.collectAsState()
+    val currentEpisodeId by viewModel.currentEpisodeId.collectAsState()
+    val currentTitle by viewModel.currentTitle.collectAsState()
+    var autoplayRef by remember { mutableStateOf(autoplayNext) }
     var showOverlay by remember { mutableStateOf(true) }
     var isPlaying by remember { mutableStateOf(true) }
     var isBuffering by remember { mutableStateOf(true) }
@@ -115,12 +121,17 @@ fun PlayerScreen(
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
             .build().apply {
                 playWhenReady = true
-                setPlaybackSpeed(1f)
                 addListener(object : Player.Listener {
                     override fun onPlaybackStateChanged(state: Int) {
                         isBuffering = state == Player.STATE_BUFFERING
                         if (state == Player.STATE_READY) {
                             duration = this@apply.duration.toFloat().coerceAtLeast(0f)
+                        }
+                        if (state == Player.STATE_ENDED && autoplayRef) {
+                            val next = viewModel.nextEpisodeId()
+                            if (next != null) {
+                                viewModel.playNextEpisode(next, "")
+                            }
                         }
                     }
                     override fun onIsPlayingChanged(playing: Boolean) {
@@ -128,6 +139,13 @@ fun PlayerScreen(
                     }
                 })
             }
+    }
+
+    LaunchedEffect(autoplayNext) { autoplayRef = autoplayNext }
+
+    LaunchedEffect(defaultSpeed) {
+        playbackSpeed = defaultSpeed
+        exoPlayer.setPlaybackSpeed(defaultSpeed)
     }
 
     var networkSpeed by remember { mutableStateOf(0L) }
@@ -158,7 +176,7 @@ fun PlayerScreen(
 
     val contentId = when (streamType) {
         "vod" -> "vod_$streamId"
-        "series" -> "series_$streamId"
+        "series" -> "series_$currentEpisodeId"
         "live" -> "live_$streamId"
         else -> ""
     }
@@ -279,9 +297,9 @@ fun PlayerScreen(
                             tint = Color.White
                         )
                     }
-                    if (streamName.isNotBlank()) {
+                    if (currentTitle.isNotBlank()) {
                         Text(
-                            text = streamName,
+                            text = currentTitle,
                             color = Color.White,
                             fontSize = 14.sp,
                             maxLines = 1,
@@ -289,15 +307,17 @@ fun PlayerScreen(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    DeviceStatusIndicator(fontSize = 12.sp)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    if (networkSpeed > 0) {
-                        Text(
-                            text = formatNetworkSpeed(networkSpeed),
-                            color = Color(0xFFCCCCCC),
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(end = 12.dp)
-                        )
+                    if (showStatus) {
+                        DeviceStatusIndicator(fontSize = 12.sp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        if (networkSpeed > 0) {
+                            Text(
+                                text = formatNetworkSpeed(networkSpeed),
+                                color = Color(0xFFCCCCCC),
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(end = 12.dp)
+                            )
+                        }
                     }
                 }
             }

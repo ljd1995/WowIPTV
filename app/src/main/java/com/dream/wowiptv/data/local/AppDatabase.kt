@@ -3,6 +3,7 @@ package com.dream.wowiptv.data.local
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.dream.wowiptv.data.local.dao.EpgDao
+import com.dream.wowiptv.data.local.dao.DataCleanupDao
 import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
 import com.dream.wowiptv.data.local.dao.FavoriteVodDao
 import com.dream.wowiptv.data.local.dao.LiveCategoryDao
@@ -61,4 +62,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun favoriteStreamDao(): FavoriteStreamDao
     abstract fun favoriteVodDao(): FavoriteVodDao
     abstract fun watchProgressDao(): WatchProgressDao
+    abstract fun dataCleanupDao(): DataCleanupDao
 }

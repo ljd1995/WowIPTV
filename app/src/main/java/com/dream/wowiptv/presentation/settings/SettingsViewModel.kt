@@ -3,7 +3,9 @@ package com.dream.wowiptv.presentation.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.BuildConfig
+import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.data.local.SourcePreferences
+import com.dream.wowiptv.data.local.dao.DataCleanupDao
 import com.dream.wowiptv.domain.model.UserInfo
 import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.domain.usecase.GetUserInfoUseCase
@@ -29,12 +31,44 @@ class SettingsViewModel @Inject constructor(
     private val switchSourceUseCase: SwitchSourceUseCase,
     private val getUserInfoUseCase: GetUserInfoUseCase,
     private val sourcePreferences: SourcePreferences,
+    private val appPreferences: AppPreferences,
+    private val dataCleanupDao: DataCleanupDao,
 ) : ViewModel() {
 
     val versionName: String = BuildConfig.VERSION_NAME
 
     private val _userInfo = MutableStateFlow<UserInfo?>(null)
     val userInfo: StateFlow<UserInfo?> = _userInfo.asStateFlow()
+
+    private val _refreshingUser = MutableStateFlow(false)
+    val refreshingUser: StateFlow<Boolean> = _refreshingUser.asStateFlow()
+
+    private val _syncingAll = MutableStateFlow(false)
+    val syncingAll: StateFlow<Boolean> = _syncingAll.asStateFlow()
+
+    private val _clearingCache = MutableStateFlow(false)
+    val clearingCache: StateFlow<Boolean> = _clearingCache.asStateFlow()
+
+    val defaultPlaybackSpeed: StateFlow<Float> = appPreferences.defaultPlaybackSpeed
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 1f)
+
+    val showPlayerStatus: StateFlow<Boolean> = appPreferences.showPlayerStatus
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val autoplayNextEpisode: StateFlow<Boolean> = appPreferences.autoplayNextEpisode
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val showContinueWatching: StateFlow<Boolean> = appPreferences.showContinueWatching
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val showFavorites: StateFlow<Boolean> = appPreferences.showFavorites
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val showRecent: StateFlow<Boolean> = appPreferences.showRecent
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val splashPreload: StateFlow<Boolean> = appPreferences.splashPreload
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     init {
         viewModelScope.launch {
@@ -44,12 +78,88 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun setDefaultPlaybackSpeed(speed: Float) {
+        viewModelScope.launch { appPreferences.setDefaultPlaybackSpeed(speed) }
+    }
+
+    fun setShowPlayerStatus(show: Boolean) {
+        viewModelScope.launch { appPreferences.setShowPlayerStatus(show) }
+    }
+
+    fun setAutoplayNextEpisode(enabled: Boolean) {
+        viewModelScope.launch { appPreferences.setAutoplayNextEpisode(enabled) }
+    }
+
+    fun setShowContinueWatching(show: Boolean) {
+        viewModelScope.launch { appPreferences.setShowContinueWatching(show) }
+    }
+
+    fun setShowFavorites(show: Boolean) {
+        viewModelScope.launch { appPreferences.setShowFavorites(show) }
+    }
+
+    fun setShowRecent(show: Boolean) {
+        viewModelScope.launch { appPreferences.setShowRecent(show) }
+    }
+
+    fun setSplashPreload(enabled: Boolean) {
+        viewModelScope.launch { appPreferences.setSplashPreload(enabled) }
+    }
+
     fun refreshUserInfo() {
         viewModelScope.launch {
+            _refreshingUser.value = true
             val result = getUserInfoUseCase()
             if (result != null) {
                 _userInfo.value = result
                 sourcePreferences.saveUserInfo(result)
+            }
+            _refreshingUser.value = false
+        }
+    }
+
+    fun clearHistory() {
+        viewModelScope.launch {
+            dataCleanupDao.clearWatchProgress()
+        }
+    }
+
+    fun clearFavorites() {
+        viewModelScope.launch {
+            dataCleanupDao.clearFavoriteStreams()
+            dataCleanupDao.clearFavoriteVod()
+        }
+    }
+
+    fun clearCacheAndResync() {
+        viewModelScope.launch {
+            _clearingCache.value = true
+            try {
+                dataCleanupDao.clearContentCache()
+                val active = manageSourcesUseCase.getActiveSource().first()
+                if (active != null) {
+                    switchSourceUseCase(active.id)
+                }
+            } finally {
+                _clearingCache.value = false
+            }
+        }
+    }
+
+    fun syncAllSources() {
+        viewModelScope.launch {
+            _syncingAll.value = true
+            try {
+                val all = manageSourcesUseCase.getSources().first()
+                val activeId = manageSourcesUseCase.getActiveSource().first()?.id
+                all.forEach { source ->
+                    switchSourceUseCase(source.id)
+                }
+                if (activeId != null) {
+                    switchSourceUseCase(activeId)
+                }
+            } finally {
+                _syncingAll.value = false
             }
         }
     }

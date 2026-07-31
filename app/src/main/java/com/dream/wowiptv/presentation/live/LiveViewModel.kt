@@ -3,6 +3,7 @@ package com.dream.wowiptv.presentation.live
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
+import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.data.local.entity.FavoriteStreamEntity
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveCategory
@@ -42,12 +43,19 @@ class LiveViewModel @Inject constructor(
     private val playStreamUseCase: PlayStreamUseCase,
     private val sourceRepository: SourceRepository,
     private val favoriteStreamDao: FavoriteStreamDao,
-    private val watchProgressUseCase: WatchProgressUseCase
+    private val watchProgressUseCase: WatchProgressUseCase,
+    appPreferences: AppPreferences
 ) : ViewModel() {
 
     companion object {
         const val FAVORITES_ID = -1
     }
+
+    val defaultPlaybackSpeed: StateFlow<Float> = appPreferences.defaultPlaybackSpeed
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 1f)
+
+    val showPlayerStatus: StateFlow<Boolean> = appPreferences.showPlayerStatus
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     val categories: StateFlow<UiState<List<LiveCategory>>> = getLiveCategoriesUseCase()
         .map { UiState.Success(it) as UiState<List<LiveCategory>> }

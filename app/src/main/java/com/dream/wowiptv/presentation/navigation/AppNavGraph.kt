@@ -51,7 +51,8 @@ fun AppNavGraph(navController: NavHostController) {
                 navArgument("streamType") { type = NavType.StringType },
                 navArgument("streamId") { type = NavType.StringType },
                 navArgument("name") { type = NavType.StringType; defaultValue = "" },
-                navArgument("position") { type = NavType.LongType; defaultValue = 0L }
+                navArgument("position") { type = NavType.LongType; defaultValue = 0L },
+                navArgument("episodes") { type = NavType.StringType; defaultValue = "" }
             )
         ) { backStackEntry ->
             val streamType = backStackEntry.arguments?.getString("streamType") ?: "live"
@@ -105,8 +106,8 @@ fun AppNavGraph(navController: NavHostController) {
             SeriesDetailScreen(
                 seriesId = seriesId,
                 onBack = { navController.popBackStack() },
-                onPlayEpisode = { episodeId, title, position ->
-                    navController.navigate(Routes.playerRoute("series", episodeId, title, position))
+                onPlayEpisode = { episodeId, title, position, episodes ->
+                    navController.navigate(Routes.playerRoute("series", episodeId, title, position, episodes))
                 }
             )
         }

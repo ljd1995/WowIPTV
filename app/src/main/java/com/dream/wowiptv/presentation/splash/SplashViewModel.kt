@@ -2,6 +2,7 @@ package com.dream.wowiptv.presentation.splash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.data.local.SourcePreferences
 import com.dream.wowiptv.data.local.dao.LiveStreamDao
 import com.dream.wowiptv.data.local.dao.SeriesDao
@@ -32,7 +33,8 @@ class SplashViewModel @Inject constructor(
     private val seriesDao: SeriesDao,
     private val liveTvRepository: LiveTvRepository,
     private val getUserInfoUseCase: GetUserInfoUseCase,
-    private val sourcePreferences: SourcePreferences
+    private val sourcePreferences: SourcePreferences,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _counts = MutableStateFlow<SplashCounts?>(null)
@@ -50,6 +52,17 @@ class SplashViewModel @Inject constructor(
 
     private fun preload() {
         viewModelScope.launch {
+            val preload = try {
+                appPreferences.splashPreload.first()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                true
+            }
+            if (!preload) {
+                _ready.value = true
+                return@launch
+            }
             val source = try {
                 sourceRepository.getActiveSource().first()
             } catch (e: kotlinx.coroutines.CancellationException) {

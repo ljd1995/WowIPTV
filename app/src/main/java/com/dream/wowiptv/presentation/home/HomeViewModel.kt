@@ -18,12 +18,15 @@ import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.data.local.dao.WatchProgressDao
 import com.dream.wowiptv.data.local.SourcePreferences
+import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.domain.repository.SourceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -65,11 +68,21 @@ class HomeViewModel @Inject constructor(
     private val liveCategoryDao: LiveCategoryDao,
     private val vodCategoryDao: VodCategoryDao,
     private val seriesCategoryDao: SeriesCategoryDao,
-    private val sourcePreferences: SourcePreferences
+    private val sourcePreferences: SourcePreferences,
+    appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    val showContinueWatching: StateFlow<Boolean> = appPreferences.showContinueWatching
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val showFavorites: StateFlow<Boolean> = appPreferences.showFavorites
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val showRecent: StateFlow<Boolean> = appPreferences.showRecent
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     private val _data = MutableStateFlow(HomeSection())
     val data: StateFlow<HomeSection> = _data.asStateFlow()

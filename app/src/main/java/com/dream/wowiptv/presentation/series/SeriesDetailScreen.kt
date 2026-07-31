@@ -108,7 +108,7 @@ fun SeriesDetailScreen(
     seriesId: Int,
     viewModel: SeriesDetailViewModel = hiltViewModel(),
     onBack: () -> Unit,
-    onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long) -> Unit
+    onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long, episodeIds: List<String>) -> Unit
 ) {
     val infoState by viewModel.info.collectAsState()
 
@@ -135,7 +135,7 @@ private fun SeriesDetailContent(
     info: SeriesInfo,
     episodePositions: Map<String, Long> = emptyMap(),
     onBack: () -> Unit,
-    onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long) -> Unit
+    onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long, episodeIds: List<String>) -> Unit
 ) {
     val series = info.info
     val allEpisodes = info.episodes.values.flatten()
@@ -326,17 +326,18 @@ private fun SeriesDetailContent(
                         ) {
                             seasonEpisodes.forEachIndexed { index, episode ->
                                 val savedPos = episodePositions[episode.id] ?: 0L
+                                val seasonIds = seasonEpisodes.map { it.id }
                                 EpisodeItem(
                                     episode = episode,
                                     savedPosition = savedPos,
                                     onPlay = {
                                         val episodeTitle = "${series.name} - ${selectedSeason.name} E${episode.episodeNum}"
-                                        onPlayEpisode(episode.id, episodeTitle, 0L)
+                                        onPlayEpisode(episode.id, episodeTitle, 0L, seasonIds)
                                     },
                                     onContinue = if (savedPos > 0) {
                                         {
                                             val episodeTitle = "${series.name} - ${selectedSeason.name} E${episode.episodeNum}"
-                                            onPlayEpisode(episode.id, episodeTitle, savedPos)
+                                            onPlayEpisode(episode.id, episodeTitle, savedPos, seasonIds)
                                         }
                                     } else {
                                         null

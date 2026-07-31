@@ -3,14 +3,17 @@ package com.dream.wowiptv.presentation.player
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.usecase.GetShortEpgUseCase
 import com.dream.wowiptv.domain.usecase.PlayStreamUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,12 +22,23 @@ class PlayerViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val playStreamUseCase: PlayStreamUseCase,
     private val getShortEpgUseCase: GetShortEpgUseCase,
-    private val watchProgressUseCase: WatchProgressUseCase
+    private val watchProgressUseCase: WatchProgressUseCase,
+    appPreferences: AppPreferences
 ) : ViewModel() {
 
     val streamType: String = savedStateHandle["streamType"] ?: "live"
     val streamId: String = savedStateHandle["streamId"] ?: "0"
     val streamName: String = savedStateHandle["name"] ?: ""
+    val episodeIds: List<String> = (savedStateHandle["episodes"] ?: "").split(",").filter { it.isNotBlank() }
+
+    val defaultPlaybackSpeed: StateFlow<Float> = appPreferences.defaultPlaybackSpeed
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 1f)
+
+    val showPlayerStatus: StateFlow<Boolean> = appPreferences.showPlayerStatus
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val autoplayNextEpisode: StateFlow<Boolean> = appPreferences.autoplayNextEpisode
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     private val _streamUrl = MutableStateFlow("")
     val streamUrl: StateFlow<String> = _streamUrl.asStateFlow()
@@ -35,11 +49,37 @@ class PlayerViewModel @Inject constructor(
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
+    private val _currentEpisodeId = MutableStateFlow(streamId)
+    val currentEpisodeId: StateFlow<String> = _currentEpisodeId.asStateFlow()
+
+    private val _currentTitle = MutableStateFlow(streamName)
+    val currentTitle: StateFlow<String> = _currentTitle.asStateFlow()
+
     init {
-        android.util.Log.d("PlayerVM", "init streamType=$streamType streamId=$streamId name=$streamName")
         loadStreamUrl()
         if (streamType == "live") {
             observeEpg()
+        }
+    }
+
+    fun nextEpisodeId(): String? {
+        if (streamType != "series") return null
+        val idx = episodeIds.indexOfFirst { it == _currentEpisodeId.value }
+        if (idx < 0 || idx >= episodeIds.lastIndex) return null
+        return episodeIds[idx + 1]
+    }
+
+    fun playNextEpisode(episodeId: String, title: String) {
+        viewModelScope.launch {
+            _currentEpisodeId.value = episodeId
+            if (title.isNotBlank()) _currentTitle.value = title
+            try {
+                _streamUrl.value = playStreamUseCase(
+                    PlayStreamUseCase.StreamType.Series(episodeId)
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("PlayerVM", "playNextEpisode failed", e)
+            }
         }
     }
 
@@ -54,12 +94,10 @@ class PlayerViewModel @Inject constructor(
                     else -> PlayStreamUseCase.StreamType.Live(idNum)
                 }
                 _streamUrl.value = playStreamUseCase(type)
-                android.util.Log.d("PlayerVM", "URL loaded for $streamType $streamId")
                 if (streamType == "live") {
                     val contentId = "live_$streamId"
                     val pos = System.currentTimeMillis() / 1000
                     watchProgressUseCase.saveProgress(contentId, "live", streamName, null, pos, 0L)
-                    android.util.Log.d("PlayerVM", "saved live $contentId pos=$pos")
                 }
             } catch (e: Exception) {
                 android.util.Log.e("PlayerVM", "loadStreamUrl failed", e)
@@ -78,7 +116,7 @@ class PlayerViewModel @Inject constructor(
     fun saveProgress(contentId: String, position: Long, duration: Long) {
         viewModelScope.launch {
             try {
-                val name = if (streamName.isNotBlank()) streamName else {
+                val name = if (_currentTitle.value.isNotBlank()) _currentTitle.value else {
                     watchProgressUseCase.getProgressName(contentId) ?: streamName
                 }
                 val pos = if (streamType == "live") System.currentTimeMillis() / 1000 else position
@@ -90,7 +128,6 @@ class PlayerViewModel @Inject constructor(
                     position = pos,
                     duration = duration
                 )
-                android.util.Log.d("PlayerVM", "saved $streamType $contentId pos=$pos name=$name")
             } catch (e: Exception) {
                 android.util.Log.e("PlayerVM", "save failed", e)
             }

@@ -10,6 +10,7 @@ import com.dream.wowiptv.data.local.MIGRATION_5_6
 import com.dream.wowiptv.data.local.MIGRATION_6_7
 import com.dream.wowiptv.data.local.MIGRATION_7_8
 import com.dream.wowiptv.data.local.dao.EpgDao
+import com.dream.wowiptv.data.local.dao.DataCleanupDao
 import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
 import com.dream.wowiptv.data.local.dao.FavoriteVodDao
 import com.dream.wowiptv.data.local.dao.LiveCategoryDao
@@ -69,4 +70,5 @@ object DatabaseModule {
     @Provides fun provideFavoriteStreamDao(db: AppDatabase): FavoriteStreamDao = db.favoriteStreamDao()
     @Provides fun provideFavoriteVodDao(db: AppDatabase): FavoriteVodDao = db.favoriteVodDao()
     @Provides fun provideWatchProgressDao(db: AppDatabase): WatchProgressDao = db.watchProgressDao()
+    @Provides fun provideDataCleanupDao(db: AppDatabase): DataCleanupDao = db.dataCleanupDao()
 }

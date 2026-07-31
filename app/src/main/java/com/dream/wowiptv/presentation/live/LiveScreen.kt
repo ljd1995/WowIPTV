@@ -126,6 +126,8 @@ fun LiveScreen(
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val categoryCounts by viewModel.categoryCounts.collectAsState()
+    val defaultSpeed by viewModel.defaultPlaybackSpeed.collectAsState()
+    val showStatus by viewModel.showPlayerStatus.collectAsState()
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
     val isM3u = sourceType == "m3u"
 
@@ -188,6 +190,10 @@ fun LiveScreen(
         }
     }
 
+    LaunchedEffect(defaultSpeed) {
+        exoPlayer.setPlaybackSpeed(defaultSpeed)
+    }
+
     var isBuffering by remember { mutableStateOf(false) }
 
     LaunchedEffect(streamUrl) {
@@ -243,6 +249,7 @@ fun LiveScreen(
             epgEntries = epgEntries,
             networkSpeed = networkSpeed,
             isM3u = isM3u,
+            showStatus = showStatus,
             onBack = { viewModel.exitFullscreen() },
             onTogglePlay = { viewModel.togglePlay() },
             onRestart = { currentStream?.let { viewModel.playStream(it) } },
@@ -267,6 +274,7 @@ fun LiveScreen(
                 epgEntries = epgEntries,
                 networkSpeed = networkSpeed,
                 isM3u = isM3u,
+                showStatus = showStatus,
                 onTogglePlay = { viewModel.togglePlay() },
                 onRestart = { currentStream?.let { viewModel.playStream(it) } },
                 onFullscreen = { viewModel.toggleFullscreen() },
@@ -311,6 +319,7 @@ private fun PlayerSection(
     epgEntries: List<EpgEntry>,
     networkSpeed: Long,
     isM3u: Boolean,
+    showStatus: Boolean,
     onTogglePlay: () -> Unit,
     onRestart: () -> Unit,
     onFullscreen: () -> Unit,
@@ -349,6 +358,7 @@ private fun PlayerSection(
                 isPlaying = isPlaying,
                 networkSpeed = networkSpeed,
                 isM3u = isM3u,
+                showStatus = showStatus,
                 onTogglePlay = onTogglePlay,
                 onRestart = onRestart,
                 onFullscreen = onFullscreen,
@@ -399,6 +409,7 @@ private fun PlayerOverlay(
     isPlaying: Boolean,
     networkSpeed: Long,
     isM3u: Boolean,
+    showStatus: Boolean,
     onTogglePlay: () -> Unit,
     onRestart: () -> Unit,
     onFullscreen: () -> Unit,
@@ -443,7 +454,7 @@ private fun PlayerOverlay(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                if (networkSpeed > 0) {
+                if (showStatus && networkSpeed > 0) {
                     Text(
                         text = formatNetworkSpeed(networkSpeed),
                         color = Color(0xFFCCCCCC),
@@ -987,6 +998,7 @@ private fun FullscreenPlayerView(
     epgEntries: List<EpgEntry>,
     networkSpeed: Long,
     isM3u: Boolean,
+    showStatus: Boolean,
     onBack: () -> Unit,
     onTogglePlay: () -> Unit,
     onRestart: () -> Unit,
@@ -1062,15 +1074,17 @@ private fun FullscreenPlayerView(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    DeviceStatusIndicator(fontSize = 13.sp)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    if (networkSpeed > 0) {
-                        Text(
-                            text = formatNetworkSpeed(networkSpeed),
-                            color = Color(0xFFCCCCCC),
-                            fontSize = 13.sp,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
+                    if (showStatus) {
+                        DeviceStatusIndicator(fontSize = 13.sp)
+                        Spacer(modifier = Modifier.width(10.dp))
+                        if (networkSpeed > 0) {
+                            Text(
+                                text = formatNetworkSpeed(networkSpeed),
+                                color = Color(0xFFCCCCCC),
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                        }
                     }
                     if (!isM3u) {
                         IconButton(onClick = onOpenEpg) {

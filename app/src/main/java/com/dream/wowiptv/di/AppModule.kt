@@ -1,6 +1,7 @@
 package com.dream.wowiptv.di
 
 import android.content.Context
+import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.data.local.SourcePreferences
 import com.dream.wowiptv.data.remote.xtream.DynamicBaseUrlInterceptor
 import com.google.gson.Gson
@@ -45,5 +46,11 @@ object AppModule {
     @Singleton
     fun provideSourcePreferences(@ApplicationContext context: Context): SourcePreferences {
         return SourcePreferences(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAppPreferences(@ApplicationContext context: Context): AppPreferences {
+        return AppPreferences(context)
     }
 }
