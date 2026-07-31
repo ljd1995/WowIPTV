@@ -1,5 +1,6 @@
 package com.dream.wowiptv.presentation.player
 
+import com.dream.wowiptv.R
 import android.content.pm.ActivityInfo
 import android.media.AudioManager
 import androidx.activity.ComponentActivity
@@ -38,6 +39,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -367,7 +369,7 @@ fun PlayerScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Refresh,
-                            contentDescription = "刷新",
+                            contentDescription = stringResource(R.string.common_refresh),
                             tint = Color.White,
                             modifier = Modifier.size(16.dp)
                         )
@@ -458,7 +460,7 @@ fun PlayerScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = "音量",
+                            contentDescription = stringResource(R.string.common_volume),
                             tint = Color.White,
                             modifier = Modifier.size(16.dp)
                         )
@@ -471,7 +473,7 @@ fun PlayerScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.MusicNote,
-                                contentDescription = "音轨",
+                                contentDescription = stringResource(R.string.common_track),
                                 tint = Color.White,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -483,7 +485,7 @@ fun PlayerScreen(
                             val audioGroups = exoPlayer.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
                             if (audioGroups.isEmpty()) {
                                 DropdownMenuItem(
-                                    text = { Text("无音轨", color = Color.White) },
+                                    text = { Text(stringResource(R.string.common_no_track), color = Color.White) },
                                     onClick = { showAudioMenu = false }
                                 )
                             } else {
@@ -491,7 +493,7 @@ fun PlayerScreen(
                                     val fmt = group.mediaTrackGroup.getFormat(0)
                                     val label = fmt.label?.takeIf { it.isNotBlank() }
                                         ?: fmt.language?.uppercase()
-                                        ?: "音轨 ${index + 1}"
+                                        ?: context.getString(R.string.common_track_n, index + 1)
                                     val isSelected = group.isSelected
                                     DropdownMenuItem(
                                         text = { Text(if (isSelected) "$label ✓" else label, color = Color.White) },
