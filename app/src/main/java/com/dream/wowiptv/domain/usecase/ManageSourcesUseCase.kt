@@ -17,8 +17,9 @@ class ManageSourcesUseCase @Inject constructor(
         serverUrl: String,
         port: Int,
         username: String,
-        password: String
-    ): Long = sourceRepository.addSource(name, serverUrl, port, username, password)
+        password: String,
+        type: String = "xtream"
+    ): Long = sourceRepository.addSource(name, serverUrl, port, username, password, type)
 
     suspend fun updateSource(source: XtreamSource) {
         sourceRepository.updateSource(source)

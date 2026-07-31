@@ -68,8 +68,8 @@ class SettingsViewModel @Inject constructor(
     private val _syncingIds = MutableStateFlow<Set<Long>>(emptySet())
     val syncingIds: StateFlow<Set<Long>> = _syncingIds.asStateFlow()
 
-    suspend fun addSource(name: String, serverUrl: String, port: Int, username: String, password: String) {
-        val newId = manageSourcesUseCase.addSource(name, serverUrl, port, username, password)
+    suspend fun addSource(name: String, serverUrl: String, port: Int, username: String, password: String, type: String = "xtream") {
+        val newId = manageSourcesUseCase.addSource(name, serverUrl, port, username, password, type)
         switchSourceUseCase(newId)
     }
 

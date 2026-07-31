@@ -32,14 +32,16 @@ class SourceRepositoryImpl @Inject constructor(
         serverUrl: String,
         port: Int,
         username: String,
-        password: String
+        password: String,
+        type: String
     ): Long {
         val entity = SourceEntity(
             name = name,
             serverUrl = serverUrl,
             port = port,
             username = username,
-            password = password
+            password = password,
+            type = type
         )
         val newId = sourceDao.insert(entity)
 
@@ -95,7 +97,8 @@ class SourceRepositoryImpl @Inject constructor(
             serverUrl = serverUrl,
             port = port,
             username = username,
-            password = password
+            password = password,
+            type = type
         )
     }
 }
