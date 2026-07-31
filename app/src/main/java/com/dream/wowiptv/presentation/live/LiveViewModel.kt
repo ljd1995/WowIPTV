@@ -1,5 +1,6 @@
 package com.dream.wowiptv.presentation.live
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
@@ -16,7 +17,9 @@ import com.dream.wowiptv.domain.usecase.PlayStreamUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.domain.repository.SourceRepository
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -44,7 +47,8 @@ class LiveViewModel @Inject constructor(
     private val sourceRepository: SourceRepository,
     private val favoriteStreamDao: FavoriteStreamDao,
     private val watchProgressUseCase: WatchProgressUseCase,
-    appPreferences: AppPreferences
+    appPreferences: AppPreferences,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     companion object {
@@ -59,7 +63,7 @@ class LiveViewModel @Inject constructor(
 
     val categories: StateFlow<UiState<List<LiveCategory>>> = getLiveCategoriesUseCase()
         .map { UiState.Success(it) as UiState<List<LiveCategory>> }
-        .catch { emit(UiState.Error(it.message ?: "加载分类失败")) }
+        .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_categories))) }
         .onStart { emit(UiState.Loading) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
@@ -79,12 +83,12 @@ class LiveViewModel @Inject constructor(
                         val favIds = _favoriteIds.value
                         UiState.Success(allStreams.filter { it.id in favIds }) as UiState<List<LiveStream>>
                     }
-                    .catch { emit(UiState.Error(it.message ?: "加载收藏失败")) }
+                    .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_favorites))) }
                     .onStart { emit(UiState.Loading) }
             } else {
                 getLiveStreamsUseCase(categoryId)
                     .map { UiState.Success(it) as UiState<List<LiveStream>> }
-                    .catch { emit(UiState.Error(it.message ?: "加载频道失败")) }
+                    .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_channels))) }
                     .onStart { emit(UiState.Loading) }
             }
         }

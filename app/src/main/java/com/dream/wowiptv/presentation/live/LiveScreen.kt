@@ -63,6 +63,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -87,6 +88,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
+import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveCategory
 import com.dream.wowiptv.domain.model.LiveStream
@@ -272,7 +274,7 @@ fun LiveScreen(
     } else {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
-                title = { Text("直播", color = Color.White) },
+                title = { Text(stringResource(R.string.live_title), color = Color.White) },
                 windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF1A1A1A),
@@ -399,14 +401,14 @@ private fun PlayerSection(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "选择一个频道播放",
+                        text = stringResource(R.string.live_select_channel),
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "从右侧列表选择频道开始观看",
+                        text = stringResource(R.string.live_select_channel_hint),
                         color = Color(0xFF888888),
                         fontSize = 12.sp
                     )
@@ -527,7 +529,7 @@ private fun PlayerOverlay(
                         }
                         nextEpg?.let { epg ->
                             Text(
-                                text = "下一节目: ${epg.title}",
+                                text = stringResource(R.string.common_next_program, epg.title),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color(0xFFCCCCCC),
                                 maxLines = 1,
@@ -553,7 +555,7 @@ private fun PlayerOverlay(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                            contentDescription = if (isPlaying) "暂停" else "播放",
+                            contentDescription = if (isPlaying) stringResource(R.string.common_pause) else stringResource(R.string.common_play),
                             tint = Color.White,
                             modifier = Modifier
                                 .size(28.dp)
@@ -562,7 +564,7 @@ private fun PlayerOverlay(
                         )
                         Icon(
                             imageVector = Icons.Filled.Refresh,
-                            contentDescription = "刷新",
+                            contentDescription = stringResource(R.string.common_refresh),
                             tint = Color.White,
                             modifier = Modifier
                                 .size(28.dp)
@@ -573,7 +575,7 @@ private fun PlayerOverlay(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = "音量",
+                            contentDescription = stringResource(R.string.common_volume),
                             tint = Color.White,
                             modifier = Modifier
                                 .size(28.dp)
@@ -582,7 +584,7 @@ private fun PlayerOverlay(
                         )
                         Icon(
                             imageVector = Icons.Filled.Fullscreen,
-                            contentDescription = "全屏",
+                            contentDescription = stringResource(R.string.common_fullscreen),
                             tint = Color.White,
                             modifier = Modifier
                                 .size(28.dp)
@@ -717,7 +719,7 @@ private fun CategorySidebar(
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     item {
                         CategoryItem(
-                            name = "全部",
+                            name = stringResource(R.string.live_category_all),
                             count = totalCount,
                             isSelected = selectedCategoryId == null,
                             onClick = { onSelectCategory(null) }
@@ -725,7 +727,7 @@ private fun CategorySidebar(
                     }
                     item {
                         CategoryItem(
-                            name = "收藏",
+                            name = stringResource(R.string.live_category_favorites),
                             count = favoriteIds.size,
                             isSelected = selectedCategoryId == LiveViewModel.FAVORITES_ID,
                             onClick = { onSelectCategory(LiveViewModel.FAVORITES_ID) }
@@ -818,7 +820,7 @@ private fun ChannelList(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
-                placeholder = { Text("搜索", color = Color(0xFF999999), fontSize = 12.sp) },
+                placeholder = { Text(stringResource(R.string.common_search), color = Color(0xFF999999), fontSize = 12.sp) },
                 leadingIcon = {
                     Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(14.dp))
                 },
@@ -856,7 +858,7 @@ private fun ChannelList(
             is UiState.Empty -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        text = "暂无频道",
+                        text = stringResource(R.string.live_no_channels),
                         style = MaterialTheme.typography.bodyLarge,
                         color = DarkTextSecondary,
                         textAlign = TextAlign.Center
@@ -867,7 +869,7 @@ private fun ChannelList(
                 if (state.data.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = if (selectedCategoryId == LiveViewModel.FAVORITES_ID) "暂无收藏频道" else "暂无频道",
+                            text = if (selectedCategoryId == LiveViewModel.FAVORITES_ID) stringResource(R.string.live_no_favorite_channels) else stringResource(R.string.live_no_channels),
                             style = MaterialTheme.typography.bodyLarge,
                             color = DarkTextSecondary,
                             textAlign = TextAlign.Center
@@ -995,7 +997,7 @@ private fun ChannelItem(
         IconButton(onClick = onToggleFavorite) {
             Icon(
                 imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                contentDescription = if (isFavorite) "取消收藏" else "收藏",
+                contentDescription = if (isFavorite) stringResource(R.string.common_cancel_favorite) else stringResource(R.string.common_favorite),
                 tint = if (isFavorite) LiveRed else DarkTextSecondary,
                 modifier = Modifier.size(18.dp)
             )
@@ -1076,7 +1078,7 @@ private fun FullscreenPlayerView(
                     IconButton(onClick = onBack) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "退出全屏",
+                            contentDescription = stringResource(R.string.common_exit_fullscreen),
                             tint = Color.White
                         )
                     }
@@ -1151,7 +1153,7 @@ private fun FullscreenPlayerView(
                             }
                             nextEpg?.let { epg ->
                                 Text(
-                                    text = "下一节目: ${epg.title}",
+                                    text = stringResource(R.string.common_next_program, epg.title),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color(0xFFCCCCCC),
                                     maxLines = 1,
@@ -1174,7 +1176,7 @@ private fun FullscreenPlayerView(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                            contentDescription = if (isPlaying) "暂停" else "播放",
+                            contentDescription = if (isPlaying) stringResource(R.string.common_pause) else stringResource(R.string.common_play),
                             tint = Color.White,
                             modifier = Modifier
                                 .size(36.dp)
@@ -1183,7 +1185,7 @@ private fun FullscreenPlayerView(
                         )
                         Icon(
                             imageVector = Icons.Filled.Refresh,
-                            contentDescription = "刷新",
+                            contentDescription = stringResource(R.string.common_refresh),
                             tint = Color.White,
                             modifier = Modifier
                                 .size(36.dp)
@@ -1194,7 +1196,7 @@ private fun FullscreenPlayerView(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = "音量",
+                            contentDescription = stringResource(R.string.common_volume),
                             tint = Color.White,
                             modifier = Modifier
                                 .size(36.dp)
@@ -1203,7 +1205,7 @@ private fun FullscreenPlayerView(
                         )
                         Icon(
                             imageVector = Icons.Filled.Fullscreen,
-                            contentDescription = "退出全屏",
+                            contentDescription = stringResource(R.string.common_exit_fullscreen),
                             tint = Color.White,
                             modifier = Modifier
                                 .size(36.dp)
