@@ -43,19 +43,11 @@ class EpgViewModel @Inject constructor(
     init {
         val channelsFlow = getLiveStreamsUseCase(null)
 
-        channels = if (streamId != null) {
-            channelsFlow
-                .map { list -> UiState.Success(list.filter { it.id == streamId }) as UiState<List<LiveStream>> }
-                .catch { emit(UiState.Error(it.message ?: "Failed to load channels")) }
-                .onStart { emit(UiState.Loading) }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
-        } else {
-            channelsFlow
-                .map { UiState.Success(it) as UiState<List<LiveStream>> }
-                .catch { emit(UiState.Error(it.message ?: "Failed to load channels")) }
-                .onStart { emit(UiState.Loading) }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
-        }
+        channels = channelsFlow
+            .map { UiState.Success(it) as UiState<List<LiveStream>> }
+            .catch { emit(UiState.Error(it.message ?: "Failed to load channels")) }
+            .onStart { emit(UiState.Loading) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
         loadEpg()
 
@@ -92,6 +84,10 @@ class EpgViewModel @Inject constructor(
                 _epgData.value = UiState.Error(e.message ?: "EPG 加载失败")
             }
         }
+    }
+
+    fun retryLoadEpg() {
+        loadEpg()
     }
 
     fun selectChannel(id: Int) {

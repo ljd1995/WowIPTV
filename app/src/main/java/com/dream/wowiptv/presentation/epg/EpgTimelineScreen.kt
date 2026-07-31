@@ -106,13 +106,26 @@ fun EpgTimelineScreen(
                             )
                         }
                     } else {
-                        EpgGrid(
-                            channels = channels,
-                            epgDataState = epgDataState,
-                            selectedChannelId = selectedChannelId,
-                            onSelectChannel = viewModel::selectChannel,
-                            onProgramClick = { selectedProgram = it }
-                        )
+                        when (val epgState = epgDataState) {
+                            is UiState.Error -> ErrorView(
+                                message = epgState.message,
+                                onRetry = { viewModel.retryLoadEpg() }
+                            )
+                            is UiState.Loading -> {
+                                if (channelsState is UiState.Success) {
+                                    LoadingIndicator()
+                                }
+                            }
+                            else -> {
+                                EpgGrid(
+                                    channels = channels,
+                                    epgDataState = epgDataState,
+                                    selectedChannelId = selectedChannelId,
+                                    onSelectChannel = viewModel::selectChannel,
+                                    onProgramClick = { selectedProgram = it }
+                                )
+                            }
+                        }
                     }
                 }
             }
