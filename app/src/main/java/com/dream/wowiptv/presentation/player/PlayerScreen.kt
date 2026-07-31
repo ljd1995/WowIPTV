@@ -578,6 +578,7 @@ private class NetworkSpeedTracker : TransferListener {
 
     override fun onTransferStart(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {}
 
+    @Synchronized
     override fun onBytesTransferred(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean, bytesTransferred: Int) {
         if (!isNetwork) return
         totalBytes += bytesTransferred
@@ -586,6 +587,7 @@ private class NetworkSpeedTracker : TransferListener {
 
     override fun onTransferEnd(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {}
 
+    @Synchronized
     fun currentBps(): Long {
         val now = android.os.SystemClock.elapsedRealtime()
         while (samples.size > 1 && samples.first().first < now - 2000) {
