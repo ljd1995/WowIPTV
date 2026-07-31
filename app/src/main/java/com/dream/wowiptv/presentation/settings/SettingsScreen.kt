@@ -140,7 +140,7 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                 .background(
                     brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
                         colors = if (userInfo != null)
-                            listOf(Color(0xFFB8860B), Color(0xFFDAA520), Color(0xFFB8860B))
+                            listOf(Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFA855F7))
                         else
                             listOf(Color(0xFF444444), Color(0xFF333333))
                     )
@@ -154,7 +154,7 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                 Icon(
                     imageVector = Icons.Default.Star,
                     contentDescription = null,
-                    tint = if (userInfo != null) Color(0xFFFFD700) else Color(0xFF888888),
+                    tint = if (userInfo != null) Color.White else Color(0xFF888888),
                     modifier = Modifier.size(28.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
@@ -162,14 +162,14 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                     Text(
                         text = if (userInfo != null) "VIP 会员" else "源未连接",
                         style = MaterialTheme.typography.titleMedium,
-                        color = if (userInfo != null) Color(0xFFFFF8DC) else Color(0xFF888888),
+                        color = if (userInfo != null) Color.White else Color(0xFF888888),
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                     )
                     if (userInfo != null) {
                         Text(
                             text = userInfo.username ?: "未知用户",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFFFFF8DC).copy(alpha = 0.8f)
+                            color = Color.White.copy(alpha = 0.8f)
                         )
                     }
                 }
@@ -177,7 +177,7 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                     Icon(
                         imageVector = Icons.Default.Star,
                         contentDescription = "Active",
-                        tint = Color(0xFFFFD700),
+                        tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -225,7 +225,7 @@ private fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFF999999),
+            tint = Color(0xFF6366F1),
             modifier = Modifier.size(14.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -311,7 +311,7 @@ private fun SourceListCard(
                                 .height(56.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
+                                containerColor = Color(0xFF6366F1)
                             )
                         ) {
                             Icon(
@@ -409,7 +409,7 @@ private fun SourceItem(
                 Icon(
                     Icons.Default.Refresh,
                     contentDescription = "同步",
-                    tint = if (isSyncing) Color(0xFF888888) else MaterialTheme.colorScheme.primary,
+                    tint = if (isSyncing) Color(0xFF888888) else Color(0xFF6366F1),
                     modifier = Modifier.rotate(rotation)
                 )
             }
