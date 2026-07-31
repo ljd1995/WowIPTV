@@ -309,7 +309,7 @@ fun SettingsScreen(
 }
 
 private fun formatSpeedLabel(speed: Float): String =
-    if (speed % 1f == 0f) "${speed.toInt()}x" else "${speed}x"
+    if (speed % 1f == 0f) "${speed.toInt()}" else "${speed}"
 
 @Composable
 private fun PlaybackSpeedRow(
