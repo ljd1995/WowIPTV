@@ -61,11 +61,14 @@ fun EpgEntryDto.toDomain(streamId: Int): EpgEntry {
         streamId = streamId,
         title = title.orEmpty(),
         description = description,
-        startTime = startTimestamp ?: 0L,
-        endTime = stopTimestamp ?: 0L,
+        startTime = (startTimestamp ?: 0L).toEpochMillis(),
+        endTime = (stopTimestamp ?: 0L).toEpochMillis(),
         isNowPlaying = nowPlaying == 1
     )
 }
+
+private fun Long.toEpochMillis(): Long =
+    if (this > 1_000_000_000_000L) this else this * 1000
 
 fun VodCategoryDto.toDomain(): VodCategory {
     return VodCategory(

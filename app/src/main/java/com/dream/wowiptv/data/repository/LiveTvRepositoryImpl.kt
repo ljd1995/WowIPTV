@@ -103,7 +103,7 @@ class LiveTvRepositoryImpl @Inject constructor(
             val sid = streamIdStr.toIntOrNull()
             if (sid != null) entries.map { it.toDomain(sid).toEntity(sid, source.id) } else emptyList()
         }
-        if (all.isEmpty()) return
+        if (all.isEmpty()) throw IllegalStateException("EPG 接口返回空数据")
         epgDao.replaceAll(all, source.id)
     }
 

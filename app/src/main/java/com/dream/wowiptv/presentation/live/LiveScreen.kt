@@ -372,7 +372,7 @@ private fun PlayerOverlay(
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "LIVE",
-                        color = LiveRed,
+                        color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 11.sp
                     )
@@ -876,7 +876,7 @@ private fun FullscreenPlayerView(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "LIVE",
-                            color = LiveRed,
+                            color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp
                         )
