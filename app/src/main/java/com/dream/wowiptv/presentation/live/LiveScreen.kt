@@ -245,6 +245,7 @@ fun LiveScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
                 title = { Text("直播", color = Color.White) },
+                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF1A1A1A),
                     titleContentColor = Color.White

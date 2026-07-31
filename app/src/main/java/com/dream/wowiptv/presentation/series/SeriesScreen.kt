@@ -91,6 +91,7 @@ fun SeriesScreen(
         Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             TopAppBar(
                 title = { Text("剧集", color = Color.White) },
+                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF1A1A1A),
                     titleContentColor = Color.White
