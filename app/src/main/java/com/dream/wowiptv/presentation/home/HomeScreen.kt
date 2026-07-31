@@ -1,11 +1,5 @@
 package com.dream.wowiptv.presentation.home
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -97,9 +90,7 @@ fun HomeScreen(
                         )
                     )
                 },
-                actions = {
-                    HelloUserText(username = data.username)
-                },
+                actions = {},
                 windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF1A1A1A),
@@ -254,31 +245,6 @@ private fun formatRating(raw: String?): String? {
 }
 
 @Composable
-private fun HelloUserText(username: String) {
-    val transition = rememberInfiniteTransition(label = "hello")
-    val offsetX by transition.animateFloat(
-        initialValue = -2f,
-        targetValue = 2f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(180, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "shake"
-    )
-    Text(
-        text = "Hello ${username.ifBlank { "用户" }}",
-        color = Color.White,
-        fontSize = 15.sp,
-        fontWeight = FontWeight.Medium,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier
-            .padding(end = 12.dp)
-            .offset(x = offsetX.dp)
-    )
-}
-
-@Composable
 private fun StatCard(icon: ImageVector, count: Int, label: String, color: Color, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
@@ -295,10 +261,10 @@ private fun StatCard(icon: ImageVector, count: Int, label: String, color: Color,
                 imageVector = icon,
                 contentDescription = null,
                 tint = color,
-                modifier = Modifier.size(22.dp)
+                modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
+            Spacer(modifier = Modifier.weight(1f))
+            Column(horizontalAlignment = Alignment.End) {
                 CountUpText(target = count)
                 Text(
                     text = label,
