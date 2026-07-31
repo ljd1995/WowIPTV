@@ -1,7 +1,10 @@
 package com.dream.wowiptv.presentation.settings
 
+import android.app.Activity
 import android.content.Context
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
@@ -32,6 +35,7 @@ import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
@@ -172,6 +176,12 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
+                SectionCard(title = stringResource(R.string.settings_general_section), icon = Icons.Default.Settings) {
+                    LanguageRow()
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 SectionCard(title = stringResource(R.string.settings_player_section), icon = Icons.Default.Speed) {
                     PlaybackSpeedRow(
                         selected = defaultSpeed,
@@ -310,6 +320,59 @@ fun SettingsScreen(
 
 private fun formatSpeedLabel(speed: Float): String =
     if (speed % 1f == 0f) "${speed.toInt()}" else "${speed}"
+
+@Composable
+private fun LanguageRow() {
+    val context = LocalContext.current
+    val current = AppCompatDelegate.getApplicationLocales()
+    val currentTag = current.toLanguageTags()
+    val options = listOf(
+        "" to stringResource(R.string.settings_language_system),
+        "zh" to stringResource(R.string.settings_language_zh),
+        "en" to stringResource(R.string.settings_language_en)
+    )
+    var expanded by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = true }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = options.first { it.first == currentTag }.second,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF888888)
+            )
+        }
+        Box {
+            Text(
+                text = options.first { it.first == currentTag }.second,
+                color = Color(0xFF6366F1),
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                options.forEach { (tag, label) ->
+                    DropdownMenuItem(
+                        text = { Text(label, color = Color.White) },
+                        onClick = {
+                            expanded = false
+                            AppCompatDelegate.setApplicationLocales(
+                                if (tag.isEmpty()) LocaleListCompat.getEmptyLocaleList()
+                                else LocaleListCompat.forLanguageTags(tag)
+                            )
+                            (context as? Activity)?.recreate()
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun PlaybackSpeedRow(
