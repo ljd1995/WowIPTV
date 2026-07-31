@@ -47,6 +47,7 @@ data class HomeSection(
     val liveCategoryNames: Map<Int, String> = emptyMap(),
     val vodCategoryNames: Map<Int, String> = emptyMap(),
     val seriesCategoryNames: Map<Int, String> = emptyMap(),
+    val continueCategoryNames: Map<String, String> = emptyMap(),
     val isRefreshing: Boolean = false
 )
 
@@ -80,6 +81,32 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val source = sourceRepository.getActiveSource().first() ?: return@launch
 
+            data class CategoryMaps(
+                val live: Map<Int, String>,
+                val vod: Map<Int, String>,
+                val series: Map<Int, String>
+            )
+
+            var catMaps = CategoryMaps(emptyMap(), emptyMap(), emptyMap())
+
+            launch {
+                while (true) {
+                    catMaps = CategoryMaps(
+                        live = liveCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name },
+                        vod = vodCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name },
+                        series = seriesCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
+                    )
+                    _data.value = _data.value.copy(
+                        liveCategoryNames = catMaps.live,
+                        vodCategoryNames = catMaps.vod,
+                        seriesCategoryNames = catMaps.series
+                    )
+                    delay(10000)
+                }
+            }
+
+            delay(500)
+
             launch {
                 while (true) {
                     val progress = watchProgressDao.getAllBySource(source.id).first()
@@ -96,7 +123,17 @@ class HomeViewModel @Inject constructor(
                         }
                         wp.copy(icon = icon ?: wp.icon)
                     }
-                    _data.value = _data.value.copy(continueWatching = enriched.take(10))
+                    val catNames = progress.associate { wp ->
+                        val id = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_").toIntOrNull()
+                        val name = when (wp.contentType) {
+                            "live" -> live.find { it.streamId == id }?.categoryId?.let { cid -> catMaps.live[cid] }
+                            "vod" -> vod.find { it.streamId == id }?.categoryId?.let { cid -> catMaps.vod[cid] }
+                            "series" -> series.find { it.seriesId == id }?.categoryId?.let { cid -> catMaps.series[cid] }
+                            else -> null
+                        }
+                        wp.contentId to (name ?: "")
+                    }.filter { it.value.isNotEmpty() }
+                    _data.value = _data.value.copy(continueWatching = enriched.take(10), continueCategoryNames = catNames)
                     delay(3000)
                 }
             }
@@ -119,10 +156,6 @@ class HomeViewModel @Inject constructor(
                     } ?: false
                 }.ifEmpty { vod.take(10) }
 
-                val liveCatMap = liveCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
-                val vodCatMap = vodCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
-                val seriesCatMap = seriesCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
-
                 _data.value = _data.value.copy(
                     username = source.username,
                     liveCount = live.size,
@@ -133,10 +166,7 @@ class HomeViewModel @Inject constructor(
                     favoriteSeries = favVods.filter { it.type == "series" },
                     recentLive = live.take(10),
                     recentMovies = recentMovies,
-                    recentSeries = series.take(10),
-                    liveCategoryNames = liveCatMap,
-                    vodCategoryNames = vodCatMap,
-                    seriesCategoryNames = seriesCatMap
+                    recentSeries = series.take(10)
                 )
                 _isRefreshing.value = false
                 delay(2000)

@@ -93,6 +93,7 @@ fun AllHistoryScreen(
                     items(data.continueWatching, key = { it.contentId }) { item ->
                         HistoryGridCell(
                             item = item.copy(name = decodeName(item.name)),
+                            categoryName = data.continueCategoryNames[item.contentId],
                             onMovieClick = onMovieClick,
                             onSeriesClick = onSeriesClick,
                             onLiveClick = onLiveClick
@@ -107,6 +108,7 @@ fun AllHistoryScreen(
 @Composable
 private fun HistoryGridCell(
     item: WatchProgressEntity,
+    categoryName: String? = null,
     onMovieClick: (Int) -> Unit,
     onSeriesClick: (Int) -> Unit,
     onLiveClick: (Int, String) -> Unit
@@ -155,15 +157,27 @@ private fun HistoryGridCell(
                     modifier = Modifier
                         .padding(start = 4.dp, top = 4.dp)
                         .background(Color(0xFF000000).copy(alpha = 0.55f), RoundedCornerShape(3.dp))
-                        .padding(horizontal = 5.dp, vertical = 2.dp)
+                        .padding(horizontal = 4.dp, vertical = 1.dp)
                 ) {
-                    Text(
-                        text = badgeText,
-                        color = Color.White,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.5.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        if (badgeText == "LIVE") {
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .background(Color(0xFFEF4444), RoundedCornerShape(2.5.dp))
+                            )
+                        }
+                        Text(
+                            text = badgeText,
+                            color = Color.White,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
                 }
             }
         }
@@ -204,7 +218,7 @@ private fun HistoryGridCell(
                         .padding(horizontal = 6.dp, vertical = 4.dp),
                     contentAlignment = Alignment.CenterStart
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Column {
                         Text(
                             text = item.name,
                             color = Color.White,
@@ -213,6 +227,15 @@ private fun HistoryGridCell(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                        if (!categoryName.isNullOrEmpty()) {
+                            Text(
+                                text = categoryName,
+                                color = Color(0xFF999999),
+                                fontSize = 8.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
             }

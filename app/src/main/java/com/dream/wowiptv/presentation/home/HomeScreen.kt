@@ -151,6 +151,7 @@ fun HomeScreen(
                                         name = decodeName(wp.name),
                                         icon = wp.icon,
                                         badge = badgeLabel,
+                                        categoryName = data.continueCategoryNames[wp.contentId],
                                         position = wp.position,
                                         duration = wp.duration,
                                         onClick = {
@@ -182,7 +183,10 @@ fun HomeScreen(
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 items(items.take(10), key = { it.hashCode() }) { item ->
                                     when (item) {
-                                        is FavoriteStreamEntity -> FavCard(name = item.name, icon = item.iconUrl, badge = "LIVE", onClick = { onLiveClick(item.streamId, item.name) })
+                                        is FavoriteStreamEntity -> {
+                                            val catName = data.liveCategoryNames[item.categoryId]
+                                            FavCard(name = item.name, icon = item.iconUrl, badge = "LIVE", categoryName = catName, onClick = { onLiveClick(item.streamId, item.name) })
+                                        }
                                         is FavoriteVodEntity -> {
                                             val catMap = if (item.type == "movie") data.vodCategoryNames else data.seriesCategoryNames
                                             val catName = catMap[item.categoryId]
@@ -298,51 +302,32 @@ private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
 }
 
 @Composable
-private fun LiveBadge() {
-    Box(
-        modifier = Modifier
-            .padding(start = 4.dp, top = 4.dp)
-            .background(
-                color = Color(0xFFEF4444),
-                shape = RoundedCornerShape(4.dp)
-            )
-            .padding(horizontal = 6.dp, vertical = 3.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .background(Color.White, RoundedCornerShape(3.dp))
-            )
-            Text(
-                text = "LIVE",
-                color = Color.White,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-        }
-    }
-}
-
-@Composable
 private fun TypeBadge(text: String) {
     Box(
         modifier = Modifier
             .padding(start = 4.dp, top = 4.dp)
             .background(Color(0xFF000000).copy(alpha = 0.55f), RoundedCornerShape(3.dp))
-            .padding(horizontal = 5.dp, vertical = 2.dp)
+            .padding(horizontal = 4.dp, vertical = 1.dp)
     ) {
-        Text(
-            text = text,
-            color = Color.White,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.5.sp
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            if (text == "LIVE") {
+                Box(
+                    modifier = Modifier
+                        .size(5.dp)
+                        .background(Color(0xFFEF4444), RoundedCornerShape(2.5.dp))
+                )
+            }
+            Text(
+                text = text,
+                color = Color.White,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp
+            )
+        }
     }
 }
 
@@ -394,7 +379,7 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
                 .padding(horizontal = 6.dp, vertical = 4.dp),
             contentAlignment = Alignment.CenterStart
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Column {
                 Text(
                     text = name,
                     color = Color.White,
