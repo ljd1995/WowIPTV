@@ -1240,31 +1240,42 @@ private fun LiveDot(size: Dp = 8.dp) {
     val transition = rememberInfiniteTransition(label = "liveDot")
     val haloScale by transition.animateFloat(
         initialValue = 1f,
-        targetValue = 2.4f,
-        animationSpec = infiniteRepeatable(tween(1400), RepeatMode.Restart),
+        targetValue = 3.2f,
+        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Restart),
         label = "haloScale"
     )
     val haloAlpha by transition.animateFloat(
-        initialValue = 0.5f,
+        initialValue = 0.8f,
         targetValue = 0f,
-        animationSpec = infiniteRepeatable(tween(1400), RepeatMode.Restart),
+        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Restart),
         label = "haloAlpha"
+    )
+    val dotScale by transition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.65f,
+        animationSpec = infiniteRepeatable(tween(600), RepeatMode.Reverse),
+        label = "dotScale"
     )
     Box(contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
-                .size(size)
+                .size(size * 1.5f)
                 .graphicsLayer {
                     scaleX = haloScale
                     scaleY = haloScale
                     alpha = haloAlpha
                 }
-                .background(LiveRed.copy(alpha = 0.6f), CircleShape)
+                .background(LiveRed.copy(alpha = 0.7f), CircleShape)
         )
         Box(
             modifier = Modifier
                 .size(size)
+                .graphicsLayer {
+                    scaleX = dotScale
+                    scaleY = dotScale
+                }
                 .background(LiveRed, CircleShape)
         )
     }
 }
+
