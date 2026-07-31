@@ -401,7 +401,7 @@ fun PlayerScreen(
                             val trackHeight = 160.dp
                             Box(
                                 modifier = Modifier
-                                    .offset(x = 2.dp, y = (-170).dp)
+                                    .offset(x = 2.dp, y = (-164).dp)
                                     .requiredWidth(24.dp)
                                     .requiredHeight(trackHeight)
                                     .background(Color(0xCC000000), RoundedCornerShape(12.dp))
