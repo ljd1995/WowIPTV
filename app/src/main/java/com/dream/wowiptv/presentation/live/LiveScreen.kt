@@ -353,7 +353,10 @@ private fun PlayerOverlay(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .clickable { showControls = !showControls }
+            .clickable {
+                showControls = !showControls
+                showVolumeSlider = false
+            }
     ) {
         if (showControls) {
             Row(
