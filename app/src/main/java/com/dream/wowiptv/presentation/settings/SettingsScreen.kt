@@ -145,7 +145,7 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                             listOf(Color(0xFF444444), Color(0xFF333333))
                     )
                 )
-                .padding(20.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -155,13 +155,13 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                     imageVector = Icons.Default.Star,
                     contentDescription = null,
                     tint = if (userInfo != null) Color.White else Color(0xFF888888),
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(22.dp)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = if (userInfo != null) "VIP 会员" else "源未连接",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = if (userInfo != null) Color.White else Color(0xFF888888),
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                     )
@@ -169,26 +169,17 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                         Text(
                             text = userInfo.username ?: "未知用户",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f)
+                            color = Color.White.copy(alpha = 0.8f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
-            }
-        }
-        if (userInfo != null) {
-            Column(modifier = Modifier.background(Color(0xFF2C2C2C)).padding(16.dp)) {
-                InfoRow(icon = Icons.Default.Star, label = "状态", value = "Active", valueColor = Color(0xFF4CAF50))
-                InfoRow(
-                    icon = Icons.Default.Star,
-                    label = "到期",
-                    value = formatExpDate(userInfo.expDate)
-                )
-                InfoRow(icon = Icons.Default.Star, label = "最大连接", value = userInfo.maxConnections ?: "1")
-                if (!userInfo.allowedOutputFormats.isNullOrEmpty()) {
-                    InfoRow(
-                        icon = Icons.Default.Star,
-                        label = "输出格式",
-                        value = userInfo.allowedOutputFormats.joinToString(", ")
+                if (userInfo != null) {
+                    Text(
+                        text = "到期 ${formatExpDate(userInfo.expDate)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.9f)
                     )
                 }
             }
@@ -204,35 +195,6 @@ private fun formatExpDate(dateStr: String?): String {
         return "%04d-%02d-%02d".format(cal.get(java.util.Calendar.YEAR), cal.get(java.util.Calendar.MONTH) + 1, cal.get(java.util.Calendar.DAY_OF_MONTH))
     }
     return dateStr.take(10)
-}
-
-@Composable
-private fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String, valueColor: Color = Color.White) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color(0xFF6366F1),
-            modifier = Modifier.size(14.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF999999),
-            modifier = Modifier.width(72.dp)
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = valueColor
-        )
-    }
 }
 
 @Composable
