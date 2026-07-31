@@ -173,14 +173,6 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                         )
                     }
                 }
-                if (userInfo != null) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = "Active",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
             }
         }
         if (userInfo != null) {
@@ -442,7 +434,7 @@ private fun AboutCard(versionName: String) {
                 color = Color.White
             )
             Text(
-                text = "版本: $versionName",
+                text = "WowIPTV V$versionName",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF888888)
             )
