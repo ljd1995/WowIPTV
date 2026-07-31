@@ -2,6 +2,9 @@ package com.dream.wowiptv.presentation.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -379,26 +382,28 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
                 .padding(horizontal = 6.dp, vertical = 1.dp),
             contentAlignment = Alignment.TopStart
         ) {
-                    Column {
-                        Text(
-                            text = name,
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        if (!categoryName.isNullOrEmpty()) {
-                            Text(
-                                text = categoryName,
-                                color = Color(0xFF999999),
-                                fontSize = 8.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                lineHeight = 8.sp
-                            )
-                        }
+            val displayText = if (!categoryName.isNullOrEmpty()) {
+                buildAnnotatedString {
+                    withStyle(SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White)) {
+                        append(name)
                     }
+                    append("\n")
+                    withStyle(SpanStyle(fontSize = 8.sp, color = Color(0xFF999999))) {
+                        append(categoryName)
+                    }
+                }
+            } else {
+                buildAnnotatedString {
+                    withStyle(SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White)) {
+                        append(name)
+                    }
+                }
+            }
+            Text(
+                text = displayText,
+                maxLines = if (categoryName.isNullOrEmpty()) 1 else 2,
+                overflow = TextOverflow.Ellipsis
+            )
             }
         }
     }
@@ -474,28 +479,31 @@ private fun ContinueCard(name: String, icon: String? = null, badge: String? = nu
                                 )
                             )
                         )
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                    contentAlignment = Alignment.CenterStart
+                        .padding(horizontal = 6.dp, vertical = 1.dp),
+                    contentAlignment = Alignment.TopStart
                 ) {
-                    Column {
-                        Text(
-                            text = name,
-                            color = Color.White,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        if (!categoryName.isNullOrEmpty()) {
-                            Text(
-                                text = categoryName,
-                                color = Color(0xFF999999),
-                                fontSize = 8.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                    val displayText2 = if (!categoryName.isNullOrEmpty()) {
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White)) {
+                                append(name)
+                            }
+                            append("\n")
+                            withStyle(SpanStyle(fontSize = 8.sp, color = Color(0xFF999999))) {
+                                append(categoryName)
+                            }
+                        }
+                    } else {
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White)) {
+                                append(name)
+                            }
                         }
                     }
+                    Text(
+                        text = displayText2,
+                        maxLines = if (categoryName.isNullOrEmpty()) 1 else 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
         }
