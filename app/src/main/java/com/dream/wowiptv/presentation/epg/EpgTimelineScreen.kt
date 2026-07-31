@@ -50,9 +50,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveStream
 import com.dream.wowiptv.presentation.common.UiState
@@ -126,7 +128,7 @@ fun EpgTimelineScreen(
                         }) {
                             Icon(
                                 imageVector = Icons.Filled.ScreenRotation,
-                                contentDescription = "横竖屏切换",
+                                contentDescription = stringResource(R.string.epg_rotate),
                                 tint = Color.White
                             )
                         }

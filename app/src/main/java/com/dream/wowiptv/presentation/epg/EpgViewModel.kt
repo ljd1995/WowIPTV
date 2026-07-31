@@ -1,8 +1,10 @@
 package com.dream.wowiptv.presentation.epg
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveStream
 import com.dream.wowiptv.domain.repository.LiveTvRepository
@@ -10,6 +12,7 @@ import com.dream.wowiptv.domain.usecase.GetLiveStreamsUseCase
 import com.dream.wowiptv.domain.usecase.RefreshAllEpgUseCase
 import com.dream.wowiptv.presentation.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +30,8 @@ class EpgViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val liveTvRepository: LiveTvRepository,
     private val refreshAllEpgUseCase: RefreshAllEpgUseCase,
-    private val getLiveStreamsUseCase: GetLiveStreamsUseCase
+    private val getLiveStreamsUseCase: GetLiveStreamsUseCase,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val streamId: Int? = savedStateHandle.get<Int>("streamId")?.takeIf { it > 0 }
@@ -82,7 +86,7 @@ class EpgViewModel @Inject constructor(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _epgData.value = UiState.Error(e.message ?: "EPG 加载失败")
+                _epgData.value = UiState.Error(e.message ?: context.getString(R.string.err_load_epg))
             }
         }
     }
