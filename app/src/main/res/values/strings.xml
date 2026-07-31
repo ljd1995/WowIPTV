@@ -155,6 +155,8 @@
     <string name="form_password">密码</string>
     <string name="form_m3u_url">M3U 链接</string>
     <string name="form_no_valid_channels">文件无有效频道</string>
+    <string name="form_select_m3u_file">选择 M3U 文件</string>
+    <string name="form_import_failed">导入失败</string>
 
     <!-- 错误 -->
     <string name="err_load_categories">加载分类失败</string>

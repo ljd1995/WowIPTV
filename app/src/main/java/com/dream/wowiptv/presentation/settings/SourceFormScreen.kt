@@ -47,11 +47,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dream.wowiptv.R
 import com.dream.wowiptv.data.parser.M3uPlaylistParser
 import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.presentation.common.UiState
@@ -78,7 +80,7 @@ fun SourceFormScreen(
     } else null
 
     if (sourceId != null && editingSource == null && sourcesState !is UiState.Empty && sourcesState !is UiState.Error) {
-        LoadingIndicator(message = "加载中...")
+        LoadingIndicator(message = stringResource(R.string.common_loading))
         return
     }
 
@@ -179,7 +181,7 @@ private fun SourceFormInner(
                     selectedFileContent = text
                     selectedFileName = context.getDisplayName(uri)
                     val channels = withContext(Dispatchers.IO) { M3uPlaylistParser.parse(text, "") }
-                    importError = if (channels.isEmpty()) "文件无有效频道" else null
+                    importError = if (channels.isEmpty()) context.getString(R.string.form_no_valid_channels) else null
                 }
             }
         }
@@ -189,10 +191,10 @@ private fun SourceFormInner(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isEditing) "编辑源" else "添加源", color = Color.White) },
+                title = { Text(stringResource(if (isEditing) R.string.form_edit_source else R.string.form_add_source), color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -233,7 +235,7 @@ private fun SourceFormInner(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("名称", color = labelColor) },
+                label = { Text(stringResource(R.string.form_name), color = labelColor) },
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyMedium.copy(color = textColor),
                 modifier = Modifier.fillMaxWidth(),
@@ -253,7 +255,7 @@ private fun SourceFormInner(
                 OutlinedTextField(
                     value = serverUrl,
                     onValueChange = { serverUrl = it },
-                    label = { Text("服务器地址", color = labelColor) },
+                    label = { Text(stringResource(R.string.form_server_url), color = labelColor) },
                     placeholder = { Text("http://example.com:25461", color = Color(0xFF666666)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(color = textColor),
@@ -273,7 +275,7 @@ private fun SourceFormInner(
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
-                    label = { Text("用户名", color = labelColor) },
+                    label = { Text(stringResource(R.string.form_username), color = labelColor) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(color = textColor),
                     modifier = Modifier.fillMaxWidth(),
@@ -292,7 +294,7 @@ private fun SourceFormInner(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("密码", color = labelColor) },
+                    label = { Text(stringResource(R.string.form_password), color = labelColor) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -332,14 +334,14 @@ private fun SourceFormInner(
                             color = Color.White
                         )
                     } else {
-                        Text("保存", color = Color.White)
+                        Text(stringResource(R.string.common_save), color = Color.White)
                     }
                 }
             } else {
                 OutlinedTextField(
                     value = m3uUrl,
                     onValueChange = { m3uUrl = it },
-                    label = { Text("M3U 链接", color = labelColor) },
+                    label = { Text(stringResource(R.string.form_m3u_url), color = labelColor) },
                     placeholder = { Text("https://example.com/playlist.m3u", color = Color(0xFF666666)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(color = textColor),
@@ -364,7 +366,7 @@ private fun SourceFormInner(
                 ) {
                     Icon(Icons.Default.FolderOpen, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(if (selectedFileName != null) selectedFileName!! else "选择 M3U 文件")
+                    Text(if (selectedFileName != null) selectedFileName!! else stringResource(R.string.form_select_m3u_file))
                 }
                 if (importError != null) {
                     Text(importError!!, color = Color(0xFFFF5252))
@@ -379,7 +381,7 @@ private fun SourceFormInner(
                                 onImport(name.trim(), m3uUrl.trim().ifBlank { null }, selectedFileContent)
                                 onNavigateBack()
                             } catch (e: Exception) {
-                                importError = e.message ?: "导入失败"
+                                importError = e.message ?: context.getString(R.string.form_import_failed)
                             } finally {
                                 saving = false
                             }
@@ -401,7 +403,7 @@ private fun SourceFormInner(
                             color = Color.White
                         )
                     } else {
-                        Text("导入", color = Color.White)
+                        Text(stringResource(R.string.common_import), color = Color.White)
                     }
                 }
             }

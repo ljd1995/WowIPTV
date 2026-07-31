@@ -146,6 +146,8 @@
     <string name="form_password">Password</string>
     <string name="form_m3u_url">M3U URL</string>
     <string name="form_no_valid_channels">No valid channels in file</string>
+    <string name="form_select_m3u_file">Select M3U file</string>
+    <string name="form_import_failed">Import failed</string>
 
     <string name="err_load_categories">Failed to load categories</string>
     <string name="err_load_channels">Failed to load channels</string>

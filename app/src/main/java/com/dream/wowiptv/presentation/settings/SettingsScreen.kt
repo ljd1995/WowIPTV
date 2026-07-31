@@ -63,6 +63,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -70,6 +71,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.imageLoader
+import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
@@ -113,7 +115,7 @@ fun SettingsScreen(
     LaunchedEffect(currentSyncingIds) {
         val newlyCompleted = prevSyncingIdsState.value - currentSyncingIds
         if (newlyCompleted.isNotEmpty() && prevSyncingIdsState.value.isNotEmpty()) {
-            Toast.makeText(context, "同步完成", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.settings_sync_done), Toast.LENGTH_SHORT).show()
         }
         prevSyncingIdsState.value = currentSyncingIds
     }
@@ -141,7 +143,7 @@ fun SettingsScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("设置") },
+                    title = { Text(stringResource(R.string.settings_title)) },
                     windowInsets = WindowInsets(0, 0, 0, 0),
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color(0xFF1A1A1A),
@@ -164,26 +166,26 @@ fun SettingsScreen(
                         refreshing = refreshingUser,
                         onRefresh = {
                             viewModel.refreshUserInfo()
-                            Toast.makeText(context, "会员信息已刷新", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.settings_member_refreshed), Toast.LENGTH_SHORT).show()
                         }
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                SectionCard(title = "播放器设置", icon = Icons.Default.Speed) {
+                SectionCard(title = stringResource(R.string.settings_player_section), icon = Icons.Default.Speed) {
                     PlaybackSpeedRow(
                         selected = defaultSpeed,
                         onSelect = viewModel::setDefaultPlaybackSpeed
                     )
                     SettingSwitchRow(
-                        title = "播放器状态栏",
-                        subtitle = "显示网速、系统时间、电量",
+                        title = stringResource(R.string.settings_player_status),
+                        subtitle = stringResource(R.string.settings_player_status_desc),
                         checked = showPlayerStatus,
                         onCheckedChange = viewModel::setShowPlayerStatus
                     )
                     SettingSwitchRow(
-                        title = "自动连播下一集",
-                        subtitle = "剧集播放结束后自动播放下一集",
+                        title = stringResource(R.string.settings_autoplay),
+                        subtitle = stringResource(R.string.settings_autoplay_desc),
                         checked = autoplayNext,
                         onCheckedChange = viewModel::setAutoplayNextEpisode
                     )
@@ -191,22 +193,22 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                SectionCard(title = "首页设置", icon = Icons.Default.Home) {
+                SectionCard(title = stringResource(R.string.settings_home_section), icon = Icons.Default.Home) {
                     SettingSwitchRow(
-                        title = "显示「继续观看」",
-                        subtitle = "首页展示观看进度",
+                        title = stringResource(R.string.settings_show_continue),
+                        subtitle = stringResource(R.string.settings_show_continue_desc),
                         checked = showContinue,
                         onCheckedChange = viewModel::setShowContinueWatching
                     )
                     SettingSwitchRow(
-                        title = "显示「收藏」",
-                        subtitle = "首页展示收藏内容",
+                        title = stringResource(R.string.settings_show_favorites),
+                        subtitle = stringResource(R.string.settings_show_favorites_desc),
                         checked = showFavorites,
                         onCheckedChange = viewModel::setShowFavorites
                     )
                     SettingSwitchRow(
-                        title = "显示「最近添加」",
-                        subtitle = "首页展示最近添加内容",
+                        title = stringResource(R.string.settings_show_recent),
+                        subtitle = stringResource(R.string.settings_show_recent_desc),
                         checked = showRecent,
                         onCheckedChange = viewModel::setShowRecent
                     )
@@ -214,10 +216,10 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                SectionCard(title = "启动设置", icon = Icons.Default.Info) {
+                SectionCard(title = stringResource(R.string.settings_startup_section), icon = Icons.Default.Info) {
                     SettingSwitchRow(
-                        title = "启动预加载",
-                        subtitle = "启动时预热 EPG 与会员信息",
+                        title = stringResource(R.string.settings_splash_preload),
+                        subtitle = stringResource(R.string.settings_splash_preload_desc),
                         checked = splashPreload,
                         onCheckedChange = viewModel::setSplashPreload
                     )
@@ -225,7 +227,7 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                SectionCard(title = "数据管理", icon = Icons.Default.DeleteSweep) {
+                SectionCard(title = stringResource(R.string.settings_data_section), icon = Icons.Default.DeleteSweep) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -234,50 +236,50 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("图片缓存", style = MaterialTheme.typography.bodyLarge, color = Color.White)
+                            Text(stringResource(R.string.settings_image_cache), style = MaterialTheme.typography.bodyLarge, color = Color.White)
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text("占用 ${formatCacheSize(cacheSize)}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+                            Text(stringResource(R.string.settings_image_cache_usage, formatCacheSize(cacheSize)), style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
                         }
                         Text(
-                            text = "清除",
+                            text = stringResource(R.string.settings_clear),
                             color = Color(0xFF6366F1),
                             modifier = Modifier
                                 .clickable {
                                     clearImageCache()
-                                    Toast.makeText(context, "图片缓存已清除", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.settings_image_cache_cleared), Toast.LENGTH_SHORT).show()
                                 }
                                 .padding(8.dp)
                         )
                     }
                     HorizontalDividerItem()
                     ActionRow(
-                        title = "清空观看历史",
-                        subtitle = "删除所有「继续观看」记录",
+                        title = stringResource(R.string.settings_clear_history),
+                        subtitle = stringResource(R.string.settings_clear_history_desc),
                         enabled = true,
                         onClick = {
                             viewModel.clearHistory()
-                            Toast.makeText(context, "观看历史已清空", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.settings_history_cleared), Toast.LENGTH_SHORT).show()
                         }
                     )
                     HorizontalDividerItem()
                     ActionRow(
-                        title = "清空收藏",
-                        subtitle = "删除所有收藏内容",
+                        title = stringResource(R.string.settings_clear_favorites),
+                        subtitle = stringResource(R.string.settings_clear_favorites_desc),
                         enabled = true,
                         onClick = {
                             viewModel.clearFavorites()
-                            Toast.makeText(context, "收藏已清空", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.settings_favorites_cleared), Toast.LENGTH_SHORT).show()
                         }
                     )
                     HorizontalDividerItem()
                     ActionRow(
-                        title = "清除缓存并重新同步",
-                        subtitle = "清空本地数据后重新拉取当前源",
+                        title = stringResource(R.string.settings_clear_cache_resync),
+                        subtitle = stringResource(R.string.settings_clear_cache_resync_desc),
                         enabled = !clearingCache,
                         loading = clearingCache,
                         onClick = {
                             viewModel.clearCacheAndResync()
-                            Toast.makeText(context, "缓存已清除，正在重新同步…", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, context.getString(R.string.settings_cache_cleared_syncing), Toast.LENGTH_LONG).show()
                         }
                     )
                 }
@@ -291,7 +293,7 @@ fun SettingsScreen(
                     syncingAll = syncingAll,
                     onSyncAll = {
                         viewModel.syncAllSources()
-                        Toast.makeText(context, "正在同步全部源…", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, context.getString(R.string.settings_syncing_all), Toast.LENGTH_LONG).show()
                     },
                     onEdit = onEditSource,
                     onSync = { viewModel.syncSource(it) },
@@ -324,13 +326,13 @@ private fun PlaybackSpeedRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text("默认播放倍速", style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Text(stringResource(R.string.settings_default_speed), style = MaterialTheme.typography.bodyLarge, color = Color.White)
             Spacer(modifier = Modifier.height(2.dp))
-            Text("新打开播放器时使用的倍速", style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+            Text(stringResource(R.string.settings_default_speed_desc), style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
         }
         Box {
             Text(
-                text = formatSpeedLabel(selected),
+                text = stringResource(R.string.settings_speed_x, formatSpeedLabel(selected)),
                 color = Color(0xFF6366F1),
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(horizontal = 8.dp)
@@ -343,7 +345,7 @@ private fun PlaybackSpeedRow(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = "${formatSpeedLabel(speed)}${if (speed == selected) " ✓" else ""}",
+                                text = stringResource(R.string.settings_speed_x, formatSpeedLabel(speed)) + if (speed == selected) " ✓" else "",
                                 color = Color.White
                             )
                         },
@@ -486,14 +488,14 @@ private fun UserInfoCard(
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = if (userInfo != null) "VIP 会员" else "源未连接",
+                        text = if (userInfo != null) stringResource(R.string.settings_vip_member) else stringResource(R.string.settings_source_not_connected),
                         style = MaterialTheme.typography.bodyLarge,
                         color = if (userInfo != null) Color.White else Color(0xFF888888),
                         fontWeight = FontWeight.Bold
                     )
                     if (userInfo != null) {
                         Text(
-                            text = userInfo.username ?: "未知用户",
+                            text = userInfo.username ?: stringResource(R.string.settings_unknown_user),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.8f),
                             maxLines = 1,
@@ -504,13 +506,13 @@ private fun UserInfoCard(
                 if (userInfo != null) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "到期 ${formatExpDate(userInfo.expDate)}",
+                            text = stringResource(R.string.settings_expiry, formatExpDate(userInfo.expDate)),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.9f)
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "最大连接 ${userInfo.maxConnections ?: "1"}",
+                            text = stringResource(R.string.settings_max_connections, userInfo.maxConnections ?: "1"),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.7f)
                         )
@@ -523,7 +525,7 @@ private fun UserInfoCard(
                     IconButton(onClick = onRefresh) {
                         Icon(
                             Icons.Default.Refresh,
-                            contentDescription = "刷新会员信息",
+                            contentDescription = stringResource(R.string.settings_refresh_member),
                             tint = Color.White.copy(alpha = 0.9f)
                         )
                     }
@@ -568,7 +570,7 @@ private fun SourceListCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "源列表",
+                    text = stringResource(R.string.settings_sources),
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White
                 )
@@ -579,7 +581,7 @@ private fun SourceListCard(
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "同步全部源",
+                                contentDescription = stringResource(R.string.settings_sync_all),
                                 tint = Color(0xFF6366F1)
                             )
                         }
@@ -587,7 +589,7 @@ private fun SourceListCard(
                     IconButton(onClick = onAddSource) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "添加源",
+                            contentDescription = stringResource(R.string.settings_add_source),
                             tint = Color(0xFF6366F1)
                         )
                     }
@@ -612,7 +614,7 @@ private fun SourceListCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "暂无源",
+                            text = stringResource(R.string.settings_no_source),
                             style = MaterialTheme.typography.bodyLarge,
                             color = Color(0xFF888888)
                         )
@@ -710,7 +712,7 @@ private fun SourceItem(
                 IconButton(onClick = onSwitch!!) {
                     Icon(
                         Icons.Default.Star,
-                        contentDescription = "设为默认",
+                        contentDescription = stringResource(R.string.settings_set_default),
                         tint = Color(0xFFCCCCCC)
                     )
                 }
@@ -718,7 +720,7 @@ private fun SourceItem(
             IconButton(onClick = onSync, enabled = !isSyncing) {
                 Icon(
                     Icons.Default.Refresh,
-                    contentDescription = "同步",
+                    contentDescription = stringResource(R.string.settings_sync),
                     tint = if (isSyncing) Color(0xFF888888) else Color(0xFF6366F1),
                     modifier = Modifier.rotate(rotation)
                 )
@@ -726,7 +728,7 @@ private fun SourceItem(
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "删除",
+                    contentDescription = stringResource(R.string.settings_delete),
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -747,7 +749,7 @@ private fun AboutCard(versionName: String) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "关于",
+                text = stringResource(R.string.settings_about),
                 style = MaterialTheme.typography.titleMedium,
                 color = Color.White
             )
