@@ -23,15 +23,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -58,11 +59,14 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import kotlinx.coroutines.delay
 
 @Composable
@@ -82,6 +86,7 @@ fun PlayerScreen(
     var duration by remember { mutableFloatStateOf(0f) }
     var playbackSpeed by remember { mutableFloatStateOf(1f) }
     var showSpeedMenu by remember { mutableStateOf(false) }
+    var showAudioMenu by remember { mutableStateOf(false) }
     var hasSeeked by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
@@ -198,15 +203,16 @@ fun PlayerScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-            .clickable {
-                showOverlay = !showOverlay
-                showVolumeSlider = false
-            }
-    ) {
+    MaterialTheme(colorScheme = DarkColorScheme) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .clickable {
+                    showOverlay = !showOverlay
+                    showVolumeSlider = false
+                }
+        ) {
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
@@ -231,7 +237,7 @@ fun PlayerScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0x80000000))
-                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 Row(
@@ -270,7 +276,7 @@ fun PlayerScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0x80000000))
-                        .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                        .padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
@@ -326,7 +332,7 @@ fun PlayerScreen(
                         Canvas(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(16.dp)
+                                .height(24.dp)
                                 .pointerInput(Unit) {
                                     detectHorizontalDragGestures(
                                         onDragStart = { offset ->
@@ -391,16 +397,58 @@ fun PlayerScreen(
 
                     Box {
                         IconButton(
-                            onClick = { showSpeedMenu = true },
+                            onClick = { showAudioMenu = true },
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Settings,
-                                contentDescription = "设置",
+                                imageVector = Icons.Filled.MusicNote,
+                                contentDescription = "音轨",
                                 tint = Color.White,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
+                        DropdownMenu(
+                            expanded = showAudioMenu,
+                            onDismissRequest = { showAudioMenu = false }
+                        ) {
+                            val audioGroups = exoPlayer.currentTracks.groups.filter { it.type == C.TRACK_TYPE_AUDIO }
+                            if (audioGroups.isEmpty()) {
+                                DropdownMenuItem(
+                                    text = { Text("无音轨", color = Color.White) },
+                                    onClick = { showAudioMenu = false }
+                                )
+                            } else {
+                                audioGroups.forEachIndexed { index, group ->
+                                    val fmt = group.mediaTrackGroup.getFormat(0)
+                                    val label = fmt.label?.takeIf { it.isNotBlank() }
+                                        ?: fmt.language?.uppercase()
+                                        ?: "音轨 ${index + 1}"
+                                    val isSelected = group.isSelected
+                                    DropdownMenuItem(
+                                        text = { Text(if (isSelected) "$label ✓" else label, color = Color.White) },
+                                        onClick = {
+                                            val groupTracks = (0 until group.mediaTrackGroup.length).toList()
+                                            val params = exoPlayer.trackSelectionParameters.buildUpon()
+                                                .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, groupTracks))
+                                                .build()
+                                            exoPlayer.trackSelectionParameters = params
+                                            showAudioMenu = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Box {
+                        Text(
+                            text = "${formatSpeed(playbackSpeed)}x",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            modifier = Modifier
+                                .padding(horizontal = 6.dp, vertical = 8.dp)
+                                .clickable { showSpeedMenu = true }
+                        )
                         DropdownMenu(
                             expanded = showSpeedMenu,
                             onDismissRequest = { showSpeedMenu = false }
@@ -409,7 +457,7 @@ fun PlayerScreen(
                                 DropdownMenuItem(
                                     text = {
                                         Text(
-                                            text = "${speed}x${if (speed == playbackSpeed) " ✓" else ""}",
+                                            text = "${formatSpeed(speed)}x${if (speed == playbackSpeed) " ✓" else ""}",
                                             color = Color.White
                                         )
                                     },
@@ -466,6 +514,7 @@ fun PlayerScreen(
             }
         }
     }
+    }
 
 private fun formatTime(ms: Long): String {
     val totalSec = ms / 1000
@@ -473,3 +522,6 @@ private fun formatTime(ms: Long): String {
     val sec = totalSec % 60
     return "%02d:%02d".format(min, sec)
 }
+
+private fun formatSpeed(speed: Float): String =
+    if (speed % 1f == 0f) speed.toInt().toString() else speed.toString()
