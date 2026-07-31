@@ -991,7 +991,7 @@ private fun FullscreenPlayerView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0x80000000))
-                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onBack) {
@@ -1086,7 +1086,7 @@ private fun FullscreenPlayerView(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .background(Color(0x80000000))
-                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                        .padding(horizontal = 12.dp, vertical = 2.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1137,7 +1137,7 @@ private fun FullscreenPlayerView(
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .offset(x = (-50).dp, y = (-34).dp)
+                            .offset(x = (-54).dp, y = (-34).dp)
                             .width(24.dp)
                             .height(trackHeight)
                             .background(Color(0xCC000000), RoundedCornerShape(12.dp))
