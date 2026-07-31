@@ -103,8 +103,8 @@ class LiveTvRepositoryImpl @Inject constructor(
             val sid = streamIdStr.toIntOrNull()
             if (sid != null) entries.map { it.toDomain(sid).toEntity(sid, source.id) } else emptyList()
         }
-        epgDao.deleteBySource(source.id)
-        epgDao.insertAll(all)
+        if (all.isEmpty()) return
+        epgDao.replaceAll(all, source.id)
     }
 
     override fun getAllEpg(): Flow<Map<Int, List<EpgEntry>>> = flow {

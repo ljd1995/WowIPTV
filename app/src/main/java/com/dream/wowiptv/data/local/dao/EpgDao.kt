@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.dream.wowiptv.data.local.entity.EpgEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -24,4 +25,10 @@ interface EpgDao {
 
     @Query("DELETE FROM epg_entries WHERE sourceId = :sourceId")
     suspend fun deleteBySource(sourceId: Long)
+
+    @Transaction
+    suspend fun replaceAll(entries: List<EpgEntity>, sourceId: Long) {
+        deleteBySource(sourceId)
+        insertAll(entries)
+    }
 }
