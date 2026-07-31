@@ -1,6 +1,7 @@
 package com.dream.wowiptv.presentation.live
 
 import android.content.pm.ActivityInfo
+import android.media.AudioManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,13 +26,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Slider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -222,6 +226,7 @@ fun LiveScreen(
                 isBuffering = isBuffering,
                 epgEntries = epgEntries,
                 onTogglePlay = { viewModel.togglePlay() },
+                onRestart = { currentStream?.let { viewModel.playStream(it) } },
                 onFullscreen = { viewModel.toggleFullscreen() },
                 onOpenEpg = { currentStream?.let { onOpenEpg(it.id) } },
                 modifier = Modifier.weight(0.4f)
@@ -262,6 +267,7 @@ private fun PlayerSection(
     isBuffering: Boolean,
     epgEntries: List<EpgEntry>,
     onTogglePlay: () -> Unit,
+    onRestart: () -> Unit,
     onFullscreen: () -> Unit,
     onOpenEpg: () -> Unit,
     modifier: Modifier = Modifier
@@ -297,6 +303,7 @@ private fun PlayerSection(
                 epgEntries = epgEntries,
                 isPlaying = isPlaying,
                 onTogglePlay = onTogglePlay,
+                onRestart = onRestart,
                 onFullscreen = onFullscreen,
                 onOpenEpg = onOpenEpg
             )
@@ -322,6 +329,7 @@ private fun PlayerOverlay(
     epgEntries: List<EpgEntry>,
     isPlaying: Boolean,
     onTogglePlay: () -> Unit,
+    onRestart: () -> Unit,
     onFullscreen: () -> Unit,
     onOpenEpg: () -> Unit
 ) {
@@ -333,6 +341,12 @@ private fun PlayerOverlay(
             showControls = false
         }
     }
+
+    val context = LocalContext.current
+    val audioManager = remember { context.getSystemService(AudioManager::class.java) }
+    val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC) ?: 100
+    var volume by remember { mutableStateOf(audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0) }
+    var showVolumeSlider by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -419,33 +433,79 @@ private fun PlayerOverlay(
                 }
             }
 
-            Row(
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .background(Color(0x80000000))
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                Icon(
-                    imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = if (isPlaying) "暂停" else "播放",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clickable(onClick = onTogglePlay)
-                        .padding(4.dp)
-                )
-                Icon(
-                    imageVector = Icons.Filled.Fullscreen,
-                    contentDescription = "全屏",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clickable(onClick = onFullscreen)
-                        .padding(4.dp)
-                )
+                if (showVolumeSlider) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "音量",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Slider(
+                            value = volume.toFloat(),
+                            onValueChange = { v ->
+                                volume = v.toInt()
+                                audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, v.toInt(), 0)
+                            },
+                            valueRange = 0f..maxVolume.toFloat(),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        contentDescription = if (isPlaying) "暂停" else "播放",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clickable(onClick = onTogglePlay)
+                            .padding(4.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = "刷新",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clickable(onClick = onRestart)
+                            .padding(4.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                        contentDescription = "音量",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clickable(onClick = { showVolumeSlider = !showVolumeSlider })
+                            .padding(4.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.Fullscreen,
+                        contentDescription = "全屏",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clickable(onClick = onFullscreen)
+                            .padding(4.dp)
+                    )
+                }
             }
         }
     }
