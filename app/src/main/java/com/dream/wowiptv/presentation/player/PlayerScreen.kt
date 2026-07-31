@@ -259,12 +259,14 @@ fun PlayerScreen(
                         modifier = Modifier.size(36.dp),
                         strokeWidth = 3.dp
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "${(buffered * 100).toInt().coerceIn(0, 100)}%",
-                        color = Color.White,
-                        fontSize = 14.sp
-                    )
+                    if (duration > 0) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "${(buffered * 100).toInt().coerceIn(0, 100)}%",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
         }
