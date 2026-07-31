@@ -400,7 +400,7 @@ private fun EpisodeItem(
             if (savedPosition > 0) {
                 Spacer(modifier = Modifier.height(4.dp))
                 val totalSecs = episode.durationSecs ?: 0
-                val progress = if (totalSecs > 0) (savedPosition / totalSecs.toFloat()).coerceIn(0f, 1f) else 0f
+                val progress = if (totalSecs > 0) (savedPosition / (totalSecs * 1000L).toFloat()).coerceIn(0f, 1f) else 0f
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
