@@ -10,7 +10,6 @@ import com.dream.wowiptv.domain.usecase.GetLiveStreamsUseCase
 import com.dream.wowiptv.domain.usecase.RefreshAllEpgUseCase
 import com.dream.wowiptv.presentation.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +22,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class EpgViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -73,20 +71,26 @@ class EpgViewModel @Inject constructor(
 
     private fun loadEpg() {
         viewModelScope.launch {
-            val cached = runCatching { liveTvRepository.getAllEpg().first() }.getOrNull()
+            val cached = try {
+                liveTvRepository.getAllEpg().first()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                null
+            }
             if (cached != null && cached.isNotEmpty()) {
                 _epgData.value = UiState.Success(cached)
                 return@launch
             }
             _epgData.value = UiState.Loading
-            runCatching { refreshAllEpgUseCase() }
-                .onSuccess {
-                    val refreshed = liveTvRepository.getAllEpg().first()
-                    _epgData.value = UiState.Success(refreshed)
-                }
-                .onFailure { e ->
-                    _epgData.value = UiState.Error(e.message ?: "EPG 加载失败")
-                }
+            try {
+                refreshAllEpgUseCase()
+                _epgData.value = UiState.Success(liveTvRepository.getAllEpg().first())
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _epgData.value = UiState.Error(e.message ?: "EPG 加载失败")
+            }
         }
     }
 
@@ -95,8 +99,20 @@ class EpgViewModel @Inject constructor(
             _selectedChannelId.value = id
         }
         viewModelScope.launch {
-            runCatching { liveTvRepository.refreshEpg(id) }
-            val updated = runCatching { liveTvRepository.getAllEpg().first() }.getOrNull()
+            try {
+                liveTvRepository.refreshEpg(id)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // 增量刷新失败忽略，缓存兜底
+            }
+            val updated = try {
+                liveTvRepository.getAllEpg().first()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                null
+            }
             if (updated != null) {
                 _epgData.value = UiState.Success(updated)
             }
