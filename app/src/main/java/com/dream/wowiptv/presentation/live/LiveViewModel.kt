@@ -124,6 +124,27 @@ class LiveViewModel @Inject constructor(
 
     init {
         loadFavoriteIds()
+        observeSourceChange()
+    }
+
+    private fun observeSourceChange() {
+        viewModelScope.launch {
+            var lastSourceId: Long? = null
+            sourceRepository.getActiveSource().collect { source ->
+                val newId = source?.id
+                if (lastSourceId != null && newId != null && lastSourceId != newId) {
+                    _currentStream.value = null
+                    _streamUrl.value = ""
+                    _isPlaying.value = false
+                    _isFullscreen.value = false
+                    _epgEntries.value = emptyList()
+                    _channelEpg.value = emptyMap()
+                    _epgLoadedIds.value = emptySet()
+                    _selectedCategoryId.value = null
+                }
+                lastSourceId = newId
+            }
+        }
     }
 
     private fun loadFavoriteIds() {
