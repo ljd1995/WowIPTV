@@ -406,24 +406,15 @@ private fun EpisodeItem(
                         .fillMaxWidth()
                         .height(3.dp)
                         .clip(RoundedCornerShape(2.dp))
-                        .background(Color(0xFF444444))
+                        .background(Color(0xFF555555).copy(alpha = 0.5f))
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
                             .fillMaxWidth(progress)
-                            .background(Color(0xFF4CAF50))
+                            .background(Color(0xFF6366F1))
                     )
                 }
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = if (totalSecs > 0)
-                        "已播放 ${formatDurationShort(savedPosition)} / ${formatDurationShort(totalSecs.toLong())}"
-                    else
-                        "已播放 ${formatDurationShort(savedPosition)}",
-                    color = Color(0xFF888888),
-                    fontSize = 10.sp
-                )
             }
         }
         Spacer(modifier = Modifier.width(8.dp))
@@ -456,11 +447,4 @@ private fun EpisodeItem(
             )
         }
     }
-}
-
-private fun formatDurationShort(secs: Long): String {
-    val h = secs / 3600
-    val m = (secs % 3600) / 60
-    val s = secs % 60
-    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s)
 }
