@@ -50,6 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -433,7 +434,7 @@ private fun SectionCard(
     icon: ImageVector,
     content: @Composable () -> Unit
 ) {
-    Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))) {
+    Card(colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))) {
         Column {
             Row(
                 modifier = Modifier
@@ -469,7 +470,14 @@ private fun SettingSwitchRow(
             Spacer(modifier = Modifier.height(2.dp))
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = Color(0xFF8B5CF6)
+            )
+        )
     }
 }
 
@@ -626,7 +634,7 @@ private fun SourceListCard(
     onAddSource: () -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
     ) {
         Column {
             Row(
@@ -735,7 +743,7 @@ private fun SourceItem(
             .clickable { onEdit() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF2C2C2C)
+            containerColor = Color.White.copy(alpha = 0.05f)
         )
     ) {
         Row(
@@ -806,7 +814,7 @@ private fun SourceItem(
 @Composable
 private fun AboutCard(versionName: String) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
     ) {
         Row(
             modifier = Modifier

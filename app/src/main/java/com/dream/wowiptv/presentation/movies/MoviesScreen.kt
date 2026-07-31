@@ -122,8 +122,8 @@ fun MoviesScreen(
                         cursorColor = Color.White,
                         focusedBorderColor = Color(0xFF444444),
                         unfocusedBorderColor = Color(0xFF333333),
-                        focusedContainerColor = Color(0xFF1E1E1E),
-                        unfocusedContainerColor = Color(0xFF1E1E1E)
+                    focusedContainerColor = Color.White.copy(alpha = 0.06f),
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.06f)
                     ),
                     shape = RoundedCornerShape(4.dp)
                 )

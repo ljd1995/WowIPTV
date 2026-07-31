@@ -105,7 +105,6 @@ import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
 import com.dream.wowiptv.presentation.common.theme.LiveRed
 
-private val DarkBg = Color(0xFF1A1A1A)
 private val DarkSurface = Color(0xFF242424)
 private val DarkText = Color(0xFFDDDDDD)
 private val DarkTextSecondary = Color(0xFF999999)
@@ -663,7 +662,7 @@ private fun ContentSection(
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth().background(DarkBg)) {
+    Column(modifier = modifier.fillMaxWidth()) {
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
             CategorySidebar(
                 categoriesState = categoriesState,
@@ -767,7 +766,7 @@ private fun CategoryItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val bgColor = if (isSelected) Color(0xFF333333) else Color.Transparent
+    val bgColor = if (isSelected) Color(0xFF6366F1).copy(alpha = 0.22f) else Color.Transparent
     val textColor = if (isSelected) Color.White else DarkText
 
     Row(
@@ -838,8 +837,8 @@ private fun ChannelList(
                     cursorColor = Color.White,
                     focusedBorderColor = Color(0xFF444444),
                     unfocusedBorderColor = Color(0xFF333333),
-                    focusedContainerColor = Color(0xFF1E1E1E),
-                    unfocusedContainerColor = Color(0xFF1E1E1E)
+                    focusedContainerColor = Color.White.copy(alpha = 0.06f),
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.06f)
                 ),
                 shape = RoundedCornerShape(4.dp),
                 interactionSource = remember { MutableInteractionSource() }
@@ -928,7 +927,7 @@ private fun ChannelItem(
     LaunchedEffect(stream.id) {
         onLoadChannelEpg()
     }
-    val bgColor = if (isSelected) Color(0xFF333333) else Color.Transparent
+    val bgColor = if (isSelected) Color(0xFF6366F1).copy(alpha = 0.22f) else Color.Transparent
     Row(
         modifier = Modifier
             .fillMaxWidth()
