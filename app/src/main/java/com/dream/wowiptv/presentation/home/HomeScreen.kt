@@ -25,10 +25,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,11 +56,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.dream.wowiptv.R
 import com.dream.wowiptv.data.local.entity.FavoriteStreamEntity
 import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
 import com.dream.wowiptv.data.local.entity.LiveStreamEntity
@@ -178,15 +180,15 @@ fun HomeScreen(
                 ) {
                     item {
                         if (sourceType == "m3u") {
-                            StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = "频道", color = Color(0xFFEF4444), modifier = Modifier.fillMaxWidth())
+                            StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = stringResource(R.string.home_channels), color = Color(0xFFEF4444), modifier = Modifier.fillMaxWidth())
                         } else {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = "频道", color = Color(0xFFEF4444), modifier = Modifier.weight(1f))
-                                StatCard(icon = Icons.Filled.Movie, count = data.movieCount, label = "电影", color = Color(0xFF818CF8), modifier = Modifier.weight(1f))
-                                StatCard(icon = Icons.Filled.Tv, count = data.seriesCount, label = "剧集", color = Color(0xFFA855F7), modifier = Modifier.weight(1f))
+                                StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = stringResource(R.string.home_channels), color = Color(0xFFEF4444), modifier = Modifier.weight(1f))
+                                StatCard(icon = Icons.Filled.Movie, count = data.movieCount, label = stringResource(R.string.home_movies), color = Color(0xFF818CF8), modifier = Modifier.weight(1f))
+                                StatCard(icon = Icons.AutoMirrored.Filled.PlaylistPlay, count = data.seriesCount, label = stringResource(R.string.home_series), color = Color(0xFFA855F7), modifier = Modifier.weight(1f))
                             }
                         }
                     }
@@ -196,7 +198,7 @@ fun HomeScreen(
                 if (showContinue && data.continueWatching.isNotEmpty()) {
                     item {
                         Column {
-                            SectionHeader(title = "继续观看", onViewAll = onViewAllHistory)
+                            SectionHeader(title = stringResource(R.string.home_continue_watching), onViewAll = onViewAllHistory)
                             Spacer(modifier = Modifier.height(16.dp))
                             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                 items(data.continueWatching, key = { it.contentId }) { wp ->
@@ -240,11 +242,11 @@ fun HomeScreen(
                 if (showFavs) {
                     item {
                         Column {
-                            SectionHeader(title = "收藏", onViewAll = onViewAllFavorites)
+                            SectionHeader(title = stringResource(R.string.home_favorites), onViewAll = onViewAllFavorites)
                             Spacer(modifier = Modifier.height(16.dp))
                             val items = data.favoriteStreams + data.favoriteMovies + data.favoriteSeries
                             if (items.isEmpty()) {
-                                Text("暂无收藏", color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
+                                Text(stringResource(R.string.home_no_favorites), color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
                             } else {
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                     items(items.take(10), key = { it.hashCode() }) { item ->
@@ -275,11 +277,11 @@ fun HomeScreen(
                 if (showRecentSection) {
                     item {
                         Column {
-                            SectionHeader(title = "最近添加", onViewAll = onViewAllRecent)
+                            SectionHeader(title = stringResource(R.string.home_recent), onViewAll = onViewAllRecent)
                             Spacer(modifier = Modifier.height(16.dp))
                             val all = data.recentLive + data.recentMovies + data.recentSeries
                             if (all.isEmpty()) {
-                                Text("暂无内容", color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
+                                Text(stringResource(R.string.home_no_content), color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
                             } else {
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                                     items(all.take(10), key = { it.hashCode() }) { item ->
@@ -426,7 +428,7 @@ private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = "查看全部",
+                    text = stringResource(R.string.home_view_all),
                     color = Color(0xFF8B5CF6),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium

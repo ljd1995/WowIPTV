@@ -37,12 +37,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.dream.wowiptv.R
 import com.dream.wowiptv.data.local.entity.FavoriteStreamEntity
 import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
@@ -62,10 +64,10 @@ fun AllFavoritesScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("我的收藏", color = Color.White) },
+                    title = { Text(stringResource(R.string.home_my_favorites), color = Color.White) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回", tint = Color.White)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = Color.White)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFF1A1A1A))
@@ -75,7 +77,7 @@ fun AllFavoritesScreen(
         ) { innerPadding ->
             val items = data.favoriteStreams + data.favoriteMovies + data.favoriteSeries
             if (items.isEmpty()) {
-                Text("暂无收藏", color = Color(0xFF888888), modifier = Modifier.fillMaxSize().padding(innerPadding).wrapContentSize(Alignment.Center))
+                Text(stringResource(R.string.home_no_favorites), color = Color(0xFF888888), modifier = Modifier.fillMaxSize().padding(innerPadding).wrapContentSize(Alignment.Center))
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
