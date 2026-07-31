@@ -54,6 +54,7 @@ import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +68,8 @@ fun AllItemsScreen(
 ) {
     val data by viewModel.data.collectAsState()
     var tab by remember { mutableIntStateOf(initialTab) }
+    val sourceTypeViewModel: SourceTypeViewModel = hiltViewModel()
+    val sourceType by sourceTypeViewModel.sourceType.collectAsState()
     val tabs = listOf("全部", "直播", "电影", "剧集")
 
     MaterialTheme(colorScheme = DarkColorScheme) {
@@ -88,24 +91,30 @@ fun AllItemsScreen(
                 modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        tabs.forEachIndexed { idx, label ->
-                            FilterChip(
-                                selected = tab == idx,
-                                onClick = { tab = idx },
-                                label = { Text(label, fontSize = 13.sp) }
-                            )
+                if (sourceType != "m3u") {
+                    item {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            tabs.forEachIndexed { idx, label ->
+                                FilterChip(
+                                    selected = tab == idx,
+                                    onClick = { tab = idx },
+                                    label = { Text(label, fontSize = 13.sp) }
+                                )
+                            }
                         }
                     }
                 }
 
-                val items: List<Any> = when (tab) {
-                    1 -> data.recentLive
-                    2 -> data.recentMovies
-                    3 -> data.recentSeries
-                    else -> data.recentLive + data.recentMovies + data.recentSeries
+                val items: List<Any> = if (sourceType == "m3u") {
+                    data.recentLive
+                } else {
+                    when (tab) {
+                        1 -> data.recentLive
+                        2 -> data.recentMovies
+                        3 -> data.recentSeries
+                        else -> data.recentLive + data.recentMovies + data.recentSeries
+                    }
                 }
 
                 if (items.isEmpty()) {

@@ -61,6 +61,7 @@ import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,6 +77,8 @@ fun HomeScreen(
 ) {
     val data by viewModel.data.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val sourceTypeViewModel: SourceTypeViewModel = hiltViewModel()
+    val sourceType by sourceTypeViewModel.sourceType.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
         Column(modifier = Modifier.fillMaxSize().background(Color(0xFF1E1E1E))) {
@@ -107,13 +110,17 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = "频道", color = Color(0xFFEF4444), modifier = Modifier.weight(1f))
-                            StatCard(icon = Icons.Filled.Movie, count = data.movieCount, label = "电影", color = Color(0xFF818CF8), modifier = Modifier.weight(1f))
-                            StatCard(icon = Icons.Filled.Tv, count = data.seriesCount, label = "剧集", color = Color(0xFFA855F7), modifier = Modifier.weight(1f))
+                        if (sourceType == "m3u") {
+                            StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = "频道", color = Color(0xFFEF4444), modifier = Modifier.fillMaxWidth())
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = "频道", color = Color(0xFFEF4444), modifier = Modifier.weight(1f))
+                                StatCard(icon = Icons.Filled.Movie, count = data.movieCount, label = "电影", color = Color(0xFF818CF8), modifier = Modifier.weight(1f))
+                                StatCard(icon = Icons.Filled.Tv, count = data.seriesCount, label = "剧集", color = Color(0xFFA855F7), modifier = Modifier.weight(1f))
+                            }
                         }
                     }
 

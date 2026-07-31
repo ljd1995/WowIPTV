@@ -11,6 +11,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,8 @@ import com.dream.wowiptv.presentation.navigation.Routes
 import com.dream.wowiptv.presentation.series.SeriesScreen
 import com.dream.wowiptv.presentation.settings.SettingsScreen
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.SourceTypeViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int? = null) {
@@ -42,6 +45,20 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
     val currentRoute = navBackStackEntry?.destination?.route
     var hideBottomBar by remember { mutableStateOf(false) }
     var pendingLiveStream by remember { mutableStateOf(pendingLiveStreamArg) }
+    val sourceTypeViewModel: SourceTypeViewModel = hiltViewModel()
+    val sourceType by sourceTypeViewModel.sourceType.collectAsState()
+
+    LaunchedEffect(sourceType) {
+        if (sourceType == "m3u" &&
+            currentRoute in listOf(BottomNavItem.Movies.route, BottomNavItem.Series.route)
+        ) {
+            navController.navigate(BottomNavItem.Home.route) {
+                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
 
     LaunchedEffect(pendingLiveStreamArg) {
         if (pendingLiveStreamArg != null) {
@@ -61,7 +78,14 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                     NavigationBar(
                         containerColor = Color(0xFF1A1A1A)
                     ) {
-                        BottomNavItem.items.forEach { item ->
+                        val visibleItems = if (sourceType == "m3u") {
+                            BottomNavItem.items.filter {
+                                it.route != BottomNavItem.Movies.route && it.route != BottomNavItem.Series.route
+                            }
+                        } else {
+                            BottomNavItem.items
+                        }
+                        visibleItems.forEach { item ->
                             NavigationBarItem(
                                 selected = currentRoute == item.route,
                                 onClick = {
