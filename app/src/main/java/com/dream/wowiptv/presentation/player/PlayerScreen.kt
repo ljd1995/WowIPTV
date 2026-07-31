@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -400,8 +402,8 @@ fun PlayerScreen(
                             Box(
                                 modifier = Modifier
                                     .offset(x = 2.dp, y = (-170).dp)
-                                    .width(24.dp)
-                                    .height(trackHeight)
+                                    .requiredWidth(24.dp)
+                                    .requiredHeight(trackHeight)
                                     .background(Color(0xCC000000), RoundedCornerShape(12.dp))
                                     .pointerInput(maxVolume) {
                                         var dragStartVolume = volume
