@@ -7,9 +7,7 @@ import com.dream.wowiptv.data.local.dao.LiveStreamDao
 import com.dream.wowiptv.data.local.dao.SeriesDao
 import com.dream.wowiptv.data.local.dao.VodStreamDao
 import com.dream.wowiptv.domain.repository.LiveTvRepository
-import com.dream.wowiptv.domain.repository.SeriesRepository
 import com.dream.wowiptv.domain.repository.SourceRepository
-import com.dream.wowiptv.domain.repository.VodRepository
 import com.dream.wowiptv.domain.usecase.GetUserInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,8 +31,6 @@ class SplashViewModel @Inject constructor(
     private val vodStreamDao: VodStreamDao,
     private val seriesDao: SeriesDao,
     private val liveTvRepository: LiveTvRepository,
-    private val vodRepository: VodRepository,
-    private val seriesRepository: SeriesRepository,
     private val getUserInfoUseCase: GetUserInfoUseCase,
     private val sourcePreferences: SourcePreferences
 ) : ViewModel() {
@@ -97,19 +93,12 @@ class SplashViewModel @Inject constructor(
             }
 
             launch {
-                val refreshers = listOf<suspend () -> Unit>(
-                    { liveTvRepository.refreshAll() },
-                    { vodRepository.refreshAll() },
-                    { seriesRepository.refreshAll() }
-                )
-                refreshers.forEach { refresher ->
-                    try {
-                        refresher()
-                    } catch (e: kotlinx.coroutines.CancellationException) {
-                        throw e
-                    } catch (_: Exception) {
-                        // 单个刷新失败不影响其他
-                    }
+                try {
+                    liveTvRepository.refreshAllEpg()
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // EPG 预热失败忽略
                 }
             }
         }
