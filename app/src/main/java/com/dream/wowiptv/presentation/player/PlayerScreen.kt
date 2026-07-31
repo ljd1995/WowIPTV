@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -333,6 +334,13 @@ fun PlayerScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(24.dp)
+                                .pointerInput(Unit) {
+                                    detectTapGestures { offset ->
+                                        val newPos = (offset.x / size.width).coerceIn(0f, 1f)
+                                        position = newPos
+                                        exoPlayer.seekTo((newPos * duration).toLong())
+                                    }
+                                }
                                 .pointerInput(Unit) {
                                     detectHorizontalDragGestures(
                                         onDragStart = { offset ->
