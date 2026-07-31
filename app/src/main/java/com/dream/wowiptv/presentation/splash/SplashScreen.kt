@@ -33,8 +33,6 @@ fun SplashScreen(
     viewModel: SplashViewModel = hiltViewModel(),
     onFinished: () -> Unit
 ) {
-    val counts by viewModel.counts.collectAsState()
-    val expiry by viewModel.expiry.collectAsState()
     val ready by viewModel.ready.collectAsState()
 
     LaunchedEffect(ready) {
@@ -74,20 +72,6 @@ fun SplashScreen(
                 CircularProgressIndicator(
                     color = Color(0xFF6366F1),
                     strokeWidth = 3.dp
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-                counts?.let {
-                    Text(
-                        text = "直播 ${it.live} · 电影 ${it.movie} · 剧集 ${it.series}",
-                        color = Color(0xFF999999),
-                        fontSize = 13.sp
-                    )
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = if (expiry.isNullOrEmpty()) "VIP 加载中..." else "VIP 到期: $expiry",
-                    color = Color(0xFF999999),
-                    fontSize = 13.sp
                 )
             }
         }
