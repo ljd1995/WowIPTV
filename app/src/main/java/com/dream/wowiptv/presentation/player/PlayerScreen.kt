@@ -383,7 +383,7 @@ fun PlayerScreen(
                         modifier = Modifier.width(78.dp)
                     )
 
-                    Box {
+                    Box(modifier = Modifier.size(28.dp)) {
                         IconButton(
                             onClick = { showVolumeSlider = !showVolumeSlider },
                             modifier = Modifier.size(28.dp)
