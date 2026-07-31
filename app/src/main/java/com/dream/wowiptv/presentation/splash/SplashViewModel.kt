@@ -60,11 +60,13 @@ class SplashViewModel @Inject constructor(
                 return@launch
             }
 
-            _counts.value = SplashCounts(
-                live = liveStreamDao.getBySource(source.id).first().size,
-                movie = vodStreamDao.getBySource(source.id).first().size,
-                series = seriesDao.getBySource(source.id).first().size
-            )
+            runCatching {
+                _counts.value = SplashCounts(
+                    live = liveStreamDao.getBySource(source.id).first().size,
+                    movie = vodStreamDao.getBySource(source.id).first().size,
+                    series = seriesDao.getBySource(source.id).first().size
+                )
+            }
 
             launch {
                 val info = withTimeoutOrNull(3000) { getUserInfoUseCase() }
