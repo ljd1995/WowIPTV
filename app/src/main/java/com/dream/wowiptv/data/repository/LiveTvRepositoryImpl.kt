@@ -83,7 +83,7 @@ class LiveTvRepositoryImpl @Inject constructor(
         liveStreamDao.insertAll(liveStreams.map { it.toDomain().toEntity(source.id) })
     }
 
-    suspend fun refreshEpg(streamId: Int) {
+    override suspend fun refreshEpg(streamId: Int) {
         val source = sourceRepository.getActiveSource().first() ?: return
         configureBaseUrl(source.serverUrl, source.port)
 
@@ -92,6 +92,32 @@ class LiveTvRepositoryImpl @Inject constructor(
 
         epgDao.deleteByStream(streamId, source.id)
         epgDao.insertAll(entries.map { it.toEntity(streamId, source.id) })
+    }
+
+    override suspend fun refreshAllEpg() {
+        val source = sourceRepository.getActiveSource().first() ?: return
+        configureBaseUrl(source.serverUrl, source.port)
+
+        val table = api.getSimpleDataTable(source.username, source.password)
+        val all = table.entries.flatMap { (streamIdStr, entries) ->
+            val sid = streamIdStr.toIntOrNull()
+            if (sid != null) entries.map { it.toDomain(sid).toEntity(sid, source.id) } else emptyList()
+        }
+        epgDao.deleteBySource(source.id)
+        epgDao.insertAll(all)
+    }
+
+    override fun getAllEpg(): Flow<Map<Int, List<EpgEntry>>> = flow {
+        val source = sourceRepository.getActiveSource().first()
+        if (source == null) {
+            emit(emptyMap())
+            return@flow
+        }
+        emitAll(
+            epgDao.getBySource(source.id).map { entities ->
+                entities.map { it.toDomain() }.groupBy { it.streamId }
+            }
+        )
     }
 
     private fun configureBaseUrl(serverUrl: String, port: Int) {

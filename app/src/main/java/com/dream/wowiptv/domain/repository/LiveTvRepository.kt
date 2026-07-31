@@ -10,4 +10,7 @@ interface LiveTvRepository {
     fun getStreams(categoryId: Int?): Flow<List<LiveStream>>
     fun getShortEpg(streamId: Int): Flow<List<EpgEntry>>
     suspend fun refreshAll()
+    suspend fun refreshAllEpg()
+    suspend fun refreshEpg(streamId: Int)
+    fun getAllEpg(): Flow<Map<Int, List<EpgEntry>>>
 }
