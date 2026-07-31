@@ -60,6 +60,7 @@ import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
+import com.dream.wowiptv.presentation.common.LiveDot
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import kotlinx.coroutines.delay
@@ -354,11 +355,7 @@ private fun TypeBadge(text: String) {
             horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             if (text == "LIVE") {
-                Box(
-                    modifier = Modifier
-                        .size(5.dp)
-                        .background(Color(0xFFEF4444), RoundedCornerShape(2.5.dp))
-                )
+                LiveDot(size = 5.dp)
             }
             Text(
                 text = text,

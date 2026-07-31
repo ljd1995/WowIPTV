@@ -1,10 +1,5 @@
 package com.dream.wowiptv.presentation.live
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import android.content.pm.ActivityInfo
 import android.media.AudioManager
 import androidx.activity.ComponentActivity
@@ -64,7 +59,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -74,7 +68,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -96,6 +89,7 @@ import coil.compose.AsyncImage
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveCategory
 import com.dream.wowiptv.domain.model.LiveStream
+import com.dream.wowiptv.presentation.common.LiveDot
 import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
@@ -1235,47 +1229,4 @@ private fun FullscreenPlayerView(
 }
 
 
-@Composable
-private fun LiveDot(size: Dp = 8.dp) {
-    val transition = rememberInfiniteTransition(label = "liveDot")
-    val haloScale by transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 3.2f,
-        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Restart),
-        label = "haloScale"
-    )
-    val haloAlpha by transition.animateFloat(
-        initialValue = 0.8f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Restart),
-        label = "haloAlpha"
-    )
-    val dotScale by transition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0.65f,
-        animationSpec = infiniteRepeatable(tween(600), RepeatMode.Reverse),
-        label = "dotScale"
-    )
-    Box(contentAlignment = Alignment.Center) {
-        Box(
-            modifier = Modifier
-                .size(size * 1.5f)
-                .graphicsLayer {
-                    scaleX = haloScale
-                    scaleY = haloScale
-                    alpha = haloAlpha
-                }
-                .background(LiveRed.copy(alpha = 0.7f), CircleShape)
-        )
-        Box(
-            modifier = Modifier
-                .size(size)
-                .graphicsLayer {
-                    scaleX = dotScale
-                    scaleY = dotScale
-                }
-                .background(LiveRed, CircleShape)
-        )
-    }
-}
 
