@@ -90,6 +90,7 @@ import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveCategory
 import com.dream.wowiptv.domain.model.LiveStream
 import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
+import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
@@ -109,7 +110,8 @@ fun LiveScreen(
     onStreamPlayed: () -> Unit = {},
     onFullscreenChanged: (Boolean) -> Unit = {},
     onOpenEpg: (Int) -> Unit = {},
-    viewModel: LiveViewModel = hiltViewModel()
+    viewModel: LiveViewModel = hiltViewModel(),
+    sourceTypeViewModel: SourceTypeViewModel = hiltViewModel()
 ) {
     val categoriesState by viewModel.categories.collectAsState()
     val selectedCategoryId by viewModel.selectedCategoryId.collectAsState()
@@ -123,6 +125,8 @@ fun LiveScreen(
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val categoryCounts by viewModel.categoryCounts.collectAsState()
+    val sourceType by sourceTypeViewModel.sourceType.collectAsState()
+    val isM3u = sourceType == "m3u"
 
     val context = LocalContext.current
     val activity = context as? ComponentActivity
@@ -237,6 +241,7 @@ fun LiveScreen(
             isBuffering = isBuffering,
             epgEntries = epgEntries,
             networkSpeed = networkSpeed,
+            isM3u = isM3u,
             onBack = { viewModel.exitFullscreen() },
             onTogglePlay = { viewModel.togglePlay() },
             onRestart = { currentStream?.let { viewModel.playStream(it) } },
@@ -260,6 +265,7 @@ fun LiveScreen(
                 isBuffering = isBuffering,
                 epgEntries = epgEntries,
                 networkSpeed = networkSpeed,
+                isM3u = isM3u,
                 onTogglePlay = { viewModel.togglePlay() },
                 onRestart = { currentStream?.let { viewModel.playStream(it) } },
                 onFullscreen = { viewModel.toggleFullscreen() },
@@ -280,6 +286,7 @@ fun LiveScreen(
                 onPlayStream = { viewModel.playStream(it) },
                 onToggleFavorite = { stream -> viewModel.toggleFavorite(stream) },
                 onOpenEpg = onOpenEpg,
+                isM3u = isM3u,
                 channelEpgTitles = channelEpg,
                 onLoadChannelEpg = { viewModel.loadChannelEpg(it) },
                 isRefreshing = isRefreshing,
@@ -302,6 +309,7 @@ private fun PlayerSection(
     isBuffering: Boolean,
     epgEntries: List<EpgEntry>,
     networkSpeed: Long,
+    isM3u: Boolean,
     onTogglePlay: () -> Unit,
     onRestart: () -> Unit,
     onFullscreen: () -> Unit,
@@ -339,6 +347,7 @@ private fun PlayerSection(
                 epgEntries = epgEntries,
                 isPlaying = isPlaying,
                 networkSpeed = networkSpeed,
+                isM3u = isM3u,
                 onTogglePlay = onTogglePlay,
                 onRestart = onRestart,
                 onFullscreen = onFullscreen,
@@ -388,6 +397,7 @@ private fun PlayerOverlay(
     epgEntries: List<EpgEntry>,
     isPlaying: Boolean,
     networkSpeed: Long,
+    isM3u: Boolean,
     onTogglePlay: () -> Unit,
     onRestart: () -> Unit,
     onFullscreen: () -> Unit,
@@ -441,16 +451,18 @@ private fun PlayerOverlay(
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = Icons.Filled.DateRange,
-                    contentDescription = "EPG",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable(onClick = onOpenEpg)
-                        .padding(2.dp)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
+                if (!isM3u) {
+                    Icon(
+                        imageVector = Icons.Filled.DateRange,
+                        contentDescription = "EPG",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable(onClick = onOpenEpg)
+                            .padding(2.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
@@ -615,6 +627,7 @@ private fun ContentSection(
     onPlayStream: (LiveStream) -> Unit,
     onToggleFavorite: (LiveStream) -> Unit,
     onOpenEpg: (Int) -> Unit,
+    isM3u: Boolean,
     channelEpgTitles: Map<Int, String>,
     onLoadChannelEpg: (Int) -> Unit,
     isRefreshing: Boolean,
@@ -649,6 +662,7 @@ private fun ContentSection(
                 onPlayStream = onPlayStream,
                 onToggleFavorite = onToggleFavorite,
                 onOpenEpg = onOpenEpg,
+                isM3u = isM3u,
                 channelEpgTitles = channelEpgTitles,
                 onLoadChannelEpg = onLoadChannelEpg,
                 isRefreshing = isRefreshing,
@@ -768,6 +782,7 @@ private fun ChannelList(
     onPlayStream: (LiveStream) -> Unit,
     onToggleFavorite: (LiveStream) -> Unit,
     onOpenEpg: (Int) -> Unit,
+    isM3u: Boolean,
     channelEpgTitles: Map<Int, String>,
     onLoadChannelEpg: (Int) -> Unit,
     isRefreshing: Boolean,
@@ -853,6 +868,7 @@ private fun ChannelList(
                                     isFavorite = stream.id in favoriteIds,
                                     isSelected = stream.id == currentStream?.id,
                                     currentEpgTitle = channelEpgTitles[stream.id],
+                                    isM3u = isM3u,
                                     onClick = { onPlayStream(stream) },
                                     onToggleFavorite = { onToggleFavorite(stream) },
                                     onOpenEpg = { onOpenEpg(stream.id) },
@@ -874,6 +890,7 @@ private fun ChannelItem(
     isFavorite: Boolean,
     isSelected: Boolean,
     currentEpgTitle: String?,
+    isM3u: Boolean,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
     onOpenEpg: () -> Unit,
@@ -943,13 +960,15 @@ private fun ChannelItem(
                 )
             }
         }
-        IconButton(onClick = onOpenEpg) {
-            Icon(
-                imageVector = Icons.Filled.DateRange,
-                contentDescription = "EPG",
-                tint = DarkTextSecondary,
-                modifier = Modifier.size(18.dp)
-            )
+        if (!isM3u) {
+            IconButton(onClick = onOpenEpg) {
+                Icon(
+                    imageVector = Icons.Filled.DateRange,
+                    contentDescription = "EPG",
+                    tint = DarkTextSecondary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
         IconButton(onClick = onToggleFavorite) {
             Icon(
@@ -970,6 +989,7 @@ private fun FullscreenPlayerView(
     isBuffering: Boolean,
     epgEntries: List<EpgEntry>,
     networkSpeed: Long,
+    isM3u: Boolean,
     onBack: () -> Unit,
     onTogglePlay: () -> Unit,
     onRestart: () -> Unit,
@@ -1055,13 +1075,15 @@ private fun FullscreenPlayerView(
                             modifier = Modifier.padding(end = 8.dp)
                         )
                     }
-                    IconButton(onClick = onOpenEpg) {
-                        Icon(
-                            imageVector = Icons.Filled.DateRange,
-                            contentDescription = "EPG",
-                            tint = Color.White,
-                            modifier = Modifier.size(22.dp)
-                        )
+                    if (!isM3u) {
+                        IconButton(onClick = onOpenEpg) {
+                            Icon(
+                                imageVector = Icons.Filled.DateRange,
+                                contentDescription = "EPG",
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
                     }
                     Row(
                         modifier = Modifier.padding(end = 10.dp),

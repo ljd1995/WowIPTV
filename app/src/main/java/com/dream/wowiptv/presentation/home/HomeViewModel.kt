@@ -88,61 +88,41 @@ class HomeViewModel @Inject constructor(
 
     private fun loadData() {
         viewModelScope.launch {
-            val source = sourceRepository.getActiveSource().first() ?: return@launch
-
-            val (liveCatMap, vodCatMap, seriesCatMap) = loadCategoryMaps(source.id)
-            _data.value = _data.value.copy(
-                liveCategoryNames = liveCatMap,
-                vodCategoryNames = vodCatMap,
-                seriesCategoryNames = seriesCatMap
-            )
-
-            launch {
-                while (true) {
-                    val (lMap, vMap, sMap) = loadCategoryMaps(source.id)
-                    _data.value = _data.value.copy(
-                        liveCategoryNames = lMap,
-                        vodCategoryNames = vMap,
-                        seriesCategoryNames = sMap
-                    )
-                    val progress = watchProgressDao.getAllBySource(source.id).first()
-                    val live = liveStreamDao.getBySource(source.id).first()
-                    val vod = vodStreamDao.getBySource(source.id).first()
-                    val series = seriesDao.getBySource(source.id).first()
-                    val (vodRatingMap, seriesRatingMap) = buildRatingMaps(vod, series)
-                    _data.value = _data.value.copy(vodRating = vodRatingMap, seriesRating = seriesRatingMap)
-                    android.util.Log.d("HomeVM", "continue watching: ${progress.size} items")
-                    val enriched = progress.map { wp ->
-                        val icon = when (wp.contentType) {
-                            "vod" -> vod.find { it.streamId == wp.contentId.removePrefix("vod_").toIntOrNull() }?.streamIcon
-                            "series" -> series.find { it.seriesId == wp.contentId.removePrefix("series_").toIntOrNull() }?.cover
-                            "live" -> live.find { it.streamId == wp.contentId.removePrefix("live_").toIntOrNull() }?.streamIcon
-                            else -> null
-                        }
-                        wp.copy(icon = icon ?: wp.icon)
-                    }
-                    val catNames = progress.associate { wp ->
-                        val id = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_").toIntOrNull()
-                        val name = when (wp.contentType) {
-                            "live" -> live.find { it.streamId == id }?.categoryId?.let { cid -> lMap[cid] }
-                            "vod" -> vod.find { it.streamId == id }?.categoryId?.let { cid -> vMap[cid] }
-                            "series" -> series.find { it.seriesId == id }?.categoryId?.let { cid -> sMap[cid] }
-                            else -> null
-                        }
-                        wp.contentId to (name ?: "")
-                    }.filter { it.value.isNotEmpty() }
-                    _data.value = _data.value.copy(continueWatching = enriched.take(10), continueCategoryNames = catNames)
-                    delay(5000)
-                }
-            }
-
             while (true) {
-                val favStreams = favoriteStreamDao.getAllBySource(source.id).first()
-                val favVods = favoriteVodDao.getAllBySource(source.id).first()
+                val source = sourceRepository.getActiveSource().first() ?: run {
+                    delay(2000)
+                    continue
+                }
+
+                val (liveCatMap, vodCatMap, seriesCatMap) = loadCategoryMaps(source.id)
+                val progress = watchProgressDao.getAllBySource(source.id).first()
                 val live = liveStreamDao.getBySource(source.id).first()
                 val vod = vodStreamDao.getBySource(source.id).first()
                 val series = seriesDao.getBySource(source.id).first()
                 val (vodRatingMap, seriesRatingMap) = buildRatingMaps(vod, series)
+
+                val enriched = progress.map { wp ->
+                    val icon = when (wp.contentType) {
+                        "vod" -> vod.find { it.streamId == wp.contentId.removePrefix("vod_").toIntOrNull() }?.streamIcon
+                        "series" -> series.find { it.seriesId == wp.contentId.removePrefix("series_").toIntOrNull() }?.cover
+                        "live" -> live.find { it.streamId == wp.contentId.removePrefix("live_").toIntOrNull() }?.streamIcon
+                        else -> null
+                    }
+                    wp.copy(icon = icon ?: wp.icon)
+                }
+                val catNames = progress.associate { wp ->
+                    val id = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_").toIntOrNull()
+                    val name = when (wp.contentType) {
+                        "live" -> live.find { it.streamId == id }?.categoryId?.let { cid -> liveCatMap[cid] }
+                        "vod" -> vod.find { it.streamId == id }?.categoryId?.let { cid -> vodCatMap[cid] }
+                        "series" -> series.find { it.seriesId == id }?.categoryId?.let { cid -> seriesCatMap[cid] }
+                        else -> null
+                    }
+                    wp.contentId to (name ?: "")
+                }.filter { it.value.isNotEmpty() }
+
+                val favStreams = favoriteStreamDao.getAllBySource(source.id).first()
+                val favVods = favoriteVodDao.getAllBySource(source.id).first()
 
                 val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 val cal = Calendar.getInstance()
@@ -166,6 +146,11 @@ class HomeViewModel @Inject constructor(
                     recentLive = live.take(10),
                     recentMovies = recentMovies,
                     recentSeries = series.take(10),
+                    continueWatching = enriched.take(10),
+                    continueCategoryNames = catNames,
+                    liveCategoryNames = liveCatMap,
+                    vodCategoryNames = vodCatMap,
+                    seriesCategoryNames = seriesCatMap,
                     vodRating = vodRatingMap,
                     seriesRating = seriesRatingMap
                 )
