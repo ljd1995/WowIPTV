@@ -41,6 +41,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dream.wowiptv.domain.model.XtreamSource
+import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
@@ -69,13 +71,16 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     onAddSource: () -> Unit,
     onEditSource: (Long) -> Unit,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
+    sourceTypeViewModel: SourceTypeViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val sourcesState by viewModel.sources.collectAsStateWithLifecycle()
     val activeSourceId by viewModel.activeSourceId.collectAsStateWithLifecycle()
     val syncingIds by viewModel.syncingIds.collectAsStateWithLifecycle()
     val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
+    val sourceType by sourceTypeViewModel.sourceType.collectAsState()
+    val isM3u = sourceType == "m3u"
     val prevSyncingIdsState = remember { mutableStateOf<Set<Long>>(emptySet()) }
     val currentSyncingIds by rememberUpdatedState(syncingIds)
 
@@ -107,8 +112,10 @@ fun SettingsScreen(
                     .padding(innerPadding)
                     .padding(16.dp)
             ) {
-                UserInfoCard(userInfo = userInfo)
-                Spacer(modifier = Modifier.height(12.dp))
+                if (!isM3u) {
+                    UserInfoCard(userInfo = userInfo)
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
                 SourceListCard(
                     sources = sourcesState,
                     activeSourceId = activeSourceId,
