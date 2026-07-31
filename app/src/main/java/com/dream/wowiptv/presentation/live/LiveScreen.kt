@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -348,12 +349,34 @@ private fun PlayerSection(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "选择一个频道播放",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White.copy(alpha = 0.6f),
-                    textAlign = TextAlign.Center
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .background(Color(0xFF2D2D3A), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.LiveTv,
+                            contentDescription = null,
+                            tint = Color(0xFF818CF8),
+                            modifier = Modifier.size(34.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "选择一个频道播放",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "从左侧列表选择频道开始观看",
+                        color = Color(0xFF888888),
+                        fontSize = 12.sp
+                    )
+                }
             }
         }
     }
