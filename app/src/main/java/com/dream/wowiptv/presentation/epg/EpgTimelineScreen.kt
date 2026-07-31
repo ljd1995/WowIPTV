@@ -35,6 +35,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -200,11 +202,17 @@ private fun EpgGrid(
         cal.timeInMillis
     }
 
+    val nowScrollPx = with(LocalDensity.current) {
+        (hourWidth * ((currentTimeMs - timelineStartMs) / 3600000f)).toPx()
+    }.toInt()
+    LaunchedEffect(Unit) {
+        timelineScrollState.scrollTo(nowScrollPx)
+    }
+
     Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(timelineScrollState)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Text(
@@ -217,17 +225,21 @@ private fun EpgGrid(
                     .width(channelLabelWidth)
                     .padding(horizontal = 4.dp, vertical = 6.dp)
             )
-            Row(modifier = Modifier.width(timelineWidth)) {
-                for (i in 0 until totalHours) {
-                    val hourTime = timelineStartMs + i * 3600 * 1000L
-                    Text(
-                        text = formatTime(hourTime),
-                        modifier = Modifier
-                            .width(hourWidth)
-                            .padding(horizontal = 4.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            Row(
+                modifier = Modifier.horizontalScroll(timelineScrollState)
+            ) {
+                Row(modifier = Modifier.width(timelineWidth)) {
+                    for (i in 0 until totalHours) {
+                        val hourTime = timelineStartMs + i * 3600 * 1000L
+                        Text(
+                            text = formatTime(hourTime),
+                            modifier = Modifier
+                                .width(hourWidth)
+                                .padding(horizontal = 4.dp, vertical = 6.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
