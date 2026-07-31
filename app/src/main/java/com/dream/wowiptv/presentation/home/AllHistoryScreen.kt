@@ -47,9 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.withStyle
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
@@ -218,21 +215,28 @@ private fun HistoryGridCell(
                                 )
                             )
                         )
-                        .padding(horizontal = 6.dp, vertical = 1.dp),
-                    contentAlignment = Alignment.TopStart
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                    contentAlignment = Alignment.CenterStart
                 ) {
-                    val txt = if (!categoryName.isNullOrEmpty()) {
-                        buildAnnotatedString {
-                            withStyle(SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White)) { append(item.name) }
-                            append("\n")
-                            withStyle(SpanStyle(fontSize = 8.sp, color = Color(0xFF999999))) { append(categoryName) }
-                        }
-                    } else {
-                        buildAnnotatedString {
-                            withStyle(SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White)) { append(item.name) }
+                    Column {
+                        Text(
+                            text = item.name,
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (!categoryName.isNullOrEmpty()) {
+                            Text(
+                                text = categoryName,
+                                color = Color(0xFF999999),
+                                fontSize = 8.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
-                    Text(text = txt, maxLines = if (categoryName.isNullOrEmpty()) 1 else 2, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

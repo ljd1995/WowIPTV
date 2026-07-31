@@ -15,9 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.withStyle
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -236,21 +233,28 @@ private fun GridCell(icon: String? = null, name: String, badge: String? = null, 
                         )
                     )
                 )
-                .padding(horizontal = 6.dp, vertical = 1.dp),
-            contentAlignment = Alignment.TopStart
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+            contentAlignment = Alignment.CenterStart
         ) {
-            val txt = if (!categoryName.isNullOrEmpty()) {
-                buildAnnotatedString {
-                    withStyle(SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White)) { append(name) }
-                    append("\n")
-                    withStyle(SpanStyle(fontSize = 8.sp, color = Color(0xFF999999))) { append(categoryName) }
-                }
-            } else {
-                buildAnnotatedString {
-                    withStyle(SpanStyle(fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White)) { append(name) }
+            Column {
+                Text(
+                    text = name,
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!categoryName.isNullOrEmpty()) {
+                    Text(
+                        text = categoryName,
+                        color = Color(0xFF999999),
+                        fontSize = 8.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
-            Text(text = txt, maxLines = if (categoryName.isNullOrEmpty()) 1 else 2, overflow = TextOverflow.Ellipsis)
         }
     }
 }
