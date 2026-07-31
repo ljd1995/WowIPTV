@@ -100,38 +100,44 @@ fun SourceFormScreen(
                 }
             },
             onImport = { name, url, content ->
-                scope.launch {
-                    val urlText = url?.trim().orEmpty()
-                    if (sourceId != null) {
-                        when {
-                            urlText.isNotBlank() -> viewModel.updateSource(sourceId, name, urlText, 80, "", "")
-                            content != null -> writeM3uFile(context, sourceId, content) { path ->
-                                viewModel.updateSource(sourceId, name, path, 80, "", "")
-                            }
-                        }
-                    } else if (urlText.isNotBlank()) {
-                        viewModel.addSource(name, urlText, 80, "", "", "m3u")
-                    } else if (content != null) {
-                        val id = viewModel.addSource(name, "pending", 80, "", "", "m3u")
-                        writeM3uFile(context, id, content) { path ->
-                            viewModel.updateSource(id, name, path, 80, "", "")
-                        }
-                    }
-                    onNavigateBack()
-                }
+                importM3u(context, sourceId, name, url, content, viewModel)
             },
             onNavigateBack = onNavigateBack
         )
     }
 }
 
-private suspend fun writeM3uFile(context: Context, id: Long, content: String, onWritten: suspend (String) -> Unit) {
-    val path = withContext(Dispatchers.IO) {
+private suspend fun importM3u(
+    context: Context,
+    sourceId: Long?,
+    name: String,
+    url: String?,
+    content: String?,
+    viewModel: SettingsViewModel
+) {
+    val urlText = url?.trim().orEmpty()
+    if (sourceId != null) {
+        when {
+            urlText.isNotBlank() -> viewModel.updateSource(sourceId, name, urlText, 80, "", "")
+            content != null -> {
+                val path = writeM3uFile(context, sourceId, content)
+                viewModel.updateSource(sourceId, name, path, 80, "", "")
+            }
+        }
+    } else if (urlText.isNotBlank()) {
+        viewModel.addSource(name, urlText, 80, "", "", "m3u")
+    } else if (content != null) {
+        val path = writeM3uFile(context, name.hashCode().toLong(), content)
+        viewModel.addSource(name, path, 80, "", "", "m3u")
+    }
+}
+
+private suspend fun writeM3uFile(context: Context, id: Long, content: String): String {
+    return withContext(Dispatchers.IO) {
         val dir = File(context.filesDir, "m3u").apply { mkdirs() }
         File(dir, "$id.m3u").writeText(content)
         "file://m3u/$id.m3u"
     }
-    onWritten(path)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -140,7 +146,7 @@ private fun SourceFormInner(
     initialSource: XtreamSource?,
     isEditing: Boolean,
     onSave: (name: String, serverUrl: String, username: String, password: String) -> Unit,
-    onImport: (name: String, url: String?, content: String?) -> Unit,
+    onImport: suspend (name: String, url: String?, content: String?) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     val initialUrl = if (initialSource != null) "http://${initialSource.serverUrl}:${initialSource.port}" else ""
@@ -172,7 +178,7 @@ private fun SourceFormInner(
                 if (text != null) {
                     selectedFileContent = text
                     selectedFileName = context.getDisplayName(uri)
-                    val channels = M3uPlaylistParser.parse(text, "")
+                    val channels = withContext(Dispatchers.IO) { M3uPlaylistParser.parse(text, "") }
                     importError = if (channels.isEmpty()) "文件无有效频道" else null
                 }
             }
@@ -365,9 +371,19 @@ private fun SourceFormInner(
                 Button(
                     onClick = {
                         saving = true
-                        onImport(name.trim(), m3uUrl.trim().ifBlank { null }, selectedFileContent)
+                        importError = null
+                        scope.launch {
+                            try {
+                                onImport(name.trim(), m3uUrl.trim().ifBlank { null }, selectedFileContent)
+                                onNavigateBack()
+                            } catch (e: Exception) {
+                                importError = e.message ?: "导入失败"
+                            } finally {
+                                saving = false
+                            }
+                        }
                     },
-                    enabled = isImportValid && !saving,
+                    enabled = isImportValid && importError == null && !saving,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
