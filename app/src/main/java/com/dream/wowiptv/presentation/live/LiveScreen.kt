@@ -372,7 +372,7 @@ private fun PlayerSection(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "从左侧列表选择频道开始观看",
+                        text = "从右侧列表选择频道开始观看",
                         color = Color(0xFF888888),
                         fontSize = 12.sp
                     )
