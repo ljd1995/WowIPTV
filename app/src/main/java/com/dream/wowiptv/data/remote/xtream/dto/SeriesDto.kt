@@ -11,6 +11,7 @@ data class SeriesDto(
     val cast: String? = null,
     val director: String? = null,
     val genre: String? = null,
+    val releaseDate: String? = null,
     val rating: String? = null,
     @SerializedName("category_id")
     val categoryId: String? = null

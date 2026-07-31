@@ -126,7 +126,7 @@ fun SeriesDto.toDomain(): SeriesItem {
         director = director,
         genre = genre,
         rating = rating,
-        releaseDate = null,
+        releaseDate = releaseDate,
         categoryId = categoryId?.toIntOrNull() ?: 0
     )
 }
