@@ -501,11 +501,16 @@ private fun PlayerOverlay(
                         .background(Color(0xCC000000), RoundedCornerShape(12.dp))
                         .pointerInput(maxVolume) {
                             var dragStartVolume = volume
+                            var totalDragY = 0f
                             detectDragGestures(
-                                onDragStart = { dragStartVolume = volume },
+                                onDragStart = {
+                                    dragStartVolume = volume
+                                    totalDragY = 0f
+                                },
                                 onDrag = { change, dragAmount ->
                                     change.consume()
-                                    val newVol = (dragStartVolume - dragAmount.y / trackHeight.value * maxVolume)
+                                    totalDragY += dragAmount.y
+                                    val newVol = (dragStartVolume - totalDragY / trackHeight.value * maxVolume)
                                         .toInt()
                                         .coerceIn(0, maxVolume)
                                     audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
