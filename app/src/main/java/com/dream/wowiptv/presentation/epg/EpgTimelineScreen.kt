@@ -28,6 +28,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -38,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -47,6 +49,7 @@ import com.dream.wowiptv.domain.model.LiveStream
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
+import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.LiveRed
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -72,72 +75,81 @@ fun EpgTimelineScreen(
 
     var selectedProgram by remember { mutableStateOf<EpgEntry?>(null) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("EPG") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            when (val state = channelsState) {
-                is UiState.Loading -> LoadingIndicator()
-                is UiState.Error -> ErrorView(message = state.message, onRetry = { })
-                is UiState.Empty, is UiState.Success -> {
-                    val channels = (state as? UiState.Success)?.data ?: emptyList()
-                    if (channels.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "No channels",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+    MaterialTheme(colorScheme = DarkColorScheme) {
+        Scaffold(
+            containerColor = Color(0xFF1E1E1E),
+            topBar = {
+                TopAppBar(
+                    title = { Text("EPG", color = Color.White) },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                         }
-                    } else {
-                        when (val epgState = epgDataState) {
-                            is UiState.Error -> ErrorView(
-                                message = epgState.message,
-                                onRetry = { viewModel.retryLoadEpg() }
-                            )
-                            is UiState.Loading -> {
-                                if (channelsState is UiState.Success) {
-                                    LoadingIndicator()
-                                }
-                            }
-                            else -> {
-                                EpgGrid(
-                                    channels = channels,
-                                    epgDataState = epgDataState,
-                                    selectedChannelId = selectedChannelId,
-                                    onSelectChannel = viewModel::selectChannel,
-                                    onProgramClick = { selectedProgram = it }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFF1A1A1A),
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White
+                    )
+                )
+            }
+        ) { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                when (val state = channelsState) {
+                    is UiState.Loading -> LoadingIndicator()
+                    is UiState.Error -> ErrorView(message = state.message, onRetry = { })
+                    is UiState.Empty, is UiState.Success -> {
+                        val channels = (state as? UiState.Success)?.data ?: emptyList()
+                        if (channels.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No channels",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                            }
+                        } else {
+                            when (val epgState = epgDataState) {
+                                is UiState.Error -> ErrorView(
+                                    message = epgState.message,
+                                    onRetry = { viewModel.retryLoadEpg() }
+                                )
+                                is UiState.Loading -> {
+                                    if (channelsState is UiState.Success) {
+                                        LoadingIndicator()
+                                    }
+                                }
+                                else -> {
+                                    EpgGrid(
+                                        channels = channels,
+                                        epgDataState = epgDataState,
+                                        selectedChannelId = selectedChannelId,
+                                        onSelectChannel = viewModel::selectChannel,
+                                        onProgramClick = { selectedProgram = it }
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
 
-    selectedProgram?.let { program ->
-        ModalBottomSheet(
-            onDismissRequest = { selectedProgram = null },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ) {
-            ProgramDetailContent(program = program)
+        selectedProgram?.let { program ->
+            ModalBottomSheet(
+                onDismissRequest = { selectedProgram = null },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                containerColor = Color(0xFF2C2C2C)
+            ) {
+                ProgramDetailContent(program = program)
+            }
         }
     }
 }

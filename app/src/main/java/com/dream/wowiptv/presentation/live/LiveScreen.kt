@@ -352,6 +352,31 @@ private fun PlayerOverlay(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Filled.DateRange,
+                    contentDescription = "EPG",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable(onClick = onOpenEpg)
+                        .padding(2.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(LiveRed, CircleShape)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "LIVE",
+                        color = LiveRed,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
+                    )
+                }
             }
 
             if (epgEntries.isNotEmpty()) {
@@ -407,15 +432,6 @@ private fun PlayerOverlay(
                     modifier = Modifier
                         .size(28.dp)
                         .clickable(onClick = onTogglePlay)
-                        .padding(4.dp)
-                )
-                Icon(
-                    imageVector = Icons.Filled.DateRange,
-                    contentDescription = "EPG",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clickable(onClick = onOpenEpg)
                         .padding(4.dp)
                 )
                 Icon(
@@ -840,6 +856,31 @@ private fun FullscreenPlayerView(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
+                    IconButton(onClick = onOpenEpg) {
+                        Icon(
+                            imageVector = Icons.Filled.DateRange,
+                            contentDescription = "EPG",
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.padding(end = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(9.dp)
+                                .background(LiveRed, CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "LIVE",
+                            color = LiveRed,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp
+                        )
+                    }
                 }
 
                 if (epgEntries.isNotEmpty()) {
@@ -895,15 +936,6 @@ private fun FullscreenPlayerView(
                         modifier = Modifier
                             .size(36.dp)
                             .clickable(onClick = onTogglePlay)
-                            .padding(6.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Filled.DateRange,
-                        contentDescription = "EPG",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clickable(onClick = onOpenEpg)
                             .padding(6.dp)
                     )
                     Icon(
