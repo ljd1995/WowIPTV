@@ -1,5 +1,11 @@
 package com.dream.wowiptv.presentation.home
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,24 +27,34 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,6 +68,7 @@ import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,73 +85,48 @@ fun HomeScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { viewModel.refresh() },
-            modifier = Modifier.fillMaxSize().background(Color(0xFF1E1E1E))
-        ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+        Column(modifier = Modifier.fillMaxSize().background(Color(0xFF1E1E1E))) {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "WowIPTV",
+                        style = TextStyle(
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            brush = Brush.linearGradient(listOf(Color(0xFF818CF8), Color(0xFFA855F7)))
+                        )
+                    )
+                },
+                actions = {
+                    HelloUserText(username = data.username)
+                },
+                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF1A1A1A),
+                    titleContentColor = Color.White
+                )
+            )
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.refresh() },
+                modifier = Modifier.fillMaxSize()
             ) {
-                item { Spacer(modifier = Modifier.height(4.dp)) }
-
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A2E)),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(
-                                    brush = Brush.horizontalGradient(
-                                        listOf(
-                                            Color(0xFF6366F1),
-                                            Color(0xFF8B5CF6),
-                                            Color(0xFFA855F7)
-                                        )
-                                    )
-                                )
-                                .padding(24.dp)
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Column {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = "Hello, ${data.username}",
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 20.sp
-                                        )
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Text(
-                                            text = if (data.expiryDate.length > 0) "VIP 到期: ${data.expiryDate}" else "VIP 未设置",
-                                            color = Color.White.copy(alpha = 0.9f),
-                                            fontSize = 12.sp
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        StatItem(value = data.liveCount, label = "直播")
-                                        StatItem(value = data.movieCount, label = "电影")
-                                        StatItem(value = data.seriesCount, label = "剧集")
-                                    }
-                                }
-                            }
+                            StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = "频道", color = Color(0xFFEF4444), modifier = Modifier.weight(1f))
+                            StatCard(icon = Icons.Filled.Movie, count = data.movieCount, label = "电影", color = Color(0xFF818CF8), modifier = Modifier.weight(1f))
+                            StatCard(icon = Icons.Filled.Tv, count = data.seriesCount, label = "剧集", color = Color(0xFFA855F7), modifier = Modifier.weight(1f))
                         }
                     }
-                }
 
-                item { Spacer(modifier = Modifier.height(8.dp)) }
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
 
                 if (data.continueWatching.isNotEmpty()) {
                     item {
@@ -245,6 +238,7 @@ fun HomeScreen(
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
+        }
     }
 }
 
@@ -260,24 +254,82 @@ private fun formatRating(raw: String?): String? {
 }
 
 @Composable
-private fun StatItem(value: Int, label: String) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(horizontal = 4.dp)
+private fun HelloUserText(username: String) {
+    val transition = rememberInfiniteTransition(label = "hello")
+    val offsetX by transition.animateFloat(
+        initialValue = -2f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(180, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shake"
+    )
+    Text(
+        text = "Hello ${username.ifBlank { "用户" }}",
+        color = Color.White,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Medium,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .padding(end = 12.dp)
+            .offset(x = offsetX.dp)
+    )
+}
+
+@Composable
+private fun StatCard(icon: ImageVector, count: Int, label: String, color: Color, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D2D3A))
     ) {
-        Text(
-            text = value.toString(),
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 24.sp
-        )
-        Text(
-            text = label,
-            color = Color.White.copy(alpha = 0.7f),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 10.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                CountUpText(target = count)
+                Text(
+                    text = label,
+                    color = Color(0xFF999999),
+                    fontSize = 11.sp
+                )
+            }
+        }
     }
+}
+
+@Composable
+private fun CountUpText(target: Int, durationMillis: Int = 800) {
+    var displayed by remember(target) { mutableIntStateOf(0) }
+    LaunchedEffect(target) {
+        val start = System.currentTimeMillis()
+        while (true) {
+            val elapsed = System.currentTimeMillis() - start
+            val progress = (elapsed / durationMillis.toFloat()).coerceIn(0f, 1f)
+            displayed = (target * progress).toInt()
+            if (progress >= 1f) break
+            delay(16)
+        }
+        displayed = target
+    }
+    Text(
+        text = displayed.toString(),
+        color = Color.White,
+        fontWeight = FontWeight.Bold,
+        fontSize = 18.sp
+    )
 }
 
 @Composable
