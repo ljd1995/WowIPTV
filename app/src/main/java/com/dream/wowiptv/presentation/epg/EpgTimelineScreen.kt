@@ -3,6 +3,7 @@ package com.dream.wowiptv.presentation.epg
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -47,6 +48,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -87,6 +89,10 @@ fun EpgTimelineScreen(
     val activity = context as? ComponentActivity
     val isLandscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
+    BackHandler(enabled = isLandscape) {
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    }
+
     MaterialTheme(colorScheme = DarkColorScheme) {
         Scaffold(
             containerColor = Color(0xFF1E1E1E),
@@ -94,7 +100,13 @@ fun EpgTimelineScreen(
                 TopAppBar(
                     title = { Text("EPG", color = Color.White) },
                     navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
+                        IconButton(onClick = {
+                            if (isLandscape) {
+                                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                            } else {
+                                onNavigateBack()
+                            }
+                        }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                         }
                     },
@@ -221,6 +233,7 @@ private fun EpgGrid(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
                     .width(channelLabelWidth)
                     .padding(horizontal = 4.dp, vertical = 6.dp)
