@@ -54,6 +54,15 @@ class SourcePreferences(private val context: Context) {
         }
     }
 
+    suspend fun clearUserInfo() {
+        context.sourceDataStore.edit { p ->
+            p.remove(USERNAME)
+            p.remove(EXP_DATE)
+            p.remove(MAX_CONNECTIONS)
+            p.remove(ALLOWED_OUTPUT_FORMATS)
+        }
+    }
+
     suspend fun setActiveSourceId(id: Long?) {
         context.sourceDataStore.edit { preferences ->
             if (id != null) {

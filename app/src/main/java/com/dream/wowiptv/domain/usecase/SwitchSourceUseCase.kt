@@ -1,5 +1,6 @@
 package com.dream.wowiptv.domain.usecase
 
+import com.dream.wowiptv.data.local.SourcePreferences
 import com.dream.wowiptv.domain.repository.LiveTvRepository
 import com.dream.wowiptv.domain.repository.SeriesRepository
 import com.dream.wowiptv.domain.repository.SourceRepository
@@ -12,7 +13,9 @@ class SwitchSourceUseCase @Inject constructor(
     private val sourceRepository: SourceRepository,
     private val liveTvRepository: LiveTvRepository,
     private val vodRepository: VodRepository,
-    private val seriesRepository: SeriesRepository
+    private val seriesRepository: SeriesRepository,
+    private val getUserInfoUseCase: GetUserInfoUseCase,
+    private val sourcePreferences: SourcePreferences
 ) {
     suspend operator fun invoke(sourceId: Long) {
         supervisorScope {
@@ -20,6 +23,22 @@ class SwitchSourceUseCase @Inject constructor(
             launch { runCatching { liveTvRepository.refreshAll() } }
             launch { runCatching { vodRepository.refreshAll() } }
             launch { runCatching { seriesRepository.refreshAll() } }
+            launch { refreshMemberInfo() }
+        }
+    }
+
+    private suspend fun refreshMemberInfo() {
+        try {
+            val info = getUserInfoUseCase()
+            if (info != null) {
+                sourcePreferences.saveUserInfo(info)
+            } else {
+                sourcePreferences.clearUserInfo()
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            sourcePreferences.clearUserInfo()
         }
     }
 }

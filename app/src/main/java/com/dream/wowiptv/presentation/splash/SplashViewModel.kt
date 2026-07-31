@@ -54,35 +54,63 @@ class SplashViewModel @Inject constructor(
 
     private fun preload() {
         viewModelScope.launch {
-            val source = sourceRepository.getActiveSource().first()
+            val source = try {
+                sourceRepository.getActiveSource().first()
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                null
+            }
             if (source == null) {
                 _ready.value = true
                 return@launch
             }
 
-            runCatching {
+            try {
                 _counts.value = SplashCounts(
                     live = liveStreamDao.getBySource(source.id).first().size,
                     movie = vodStreamDao.getBySource(source.id).first().size,
                     series = seriesDao.getBySource(source.id).first().size
                 )
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // 计数失败不阻塞跳转
             }
 
             launch {
-                val info = withTimeoutOrNull(3000) { getUserInfoUseCase() }
-                if (info != null) {
-                    sourcePreferences.saveUserInfo(info)
-                    _expiry.value = formatExpiry(info.expDate)
-                } else {
-                    _expiry.value = formatExpiry(sourcePreferences.expDate.first())
+                try {
+                    val info = withTimeoutOrNull(3000) { getUserInfoUseCase() }
+                    if (info != null) {
+                        sourcePreferences.saveUserInfo(info)
+                        _expiry.value = formatExpiry(info.expDate)
+                    } else {
+                        _expiry.value = formatExpiry(sourcePreferences.expDate.first())
+                    }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    _expiry.value = ""
+                } finally {
+                    _ready.value = true
                 }
-                _ready.value = true
             }
 
             launch {
-                runCatching { liveTvRepository.refreshAll() }
-                runCatching { vodRepository.refreshAll() }
-                runCatching { seriesRepository.refreshAll() }
+                val refreshers = listOf<suspend () -> Unit>(
+                    { liveTvRepository.refreshAll() },
+                    { vodRepository.refreshAll() },
+                    { seriesRepository.refreshAll() }
+                )
+                refreshers.forEach { refresher ->
+                    try {
+                        refresher()
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+                        // 单个刷新失败不影响其他
+                    }
+                }
             }
         }
     }
