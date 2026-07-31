@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,8 +71,8 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
+import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
-import com.dream.wowiptv.presentation.common.rememberDeviceStatus
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import kotlinx.coroutines.delay
 
@@ -287,6 +288,8 @@ fun PlayerScreen(
                             modifier = Modifier.weight(1f)
                         )
                     }
+                    DeviceStatusIndicator(fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(10.dp))
                     if (networkSpeed > 0) {
                         Text(
                             text = formatNetworkSpeed(networkSpeed),
@@ -295,12 +298,6 @@ fun PlayerScreen(
                             modifier = Modifier.padding(end = 12.dp)
                         )
                     }
-                    Text(
-                        text = rememberDeviceStatus(),
-                        color = Color(0xFFCCCCCC),
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(end = 12.dp)
-                    )
                 }
             }
 
