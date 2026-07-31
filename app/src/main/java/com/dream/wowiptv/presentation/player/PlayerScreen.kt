@@ -64,14 +64,13 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.datasource.TransferListener
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
+import com.dream.wowiptv.presentation.common.formatNetworkSpeed
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import kotlinx.coroutines.delay
 
@@ -570,42 +569,3 @@ private fun formatTime(ms: Long): String {
 
 private fun formatSpeed(speed: Float): String =
     if (speed % 1f == 0f) speed.toInt().toString() else speed.toString()
-
-private fun formatNetworkSpeed(bps: Long): String {
-    val bytesPerSec = bps / 8.0
-    return when {
-        bytesPerSec >= 1024 * 1024 -> String.format("%.1fM/s", bytesPerSec / 1024 / 1024)
-        bytesPerSec >= 1024 -> String.format("%.0fk/s", bytesPerSec / 1024)
-        else -> "${bytesPerSec.toInt()}B/s"
-    }
-}
-
-private class NetworkSpeedTracker : TransferListener {
-    private val samples = ArrayDeque<Pair<Long, Long>>()
-    private var totalBytes = 0L
-
-    override fun onTransferInitializing(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {}
-
-    override fun onTransferStart(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {}
-
-    @Synchronized
-    override fun onBytesTransferred(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean, bytesTransferred: Int) {
-        if (!isNetwork) return
-        totalBytes += bytesTransferred
-        samples.addLast(android.os.SystemClock.elapsedRealtime() to totalBytes)
-    }
-
-    override fun onTransferEnd(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {}
-
-    @Synchronized
-    fun currentBps(): Long {
-        val now = android.os.SystemClock.elapsedRealtime()
-        while (samples.size > 1 && samples.first().first < now - 2000) {
-            samples.removeFirst()
-        }
-        if (samples.isEmpty()) return 0L
-        val (startTime, startBytes) = samples.first()
-        val elapsed = (now - startTime).coerceAtLeast(1)
-        return (totalBytes - startBytes) * 8000 / elapsed
-    }
-}

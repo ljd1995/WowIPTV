@@ -77,16 +77,20 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveCategory
 import com.dream.wowiptv.domain.model.LiveStream
+import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
+import com.dream.wowiptv.presentation.common.formatNetworkSpeed
 import com.dream.wowiptv.presentation.common.theme.LiveRed
 
 private val DarkBg = Color(0xFF1A1A1A)
@@ -157,8 +161,22 @@ fun LiveScreen(
         }
     }
 
+    val networkTracker = remember { NetworkSpeedTracker() }
+
     val exoPlayer = remember {
-        ExoPlayer.Builder(context).build()
+        val dataSourceFactory = DefaultHttpDataSource.Factory()
+            .setTransferListener(networkTracker)
+        ExoPlayer.Builder(context)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            .build()
+    }
+
+    var networkSpeed by remember { mutableStateOf(0L) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            networkSpeed = networkTracker.currentBps()
+            kotlinx.coroutines.delay(1000)
+        }
     }
 
     var isBuffering by remember { mutableStateOf(false) }
@@ -214,6 +232,7 @@ fun LiveScreen(
             isPlaying = isPlaying,
             isBuffering = isBuffering,
             epgEntries = epgEntries,
+            networkSpeed = networkSpeed,
             onBack = { viewModel.exitFullscreen() },
             onTogglePlay = { viewModel.togglePlay() },
             onRestart = { currentStream?.let { viewModel.playStream(it) } },
@@ -228,6 +247,7 @@ fun LiveScreen(
                 isPlaying = isPlaying,
                 isBuffering = isBuffering,
                 epgEntries = epgEntries,
+                networkSpeed = networkSpeed,
                 onTogglePlay = { viewModel.togglePlay() },
                 onRestart = { currentStream?.let { viewModel.playStream(it) } },
                 onFullscreen = { viewModel.toggleFullscreen() },
@@ -269,6 +289,7 @@ private fun PlayerSection(
     isPlaying: Boolean,
     isBuffering: Boolean,
     epgEntries: List<EpgEntry>,
+    networkSpeed: Long,
     onTogglePlay: () -> Unit,
     onRestart: () -> Unit,
     onFullscreen: () -> Unit,
@@ -305,6 +326,7 @@ private fun PlayerSection(
                 streamName = currentStream.name,
                 epgEntries = epgEntries,
                 isPlaying = isPlaying,
+                networkSpeed = networkSpeed,
                 onTogglePlay = onTogglePlay,
                 onRestart = onRestart,
                 onFullscreen = onFullscreen,
@@ -331,6 +353,7 @@ private fun PlayerOverlay(
     streamName: String,
     epgEntries: List<EpgEntry>,
     isPlaying: Boolean,
+    networkSpeed: Long,
     onTogglePlay: () -> Unit,
     onRestart: () -> Unit,
     onFullscreen: () -> Unit,
@@ -375,6 +398,14 @@ private fun PlayerOverlay(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
+                if (networkSpeed > 0) {
+                    Text(
+                        text = formatNetworkSpeed(networkSpeed),
+                        color = Color(0xFFCCCCCC),
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(
                     imageVector = Icons.Filled.DateRange,
@@ -902,6 +933,7 @@ private fun FullscreenPlayerView(
     isPlaying: Boolean,
     isBuffering: Boolean,
     epgEntries: List<EpgEntry>,
+    networkSpeed: Long,
     onBack: () -> Unit,
     onTogglePlay: () -> Unit,
     onRestart: () -> Unit,
@@ -977,6 +1009,14 @@ private fun FullscreenPlayerView(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
+                    if (networkSpeed > 0) {
+                        Text(
+                            text = formatNetworkSpeed(networkSpeed),
+                            color = Color(0xFFCCCCCC),
+                            fontSize = 13.sp,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                    }
                     IconButton(onClick = onOpenEpg) {
                         Icon(
                             imageVector = Icons.Filled.DateRange,
