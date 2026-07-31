@@ -183,6 +183,14 @@ private fun SeriesDetailContent(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    series.releaseDate?.let { date ->
+                        Text(
+                            text = date.take(10),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
                     series.rating?.let { rating ->
                         Icon(
                             imageVector = Icons.Filled.Star,
@@ -193,14 +201,6 @@ private fun SeriesDetailContent(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = rating,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    series.releaseDate?.let { date ->
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = date.take(10),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

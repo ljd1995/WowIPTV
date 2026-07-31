@@ -188,7 +188,7 @@ fun MovieDetailScreen(
                             info.durationSecs?.let { secs ->
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = "${secs / 60}分钟",
+                                    text = formatDuration(secs),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -309,5 +309,16 @@ fun MovieDetailScreen(
             }
             }
         }
+    }
+}
+
+private fun formatDuration(secs: Int): String {
+    val hours = secs / 3600
+    val minutes = (secs % 3600) / 60
+    val seconds = secs % 60
+    return when {
+        hours > 0 -> "${hours}小时${minutes}分钟"
+        minutes > 0 -> "${minutes}分钟${seconds}秒"
+        else -> "${seconds}秒"
     }
 }
