@@ -43,6 +43,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -241,6 +243,13 @@ fun LiveScreen(
         )
     } else {
         Column(modifier = Modifier.fillMaxSize()) {
+            TopAppBar(
+                title = { Text("直播", color = Color.White) },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF1A1A1A),
+                    titleContentColor = Color.White
+                )
+            )
             PlayerSection(
                 exoPlayer = exoPlayer,
                 currentStream = currentStream,
@@ -594,6 +603,7 @@ private fun ContentSection(
                 categoriesState = categoriesState,
                 selectedCategoryId = selectedCategoryId,
                 categoryCounts = categoryCounts,
+                favoriteIds = favoriteIds,
                 onSelectCategory = onSelectCategory,
                 modifier = Modifier.weight(0.3f)
             )
@@ -632,6 +642,7 @@ private fun CategorySidebar(
     categoriesState: UiState<List<LiveCategory>>,
     selectedCategoryId: Int?,
     categoryCounts: Map<Int, Int>,
+    favoriteIds: Set<Int>,
     onSelectCategory: (Int?) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -655,7 +666,7 @@ private fun CategorySidebar(
                     item {
                         CategoryItem(
                             name = "收藏",
-                            count = null,
+                            count = favoriteIds.size,
                             isSelected = selectedCategoryId == LiveViewModel.FAVORITES_ID,
                             onClick = { onSelectCategory(LiveViewModel.FAVORITES_ID) }
                         )
