@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -396,6 +397,34 @@ private fun EpisodeItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
+            if (savedPosition > 0) {
+                Spacer(modifier = Modifier.height(4.dp))
+                val totalSecs = episode.durationSecs ?: 0
+                val progress = if (totalSecs > 0) (savedPosition / totalSecs.toFloat()).coerceIn(0f, 1f) else 0f
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF444444))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(progress)
+                            .background(Color(0xFF4CAF50))
+                    )
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = if (totalSecs > 0)
+                        "已播放 ${formatDurationShort(savedPosition)} / ${formatDurationShort(totalSecs.toLong())}"
+                    else
+                        "已播放 ${formatDurationShort(savedPosition)}",
+                    color = Color(0xFF888888),
+                    fontSize = 10.sp
+                )
+            }
         }
         Spacer(modifier = Modifier.width(8.dp))
         if (savedPosition > 0 && onContinue != null) {
@@ -407,7 +436,7 @@ private fun EpisodeItem(
                     .size(22.dp)
                     .clickable(onClick = onContinue)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(16.dp))
             Icon(
                 imageVector = Icons.Filled.Replay,
                 contentDescription = "重新播放",
@@ -427,4 +456,11 @@ private fun EpisodeItem(
             )
         }
     }
+}
+
+private fun formatDurationShort(secs: Long): String {
+    val h = secs / 3600
+    val m = (secs % 3600) / 60
+    val s = secs % 60
+    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s)
 }
