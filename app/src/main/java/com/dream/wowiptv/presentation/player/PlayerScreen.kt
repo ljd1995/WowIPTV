@@ -90,6 +90,7 @@ fun PlayerScreen(
     var isBuffering by remember { mutableStateOf(true) }
     var position by remember { mutableFloatStateOf(0f) }
     var duration by remember { mutableFloatStateOf(0f) }
+    var buffered by remember { mutableFloatStateOf(0f) }
     var playbackSpeed by remember { mutableFloatStateOf(1f) }
     var showSpeedMenu by remember { mutableStateOf(false) }
     var showAudioMenu by remember { mutableStateOf(false) }
@@ -218,6 +219,7 @@ fun PlayerScreen(
             delay(250)
             if (exoPlayer.duration > 0) {
                 position = (exoPlayer.currentPosition.toFloat() / exoPlayer.duration.toFloat()).coerceIn(0f, 1f)
+                buffered = (exoPlayer.bufferedPosition.toFloat() / exoPlayer.duration.toFloat()).coerceIn(0f, 1f)
                 duration = exoPlayer.duration.toFloat()
             }
         }
@@ -356,6 +358,7 @@ fun PlayerScreen(
                     ) {
                         val trackColor = Color(0xFF555555)
                         val progressColor = Color(0xFF1E88E5)
+                        val bufferedColor = Color.White.copy(alpha = 0.35f)
                         val thumbColor = Color(0xFF1E88E5)
                         Canvas(
                             modifier = Modifier
@@ -392,6 +395,13 @@ fun PlayerScreen(
                                 color = trackColor,
                                 topLeft = Offset(0f, trackTop),
                                 size = size.copy(height = trackHeight),
+                                cornerRadius = CornerRadius(trackHeight / 2)
+                            )
+                            val bufferedWidth = size.width * buffered
+                            drawRoundRect(
+                                color = bufferedColor,
+                                topLeft = Offset(0f, trackTop),
+                                size = size.copy(width = bufferedWidth, height = trackHeight),
                                 cornerRadius = CornerRadius(trackHeight / 2)
                             )
                             val progressWidth = size.width * position
