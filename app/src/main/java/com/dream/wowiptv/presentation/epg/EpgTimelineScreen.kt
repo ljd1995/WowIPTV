@@ -89,8 +89,12 @@ fun EpgTimelineScreen(
     val activity = context as? ComponentActivity
     val isLandscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-    BackHandler(enabled = isLandscape) {
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    BackHandler {
+        if (isLandscape) {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            onNavigateBack()
+        }
     }
 
     MaterialTheme(colorScheme = DarkColorScheme) {
@@ -101,8 +105,9 @@ fun EpgTimelineScreen(
                     title = { Text("EPG", color = Color.White) },
                     navigationIcon = {
                         IconButton(onClick = {
-                            if (isLandscape) {
-                                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                            val a = activity
+                            if (a != null && isLandscape) {
+                                a.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                             } else {
                                 onNavigateBack()
                             }
