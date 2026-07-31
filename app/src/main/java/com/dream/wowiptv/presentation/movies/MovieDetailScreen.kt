@@ -40,10 +40,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.VodInfo
 import com.dream.wowiptv.domain.usecase.GetVodInfoUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
@@ -53,6 +56,7 @@ import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.AccentBlue
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,12 +69,14 @@ import javax.inject.Inject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.SavedStateHandle
+import android.content.Context
 
 @HiltViewModel
 class MovieDetailViewModel @Inject constructor(
     private val getVodInfoUseCase: GetVodInfoUseCase,
     private val watchProgressUseCase: WatchProgressUseCase,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val vodId: Int = savedStateHandle.get<Int>("vodId") ?: 0
@@ -79,7 +85,7 @@ class MovieDetailViewModel @Inject constructor(
         emit(UiState.Loading)
         val info = getVodInfoUseCase(vodId)
         emit(UiState.Success(info))
-    }.catch { emit(UiState.Error(it.message ?: "加载详情失败")) }
+    }.catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_details))) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
     private val _savedPosition = MutableStateFlow(0L)
@@ -188,7 +194,7 @@ fun MovieDetailScreen(
                             info.durationSecs?.let { secs ->
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
-                                    text = formatDuration(secs),
+                                    text = formatDuration(secs, LocalContext.current),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -218,7 +224,7 @@ fun MovieDetailScreen(
                         info.plot?.let { plot ->
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "剧情简介",
+                                text = stringResource(R.string.movies_overview),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -233,7 +239,7 @@ fun MovieDetailScreen(
                         info.cast?.let { cast ->
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "演员",
+                                text = stringResource(R.string.movies_cast),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -248,7 +254,7 @@ fun MovieDetailScreen(
                         info.director?.let { director ->
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "导演",
+                                text = stringResource(R.string.movies_director),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -280,7 +286,7 @@ fun MovieDetailScreen(
                             ) {
                                 Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("重新播放")
+                                Text(stringResource(R.string.common_restart))
                             }
                             Button(
                                 onClick = { onPlay(info.id, info.name, savedPos) },
@@ -290,7 +296,7 @@ fun MovieDetailScreen(
                             ) {
                                 Icon(Icons.Filled.PlayArrow, contentDescription = null)
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("继续播放")
+                                Text(stringResource(R.string.common_continue))
                             }
                         }
                     } else {
@@ -302,7 +308,7 @@ fun MovieDetailScreen(
                         ) {
                             Icon(Icons.Filled.PlayArrow, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "播放")
+                            Text(text = stringResource(R.string.common_play))
                         }
                     }
                 }
@@ -312,13 +318,13 @@ fun MovieDetailScreen(
     }
 }
 
-private fun formatDuration(secs: Int): String {
+private fun formatDuration(secs: Int, context: Context): String {
     val hours = secs / 3600
     val minutes = (secs % 3600) / 60
     val seconds = secs % 60
     return when {
-        hours > 0 -> "${hours}小时${minutes}分钟"
-        minutes > 0 -> "${minutes}分钟${seconds}秒"
-        else -> "${seconds}秒"
+        hours > 0 -> context.getString(R.string.movies_duration_hm, hours, minutes)
+        minutes > 0 -> context.getString(R.string.movies_duration_ms, minutes, seconds)
+        else -> context.getString(R.string.movies_duration_s, seconds)
     }
 }

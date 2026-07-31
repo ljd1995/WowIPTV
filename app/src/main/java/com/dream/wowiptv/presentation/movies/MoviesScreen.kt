@@ -57,8 +57,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.VodCategory
 import com.dream.wowiptv.domain.model.VodStream
 import com.dream.wowiptv.presentation.common.UiState
@@ -90,7 +92,7 @@ fun MoviesScreen(
     MaterialTheme(colorScheme = DarkColorScheme) {
         Column(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
             TopAppBar(
-                title = { Text("电影", color = Color.White) },
+                title = { Text(stringResource(R.string.movies_title), color = Color.White) },
                 windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF1A1A1A),
@@ -103,7 +105,7 @@ fun MoviesScreen(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { viewModel.setSearchQuery(it) },
-                    placeholder = { Text("搜索", color = Color(0xFF999999), fontSize = 12.sp) },
+                    placeholder = { Text(stringResource(R.string.common_search), color = Color(0xFF999999), fontSize = 12.sp) },
                     leadingIcon = {
                         Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(14.dp))
                     },
@@ -134,7 +136,7 @@ fun MoviesScreen(
                             FilterChip(
                                 selected = selectedCategoryId == null,
                                 onClick = { viewModel.selectCategory(null); viewModel.setSearchQuery("") },
-                                label = { Text("全部 (${categoryCounts.values.sum()})") }
+                                label = { Text(stringResource(R.string.movies_all, categoryCounts.values.sum())) }
                             )
                         }
                         items(cats, key = { it.id }) { category ->
@@ -173,7 +175,7 @@ fun MoviesScreen(
                     }
                     is UiState.Empty -> {
                         Text(
-                            text = "暂无电影",
+                            text = stringResource(R.string.movies_empty),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -183,7 +185,7 @@ fun MoviesScreen(
                     is UiState.Success -> {
                         if (streams.data.isEmpty()) {
                             Text(
-                                text = if (searchQuery.isNotBlank()) "未找到匹配的电影" else "暂无电影",
+                                text = if (searchQuery.isNotBlank()) stringResource(R.string.movies_not_found) else stringResource(R.string.movies_empty),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
@@ -259,7 +261,7 @@ private fun MoviePoster(
             ) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = if (isFavorite) "取消收藏" else "收藏",
+                    contentDescription = if (isFavorite) stringResource(R.string.common_cancel_favorite) else stringResource(R.string.common_favorite),
                     tint = if (isFavorite) LiveRed else Color.White.copy(alpha = 0.7f),
                     modifier = Modifier.size(18.dp)
                 )

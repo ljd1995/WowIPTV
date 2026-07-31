@@ -1,7 +1,9 @@
 package com.dream.wowiptv.presentation.movies
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.VodCategory
 import com.dream.wowiptv.domain.model.VodStream
 import com.dream.wowiptv.domain.usecase.CreateFavoriteUseCase
@@ -9,6 +11,7 @@ import com.dream.wowiptv.domain.usecase.GetVodCategoriesUseCase
 import com.dream.wowiptv.domain.usecase.GetVodStreamsUseCase
 import com.dream.wowiptv.presentation.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,12 +31,13 @@ import javax.inject.Inject
 class MoviesViewModel @Inject constructor(
     private val getVodCategoriesUseCase: GetVodCategoriesUseCase,
     private val getVodStreamsUseCase: GetVodStreamsUseCase,
-    private val createFavoriteUseCase: CreateFavoriteUseCase
+    private val createFavoriteUseCase: CreateFavoriteUseCase,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     val categories: StateFlow<UiState<List<VodCategory>>> = getVodCategoriesUseCase()
         .map { UiState.Success(it) as UiState<List<VodCategory>> }
-        .catch { emit(UiState.Error(it.message ?: "加载分类失败")) }
+        .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_categories))) }
         .onStart { emit(UiState.Loading) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
@@ -49,7 +53,7 @@ class MoviesViewModel @Inject constructor(
         .flatMapLatest { categoryId ->
             getVodStreamsUseCase(categoryId)
                 .map { UiState.Success(it) as UiState<List<VodStream>> }
-                .catch { emit(UiState.Error(it.message ?: "加载电影失败")) }
+                .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_movies))) }
                 .onStart { emit(UiState.Loading) }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
