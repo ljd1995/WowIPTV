@@ -93,6 +93,7 @@ fun PlayerScreen(
     var position by remember { mutableFloatStateOf(0f) }
     var duration by remember { mutableFloatStateOf(0f) }
     var buffered by remember { mutableFloatStateOf(0f) }
+    var bufferingTarget by remember { mutableFloatStateOf(1f) }
     var playbackSpeed by remember { mutableFloatStateOf(1f) }
     var showSpeedMenu by remember { mutableStateOf(false) }
     var showAudioMenu by remember { mutableStateOf(false) }
@@ -261,8 +262,11 @@ fun PlayerScreen(
                     )
                     if (duration > 0) {
                         Spacer(modifier = Modifier.height(8.dp))
+                        val loadPercent = (buffered / bufferingTarget.coerceAtLeast(0.01f) * 100)
+                            .toInt()
+                            .coerceIn(0, 100)
                         Text(
-                            text = "${(buffered * 100).toInt().coerceIn(0, 100)}%",
+                            text = "$loadPercent%",
                             color = Color.White,
                             fontSize = 14.sp
                         )
@@ -387,6 +391,7 @@ fun PlayerScreen(
                                     detectTapGestures { offset ->
                                         val newPos = (offset.x / size.width).coerceIn(0f, 1f)
                                         position = newPos
+                                        bufferingTarget = newPos
                                         exoPlayer.seekTo((newPos * duration).toLong())
                                     }
                                 }
@@ -403,6 +408,7 @@ fun PlayerScreen(
                                         },
                                         onDragEnd = {
                                             dragging = false
+                                            bufferingTarget = position
                                             exoPlayer.seekTo((position * duration).toLong())
                                         }
                                     )
