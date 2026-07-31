@@ -93,7 +93,6 @@ fun PlayerScreen(
     var position by remember { mutableFloatStateOf(0f) }
     var duration by remember { mutableFloatStateOf(0f) }
     var buffered by remember { mutableFloatStateOf(0f) }
-    var bufferingTarget by remember { mutableFloatStateOf(1f) }
     var playbackSpeed by remember { mutableFloatStateOf(1f) }
     var showSpeedMenu by remember { mutableStateOf(false) }
     var showAudioMenu by remember { mutableStateOf(false) }
@@ -250,29 +249,11 @@ fun PlayerScreen(
         )
 
         if (isBuffering) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(
-                        color = Color(0xFF1E88E5),
-                        modifier = Modifier.size(36.dp),
-                        strokeWidth = 3.dp
-                    )
-                    if (duration > 0) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        val loadPercent = (buffered / bufferingTarget.coerceAtLeast(0.01f) * 100)
-                            .toInt()
-                            .coerceIn(0, 100)
-                        Text(
-                            text = "$loadPercent%",
-                            color = Color.White,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-            }
+            CircularProgressIndicator(
+                color = Color(0xFF1E88E5),
+                modifier = Modifier.size(36.dp).align(Alignment.Center),
+                strokeWidth = 3.dp
+            )
         }
 
         if (showOverlay) {
@@ -391,7 +372,6 @@ fun PlayerScreen(
                                     detectTapGestures { offset ->
                                         val newPos = (offset.x / size.width).coerceIn(0f, 1f)
                                         position = newPos
-                                        bufferingTarget = newPos
                                         exoPlayer.seekTo((newPos * duration).toLong())
                                     }
                                 }
@@ -408,7 +388,6 @@ fun PlayerScreen(
                                         },
                                         onDragEnd = {
                                             dragging = false
-                                            bufferingTarget = position
                                             exoPlayer.seekTo((position * duration).toLong())
                                         }
                                     )
