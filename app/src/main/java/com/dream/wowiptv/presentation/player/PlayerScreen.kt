@@ -71,6 +71,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
+import com.dream.wowiptv.presentation.common.rememberDeviceStatus
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import kotlinx.coroutines.delay
 
@@ -294,6 +295,12 @@ fun PlayerScreen(
                             modifier = Modifier.padding(end = 12.dp)
                         )
                     }
+                    Text(
+                        text = rememberDeviceStatus(),
+                        color = Color(0xFFCCCCCC),
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(end = 12.dp)
+                    )
                 }
             }
 

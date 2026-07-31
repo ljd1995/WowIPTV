@@ -91,6 +91,7 @@ import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
+import com.dream.wowiptv.presentation.common.rememberDeviceStatus
 import com.dream.wowiptv.presentation.common.theme.LiveRed
 
 private val DarkBg = Color(0xFF1A1A1A)
@@ -1042,6 +1043,12 @@ private fun FullscreenPlayerView(
                             fontSize = 13.sp
                         )
                     }
+                    Text(
+                        text = rememberDeviceStatus(),
+                        color = Color(0xFFCCCCCC),
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(start = 12.dp, end = 4.dp)
+                    )
                 }
 
                 if (epgEntries.isNotEmpty()) {
