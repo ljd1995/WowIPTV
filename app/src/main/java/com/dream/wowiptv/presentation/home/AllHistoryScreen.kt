@@ -233,7 +233,9 @@ private fun HistoryGridCell(
                                 color = Color(0xFF999999),
                                 fontSize = 8.sp,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                lineHeight = 8.sp,
+                                modifier = Modifier.padding(bottom = 2.dp)
                             )
                         }
                     }

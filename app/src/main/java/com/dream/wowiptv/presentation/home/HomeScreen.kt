@@ -395,7 +395,8 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
                                 fontSize = 8.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                lineHeight = 8.sp
+                                lineHeight = 8.sp,
+                                modifier = Modifier.padding(bottom = 2.dp)
                             )
                         }
                     }
@@ -492,7 +493,9 @@ private fun ContinueCard(name: String, icon: String? = null, badge: String? = nu
                                 color = Color(0xFF999999),
                                 fontSize = 8.sp,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                lineHeight = 8.sp,
+                                modifier = Modifier.padding(bottom = 2.dp)
                             )
                         }
                     }
