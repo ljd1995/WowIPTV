@@ -3,6 +3,8 @@ package com.dream.wowiptv.data.repository
 import com.dream.wowiptv.data.local.dao.EpgDao
 import com.dream.wowiptv.data.local.dao.LiveCategoryDao
 import com.dream.wowiptv.data.local.dao.LiveStreamDao
+import com.dream.wowiptv.data.local.entity.EpgEntity
+import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.mapper.toDomain
 import com.dream.wowiptv.data.mapper.toEntity
 import com.dream.wowiptv.data.remote.xtream.DynamicBaseUrlInterceptor
@@ -10,8 +12,13 @@ import com.dream.wowiptv.data.remote.xtream.XtreamApi
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveCategory
 import com.dream.wowiptv.domain.model.LiveStream
+import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.domain.repository.LiveTvRepository
 import com.dream.wowiptv.domain.repository.SourceRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
@@ -98,13 +105,25 @@ class LiveTvRepositoryImpl @Inject constructor(
         val source = sourceRepository.getActiveSource().first() ?: return
         configureBaseUrl(source.serverUrl, source.port)
 
-        val table = api.getSimpleDataTable(source.username, source.password)
-        val all = table.entries.flatMap { (streamIdStr, entries) ->
-            val sid = streamIdStr.toIntOrNull()
-            if (sid != null) entries.map { it.toDomain(sid).toEntity(sid, source.id) } else emptyList()
+        val channels = liveStreamDao.getBySource(source.id).first()
+        channels.chunked(8).forEach { batch ->
+            coroutineScope {
+                batch.map { channel ->
+                    async(Dispatchers.IO) {
+                        runCatching {
+                            val entries = fetchShortEpg(channel.streamId, source)
+                            epgDao.deleteByStream(channel.streamId, source.id)
+                            epgDao.insertAll(entries)
+                        }
+                    }
+                }.awaitAll()
+            }
         }
-        if (all.isEmpty()) throw IllegalStateException("EPG 接口返回空数据")
-        epgDao.replaceAll(all, source.id)
+    }
+
+    private suspend fun fetchShortEpg(streamId: Int, source: XtreamSource): List<EpgEntity> {
+        val resp = api.getShortEpg(source.username, source.password, streamId = streamId, limit = 12)
+        return resp.toDomain(streamId).map { it.toEntity(streamId, source.id) }
     }
 
     override fun getAllEpg(): Flow<Map<Int, List<EpgEntry>>> = flow {

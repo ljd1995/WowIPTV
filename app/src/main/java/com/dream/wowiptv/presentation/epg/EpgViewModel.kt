@@ -63,21 +63,22 @@ class EpgViewModel @Inject constructor(
 
     private fun loadEpg() {
         viewModelScope.launch {
-            val cached = try {
-                liveTvRepository.getAllEpg().first()
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                null
+            liveTvRepository.getAllEpg().collect { map ->
+                _epgData.value = UiState.Success(map)
             }
-            if (cached != null && cached.isNotEmpty()) {
-                _epgData.value = UiState.Success(cached)
-                return@launch
+        }
+        viewModelScope.launch {
+            _selectedChannelId.value?.let { id ->
+                try {
+                    liveTvRepository.refreshEpg(id)
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    // 选中频道增量刷新失败忽略
+                }
             }
-            _epgData.value = UiState.Loading
             try {
                 refreshAllEpgUseCase()
-                _epgData.value = UiState.Success(liveTvRepository.getAllEpg().first())
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -101,16 +102,6 @@ class EpgViewModel @Inject constructor(
                 throw e
             } catch (_: Exception) {
                 // 增量刷新失败忽略，缓存兜底
-            }
-            val updated = try {
-                liveTvRepository.getAllEpg().first()
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (_: Exception) {
-                null
-            }
-            if (updated != null) {
-                _epgData.value = UiState.Success(updated)
             }
         }
     }
