@@ -223,8 +223,20 @@ class HomeViewModel @Inject constructor(
             val vodCatMap = vodCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
             val seriesCatMap = seriesCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
 
-            _data.value = HomeSection(
+            val catNames = progress.associate { wp ->
+                val id = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_").toIntOrNull()
+                val name = when (wp.contentType) {
+                    "live" -> live.find { it.streamId == id }?.categoryId?.let { cid -> liveCatMap[cid] }
+                    "vod" -> vod.find { it.streamId == id }?.categoryId?.let { cid -> vodCatMap[cid] }
+                    "series" -> series.find { it.seriesId == id }?.categoryId?.let { cid -> seriesCatMap[cid] }
+                    else -> null
+                }
+                wp.contentId to (name ?: "")
+            }.filter { it.value.isNotEmpty() }
+
+            _data.value = _data.value.copy(
                 continueWatching = enriched.take(10),
+                continueCategoryNames = catNames,
                 favoriteStreams = favStreams,
                 favoriteMovies = favVods.filter { it.type == "movie" },
                 favoriteSeries = favVods.filter { it.type == "series" },
