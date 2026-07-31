@@ -220,11 +220,13 @@ private fun SourceFormInner(
                 FilterChip(
                     selected = sourceType == "xtream",
                     onClick = { sourceType = "xtream" },
+                    enabled = !isEditing,
                     label = { Text("Xtream", color = Color.White) }
                 )
                 FilterChip(
                     selected = sourceType == "m3u",
                     onClick = { sourceType = "m3u" },
+                    enabled = !isEditing,
                     label = { Text("M3U", color = Color.White) }
                 )
             }
