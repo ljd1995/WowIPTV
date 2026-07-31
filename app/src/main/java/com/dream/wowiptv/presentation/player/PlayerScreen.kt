@@ -1,24 +1,31 @@
 package com.dream.wowiptv.presentation.player
 
 import android.content.pm.ActivityInfo
+import android.media.AudioManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -79,6 +86,12 @@ fun PlayerScreen(
 
     val context = LocalContext.current
     val activity = context as? ComponentActivity
+
+    val audioManager = remember { context.getSystemService(AudioManager::class.java) }
+    val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC) ?: 100
+    var volume by remember { mutableStateOf(audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0) }
+    var showVolumeSlider by remember { mutableStateOf(false) }
+
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             playWhenReady = true
@@ -189,7 +202,10 @@ fun PlayerScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
-            .clickable { showOverlay = !showOverlay }
+            .clickable {
+                showOverlay = !showOverlay
+                showVolumeSlider = false
+            }
     ) {
         AndroidView(
             factory = { ctx ->
@@ -277,6 +293,26 @@ fun PlayerScreen(
                         )
                     }
 
+                    IconButton(
+                        onClick = {
+                            if (streamUrl.isNotEmpty()) {
+                                exoPlayer.stop()
+                                exoPlayer.setMediaItem(MediaItem.fromUri(streamUrl))
+                                exoPlayer.prepare()
+                                exoPlayer.playWhenReady = true
+                                viewModel.play()
+                            }
+                        },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Refresh,
+                            contentDescription = "刷新",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
                     var dragging by remember { mutableStateOf(false) }
                     Box(
                         modifier = Modifier
@@ -341,6 +377,18 @@ fun PlayerScreen(
                         modifier = Modifier.width(78.dp)
                     )
 
+                    IconButton(
+                        onClick = { showVolumeSlider = !showVolumeSlider },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "音量",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
                     Box {
                         IconButton(
                             onClick = { showSpeedMenu = true },
@@ -375,10 +423,49 @@ fun PlayerScreen(
                         }
                     }
                 }
+
+                if (showOverlay && showVolumeSlider) {
+                    val trackHeight = 160.dp
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                                .offset(x = (-30).dp, y = (-38).dp)
+                                .width(24.dp)
+                                .height(trackHeight)
+                                .background(Color(0xCC000000), RoundedCornerShape(12.dp))
+                                .pointerInput(maxVolume) {
+                                    var dragStartVolume = volume
+                                    var totalDragY = 0f
+                                    detectDragGestures(
+                                        onDragStart = {
+                                            dragStartVolume = volume
+                                            totalDragY = 0f
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            change.consume()
+                                            totalDragY += dragAmount.y
+                                            val newVol = (dragStartVolume - totalDragY / trackHeight.value * maxVolume)
+                                                .toInt()
+                                                .coerceIn(0, maxVolume)
+                                            audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
+                                            volume = newVol
+                                        }
+                                    )
+                                },
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(volume / maxVolume.toFloat())
+                                    .background(Color(0xFF1E88E5), RoundedCornerShape(12.dp))
+                            )
+                        }
+                    }
+                }
             }
         }
     }
-}
 
 private fun formatTime(ms: Long): String {
     val totalSec = ms / 1000
