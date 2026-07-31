@@ -48,7 +48,8 @@ fun LiveStreamDto.toDomain(): LiveStream {
         iconUrl = streamIcon,
         epgChannelId = epgChannelId,
         categoryId = categoryId?.toIntOrNull() ?: 0,
-        hasArchive = tvArchive == 1
+        hasArchive = tvArchive == 1,
+        m3uUrl = null
     )
 }
 
@@ -193,6 +194,7 @@ fun LiveStream.toEntity(sourceId: Long): LiveStreamEntity {
         epgChannelId = epgChannelId,
         categoryId = categoryId,
         tvArchive = hasArchive,
+        m3uUrl = m3uUrl,
         sourceId = sourceId
     )
 }
@@ -334,7 +336,8 @@ fun LiveStreamEntity.toDomain(): LiveStream {
         iconUrl = streamIcon,
         epgChannelId = epgChannelId,
         categoryId = categoryId ?: 0,
-        hasArchive = tvArchive
+        hasArchive = tvArchive,
+        m3uUrl = m3uUrl
     )
 }
 

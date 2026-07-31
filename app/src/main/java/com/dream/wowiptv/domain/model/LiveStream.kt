@@ -6,5 +6,6 @@ data class LiveStream(
     val iconUrl: String?,
     val epgChannelId: String?,
     val categoryId: Int,
-    val hasArchive: Boolean
+    val hasArchive: Boolean,
+    val m3uUrl: String? = null
 )

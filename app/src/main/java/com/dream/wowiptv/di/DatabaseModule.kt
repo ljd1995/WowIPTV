@@ -8,6 +8,7 @@ import com.dream.wowiptv.data.local.AppDatabase
 import com.dream.wowiptv.data.local.MIGRATION_4_5
 import com.dream.wowiptv.data.local.MIGRATION_5_6
 import com.dream.wowiptv.data.local.MIGRATION_6_7
+import com.dream.wowiptv.data.local.MIGRATION_7_8
 import com.dream.wowiptv.data.local.dao.EpgDao
 import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
 import com.dream.wowiptv.data.local.dao.FavoriteVodDao
@@ -53,7 +54,7 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "wowiptv.db"
-        ).addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7).build()
+        ).addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
     }
 
     @Provides fun provideSourceDao(db: AppDatabase): SourceDao = db.sourceDao()

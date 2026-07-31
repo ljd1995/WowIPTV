@@ -65,3 +65,10 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
         )
     }
 }
+
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE sources ADD COLUMN type TEXT NOT NULL DEFAULT 'xtream'")
+        db.execSQL("ALTER TABLE live_streams ADD COLUMN m3uUrl TEXT")
+    }
+}

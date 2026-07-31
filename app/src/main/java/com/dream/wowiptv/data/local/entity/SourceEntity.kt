@@ -12,5 +12,6 @@ data class SourceEntity(
     val port: Int = 25461,
     val username: String,
     val password: String,
+    val type: String = "xtream",
     val isActive: Boolean = false
 )

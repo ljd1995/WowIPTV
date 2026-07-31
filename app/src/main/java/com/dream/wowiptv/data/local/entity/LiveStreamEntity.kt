@@ -10,5 +10,6 @@ data class LiveStreamEntity(
     val epgChannelId: String?,
     val categoryId: Int?,
     val tvArchive: Boolean,
+    val m3uUrl: String? = null,
     val sourceId: Long
 )

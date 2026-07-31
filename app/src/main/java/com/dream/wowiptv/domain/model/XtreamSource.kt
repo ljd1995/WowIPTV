@@ -6,5 +6,6 @@ data class XtreamSource(
     val serverUrl: String,
     val port: Int,
     val username: String,
-    val password: String
+    val password: String,
+    val type: String = "xtream"
 )
