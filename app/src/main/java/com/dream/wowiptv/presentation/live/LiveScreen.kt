@@ -216,6 +216,7 @@ fun LiveScreen(
             epgEntries = epgEntries,
             onBack = { viewModel.exitFullscreen() },
             onTogglePlay = { viewModel.togglePlay() },
+            onRestart = { currentStream?.let { viewModel.playStream(it) } },
             onOpenEpg = { currentStream?.let { onOpenEpg(it.id) } }
         )
     } else {
@@ -903,6 +904,7 @@ private fun FullscreenPlayerView(
     epgEntries: List<EpgEntry>,
     onBack: () -> Unit,
     onTogglePlay: () -> Unit,
+    onRestart: () -> Unit,
     onOpenEpg: () -> Unit
 ) {
     Box(
@@ -938,10 +940,19 @@ private fun FullscreenPlayerView(
             }
         }
 
+        val fsContext = LocalContext.current
+        val fsAudioManager = remember { fsContext.getSystemService(AudioManager::class.java) }
+        val fsMaxVolume = fsAudioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC) ?: 100
+        var fsVolume by remember { mutableStateOf(fsAudioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0) }
+        var showFsVolumeSlider by remember { mutableStateOf(false) }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clickable { showFullscreenControls = !showFullscreenControls }
+                .clickable {
+                    showFullscreenControls = !showFullscreenControls
+                    showFsVolumeSlider = false
+                }
         ) {
             if (showFullscreenControls) {
                 Row(
@@ -1039,24 +1050,85 @@ private fun FullscreenPlayerView(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = if (isPlaying) "暂停" else "播放",
-                        tint = Color.White,
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            contentDescription = if (isPlaying) "暂停" else "播放",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clickable(onClick = onTogglePlay)
+                                .padding(6.dp)
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.Refresh,
+                            contentDescription = "刷新",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clickable(onClick = onRestart)
+                                .padding(6.dp)
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "音量",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clickable(onClick = { showFsVolumeSlider = !showFsVolumeSlider })
+                                .padding(6.dp)
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.Fullscreen,
+                            contentDescription = "退出全屏",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clickable(onClick = onBack)
+                                .padding(6.dp)
+                        )
+                    }
+                }
+
+                if (showFullscreenControls && showFsVolumeSlider) {
+                    val trackHeight = 160.dp
+                    Box(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clickable(onClick = onTogglePlay)
-                            .padding(6.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Filled.Fullscreen,
-                        contentDescription = "全屏",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clickable(onClick = onBack)
-                            .padding(6.dp)
-                    )
+                            .align(Alignment.BottomEnd)
+                            .offset(x = (-50).dp, y = (-34).dp)
+                            .width(24.dp)
+                            .height(trackHeight)
+                            .background(Color(0xCC000000), RoundedCornerShape(12.dp))
+                            .pointerInput(fsMaxVolume) {
+                                var dragStartVolume = fsVolume
+                                var totalDragY = 0f
+                                detectDragGestures(
+                                    onDragStart = {
+                                        dragStartVolume = fsVolume
+                                        totalDragY = 0f
+                                    },
+                                    onDrag = { change, dragAmount ->
+                                        change.consume()
+                                        totalDragY += dragAmount.y
+                                        val newVol = (dragStartVolume - totalDragY / trackHeight.value * fsMaxVolume)
+                                            .toInt()
+                                            .coerceIn(0, fsMaxVolume)
+                                        fsAudioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
+                                        fsVolume = newVol
+                                    }
+                                )
+                            },
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(fsVolume / fsMaxVolume.toFloat())
+                                .background(Color(0xFF6366F1), RoundedCornerShape(12.dp))
+                        )
+                    }
                 }
             }
         }
