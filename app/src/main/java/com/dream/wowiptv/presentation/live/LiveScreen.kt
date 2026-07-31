@@ -54,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -440,70 +441,74 @@ private fun PlayerOverlay(
                     .background(Color(0x80000000))
                     .padding(horizontal = 8.dp, vertical = 2.dp)
             ) {
-                if (showVolumeSlider) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 4.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = "音量",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Slider(
-                            value = volume.toFloat(),
-                            onValueChange = { v ->
-                                volume = v.toInt()
-                                audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, v.toInt(), 0)
-                            },
-                            valueRange = 0f..maxVolume.toFloat(),
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = if (isPlaying) "暂停" else "播放",
-                        tint = Color.White,
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            contentDescription = if (isPlaying) "暂停" else "播放",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clickable(onClick = onTogglePlay)
+                                .padding(4.dp)
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.Refresh,
+                            contentDescription = "刷新",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clickable(onClick = onRestart)
+                                .padding(4.dp)
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                            contentDescription = "音量",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clickable(onClick = { showVolumeSlider = !showVolumeSlider })
+                                .padding(4.dp)
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.Fullscreen,
+                            contentDescription = "全屏",
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clickable(onClick = onFullscreen)
+                                .padding(4.dp)
+                        )
+                    }
+                }
+            }
+
+            if (showControls && showVolumeSlider) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 12.dp)
+                        .height(180.dp)
+                        .width(48.dp)
+                        .background(Color(0x80000000), RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Slider(
+                        value = volume.toFloat(),
+                        onValueChange = { v ->
+                            volume = v.toInt()
+                            audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, v.toInt(), 0)
+                        },
+                        valueRange = 0f..maxVolume.toFloat(),
                         modifier = Modifier
-                            .size(28.dp)
-                            .clickable(onClick = onTogglePlay)
-                            .padding(4.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = "刷新",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clickable(onClick = onRestart)
-                            .padding(4.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                        contentDescription = "音量",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clickable(onClick = { showVolumeSlider = !showVolumeSlider })
-                            .padding(4.dp)
-                    )
-                    Icon(
-                        imageVector = Icons.Filled.Fullscreen,
-                        contentDescription = "全屏",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(28.dp)
-                            .clickable(onClick = onFullscreen)
-                            .padding(4.dp)
+                            .width(150.dp)
+                            .rotate(-90f)
                     )
                 }
             }
