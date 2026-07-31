@@ -11,6 +11,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -248,11 +249,24 @@ fun PlayerScreen(
         )
 
         if (isBuffering) {
-            CircularProgressIndicator(
-                color = Color(0xFF1E88E5),
-                modifier = Modifier.size(36.dp).align(Alignment.Center),
-                strokeWidth = 3.dp
-            )
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF1E88E5),
+                        modifier = Modifier.size(36.dp),
+                        strokeWidth = 3.dp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "${(buffered * 100).toInt().coerceIn(0, 100)}%",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
+                }
+            }
         }
 
         if (showOverlay) {
