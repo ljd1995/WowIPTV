@@ -176,11 +176,19 @@ private fun UserInfoCard(userInfo: com.dream.wowiptv.domain.model.UserInfo?) {
                     }
                 }
                 if (userInfo != null) {
-                    Text(
-                        text = "到期 ${formatExpDate(userInfo.expDate)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.9f)
-                    )
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "到期 ${formatExpDate(userInfo.expDate)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "最大连接 ${userInfo.maxConnections ?: "1"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             }
         }
