@@ -29,8 +29,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -220,12 +218,26 @@ private fun SourceListCard(
         colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
     ) {
         Column {
-            Text(
-                text = "源列表",
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White,
-                modifier = Modifier.padding(16.dp)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "源列表",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                IconButton(onClick = onAddSource) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "添加源",
+                        tint = Color(0xFF6366F1)
+                    )
+                }
+            }
             when (val state = sources) {
                 is UiState.Loading -> {
                     LoadingIndicator(modifier = Modifier.padding(16.dp))
@@ -264,25 +276,6 @@ private fun SourceListCard(
                                 onDelete = { onDelete(source.id) },
                                 onSwitch = if (!isSrcActive) { { onSwitch(source.id) } } else { null }
                             )
-                        }
-                        Button(
-                            onClick = onAddSource,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                                .height(56.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF6366F1)
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("添加源")
                         }
                     }
                 }
