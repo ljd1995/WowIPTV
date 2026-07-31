@@ -5,6 +5,7 @@ import android.media.AudioManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,7 +37,6 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Slider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -54,8 +55,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -490,25 +491,35 @@ private fun PlayerOverlay(
             }
 
             if (showControls && showVolumeSlider) {
+                val trackHeight = 160.dp
                 Box(
                     modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(end = 12.dp)
-                        .height(48.dp)
-                        .width(180.dp)
-                        .rotate(-90f)
-                        .background(Color(0x80000000), RoundedCornerShape(8.dp))
-                        .padding(horizontal = 4.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Slider(
-                        value = volume.toFloat(),
-                        onValueChange = { v ->
-                            volume = v.toInt()
-                            audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, v.toInt(), 0)
+                        .align(Alignment.BottomEnd)
+                        .offset(x = (-38).dp, y = (-34).dp)
+                        .width(24.dp)
+                        .height(trackHeight)
+                        .background(Color(0xCC000000), RoundedCornerShape(12.dp))
+                        .pointerInput(maxVolume) {
+                            var dragStartVolume = volume
+                            detectDragGestures(
+                                onDragStart = { dragStartVolume = volume },
+                                onDrag = { change, dragAmount ->
+                                    change.consume()
+                                    val newVol = (dragStartVolume - dragAmount.y / trackHeight.value * maxVolume)
+                                        .toInt()
+                                        .coerceIn(0, maxVolume)
+                                    audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
+                                    volume = newVol
+                                }
+                            )
                         },
-                        valueRange = 0f..maxVolume.toFloat(),
-                        modifier = Modifier.fillMaxWidth()
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(volume / maxVolume.toFloat())
+                            .background(Color(0xFF6366F1), RoundedCornerShape(12.dp))
                     )
                 }
             }
