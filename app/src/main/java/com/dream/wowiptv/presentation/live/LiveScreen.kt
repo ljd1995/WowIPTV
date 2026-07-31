@@ -494,9 +494,11 @@ private fun PlayerOverlay(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .padding(end = 12.dp)
-                        .height(180.dp)
-                        .width(48.dp)
-                        .background(Color(0x80000000), RoundedCornerShape(8.dp)),
+                        .height(48.dp)
+                        .width(180.dp)
+                        .rotate(-90f)
+                        .background(Color(0x80000000), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 4.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Slider(
@@ -506,9 +508,7 @@ private fun PlayerOverlay(
                             audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, v.toInt(), 0)
                         },
                         valueRange = 0f..maxVolume.toFloat(),
-                        modifier = Modifier
-                            .width(150.dp)
-                            .rotate(-90f)
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
