@@ -67,7 +67,7 @@ fun EpgTimelineScreen(
     onPlayChannel: (Int) -> Unit
 ) {
     val channelsState by viewModel.channels.collectAsState()
-    val epgEntriesState by viewModel.epgEntries.collectAsState()
+    val epgDataState by viewModel.epgData.collectAsState()
     val selectedChannelId by viewModel.selectedChannelId.collectAsState()
 
     var selectedProgram by remember { mutableStateOf<EpgEntry?>(null) }
@@ -108,7 +108,7 @@ fun EpgTimelineScreen(
                     } else {
                         EpgGrid(
                             channels = channels,
-                            epgEntriesState = epgEntriesState,
+                            epgDataState = epgDataState,
                             selectedChannelId = selectedChannelId,
                             onSelectChannel = viewModel::selectChannel,
                             onProgramClick = { selectedProgram = it }
@@ -132,7 +132,7 @@ fun EpgTimelineScreen(
 @Composable
 private fun EpgGrid(
     channels: List<LiveStream>,
-    epgEntriesState: UiState<List<EpgEntry>>,
+    epgDataState: UiState<Map<Int, List<EpgEntry>>>,
     selectedChannelId: Int?,
     onSelectChannel: (Int) -> Unit,
     onProgramClick: (EpgEntry) -> Unit
@@ -188,23 +188,19 @@ private fun EpgGrid(
                         .verticalScroll(verticalScrollState)
                 ) {
                     Box(modifier = Modifier.width(timelineWidth)) {
-                        val epgData = when (epgEntriesState) {
-                            is UiState.Success -> epgEntriesState.data
-                            else -> emptyList()
+                        val epgData = when (epgDataState) {
+                            is UiState.Success -> epgDataState.data
+                            else -> emptyMap()
                         }
 
                         Column {
-                            channels.forEachIndexed { index, channel ->
-                                if (channel.id == selectedChannelId) {
-                                    ChannelTimelineRow(
-                                        epgEntries = epgData,
-                                        currentTimeMs = currentTimeMs,
-                                        timelineStartMs = timelineStartMs,
-                                        onClick = onProgramClick
-                                    )
-                                } else {
-                                    Box(modifier = Modifier.height(channelRowHeight))
-                                }
+                            channels.forEach { channel ->
+                                ChannelTimelineRow(
+                                    epgEntries = epgData[channel.id].orEmpty(),
+                                    currentTimeMs = currentTimeMs,
+                                    timelineStartMs = timelineStartMs,
+                                    onClick = onProgramClick
+                                )
                             }
                         }
 
