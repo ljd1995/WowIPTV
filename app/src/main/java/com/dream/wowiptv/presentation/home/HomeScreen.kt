@@ -1,7 +1,11 @@
 package com.dream.wowiptv.presentation.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -33,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
@@ -85,25 +92,81 @@ fun HomeScreen(
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
 
     MaterialTheme(colorScheme = DarkColorScheme) {
-        Column(modifier = Modifier.fillMaxSize().background(Color(0xFF1E1E1E))) {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "WowIPTV",
-                        style = TextStyle(
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            brush = Brush.linearGradient(listOf(Color(0xFF818CF8), Color(0xFFA855F7)))
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color(0xFF201E2A), Color(0xFF141318))
+                    )
+                )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF6366F1).copy(alpha = 0.14f), Color.Transparent)
                         )
                     )
-                },
-                actions = {},
-                windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1A1A1A),
-                    titleContentColor = Color.White
-                )
             )
+            Box(
+                modifier = Modifier
+                    .width(240.dp)
+                    .height(320.dp)
+                    .align(Alignment.TopEnd)
+                    .background(
+                        Brush.radialGradient(
+                            listOf(Color(0xFFA855F7).copy(alpha = 0.10f), Color.Transparent)
+                        )
+                    )
+            )
+            Column(modifier = Modifier.fillMaxSize()) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "WowIPTV",
+                            style = TextStyle(
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                brush = Brush.linearGradient(listOf(Color(0xFF818CF8), Color(0xFFA855F7)))
+                            )
+                        )
+                    },
+                    actions = {
+                        if (data.username.isNotBlank()) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(50))
+                                    .background(Color(0xFF2D2D3A))
+                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFFD700),
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = data.username,
+                                    color = Color(0xFFDDDDDD),
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.widthIn(max = 96.dp)
+                                )
+                            }
+                        }
+                    },
+                    windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White
+                    )
+                )
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
                 onRefresh = { viewModel.refresh() },
@@ -246,6 +309,7 @@ fun HomeScreen(
         }
         }
     }
+    }
 }
 
 private fun decodeName(raw: String): String {
@@ -264,28 +328,46 @@ private fun StatCard(icon: ImageVector, count: Int, label: String, color: Color,
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2D2D3A))
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        border = BorderStroke(1.dp, Color(0xFF3A3A4A))
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = color,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.weight(1f))
-            Column(horizontalAlignment = Alignment.End) {
-                CountUpText(target = count)
-                Text(
-                    text = label,
-                    color = Color(0xFF999999),
-                    fontSize = 11.sp
+                .background(
+                    Brush.linearGradient(
+                        listOf(color.copy(alpha = 0.16f), Color(0xFF26242E))
+                    )
                 )
+                .padding(horizontal = 10.dp, vertical = 12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(color.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = color,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                Column(horizontalAlignment = Alignment.End) {
+                    CountUpText(target = count)
+                    Text(
+                        text = label,
+                        color = Color(0xFF999999),
+                        fontSize = 11.sp
+                    )
+                }
             }
         }
     }
@@ -320,12 +402,23 @@ private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(width = 4.dp, height = 16.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(
+                        Brush.verticalGradient(listOf(Color(0xFF818CF8), Color(0xFFA855F7)))
+                    )
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = title,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+        }
         if (onViewAll != null) {
             Row(
                 modifier = Modifier.clickable(onClick = onViewAll),
@@ -377,13 +470,18 @@ private fun TypeBadge(text: String) {
 
 @Composable
 private fun MediaCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, rating: String? = null, onClick: () -> Unit = {}) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val cardScale by animateFloatAsState(if (isPressed) 0.97f else 1f, label = "cardScale")
     Box(
         modifier = Modifier
             .width(110.dp)
             .aspectRatio(2f / 3f)
+            .graphicsLayer { scaleX = cardScale; scaleY = cardScale }
             .clip(RoundedCornerShape(12.dp))
             .background(Color(0xFF2D2D3A))
-            .clickable(onClick = onClick)
+            .border(1.dp, Color(0xFF3A3A4A), RoundedCornerShape(12.dp))
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
     ) {
         if (!icon.isNullOrEmpty()) {
             AsyncImage(
@@ -474,13 +572,18 @@ private fun FavCard(name: String, icon: String? = null, badge: String? = null, c
 
 @Composable
 private fun ContinueCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, position: Long = 0L, duration: Long = 0L, rating: String? = null, onClick: () -> Unit = {}) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val cardScale by animateFloatAsState(if (isPressed) 0.97f else 1f, label = "cardScale")
     Box(
         modifier = Modifier
             .width(110.dp)
             .aspectRatio(2f / 3f)
+            .graphicsLayer { scaleX = cardScale; scaleY = cardScale }
             .clip(RoundedCornerShape(12.dp))
             .background(Color(0xFF2D2D3A))
-            .clickable(onClick = onClick)
+            .border(1.dp, Color(0xFF3A3A4A), RoundedCornerShape(12.dp))
+            .clickable(interactionSource = interactionSource, indication = null, onClick = onClick)
     ) {
         if (!icon.isNullOrEmpty()) {
             AsyncImage(
