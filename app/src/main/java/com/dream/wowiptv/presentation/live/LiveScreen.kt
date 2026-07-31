@@ -1,5 +1,10 @@
 package com.dream.wowiptv.presentation.live
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import android.content.pm.ActivityInfo
 import android.media.AudioManager
 import androidx.activity.ComponentActivity
@@ -59,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -68,6 +74,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -464,11 +471,7 @@ private fun PlayerOverlay(
                     Spacer(modifier = Modifier.width(10.dp))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(LiveRed, CircleShape)
-                    )
+                    LiveDot(size = 8.dp)
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "LIVE",
@@ -1089,11 +1092,7 @@ private fun FullscreenPlayerView(
                         modifier = Modifier.padding(end = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(9.dp)
-                                .background(LiveRed, CircleShape)
-                        )
+                        LiveDot(size = 9.dp)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "LIVE",
@@ -1232,5 +1231,40 @@ private fun FullscreenPlayerView(
                 }
             }
         }
+    }
+}
+
+
+@Composable
+private fun LiveDot(size: Dp = 8.dp) {
+    val transition = rememberInfiniteTransition(label = "liveDot")
+    val haloScale by transition.animateFloat(
+        initialValue = 1f,
+        targetValue = 2.4f,
+        animationSpec = infiniteRepeatable(tween(1400), RepeatMode.Restart),
+        label = "haloScale"
+    )
+    val haloAlpha by transition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(tween(1400), RepeatMode.Restart),
+        label = "haloAlpha"
+    )
+    Box(contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .graphicsLayer {
+                    scaleX = haloScale
+                    scaleY = haloScale
+                    alpha = haloAlpha
+                }
+                .background(LiveRed.copy(alpha = 0.6f), CircleShape)
+        )
+        Box(
+            modifier = Modifier
+                .size(size)
+                .background(LiveRed, CircleShape)
+        )
     }
 }
