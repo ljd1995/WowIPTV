@@ -128,6 +128,9 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                     onStreamPlayed = { pendingLiveStream = null },
                     onFullscreenChanged = { fullscreen ->
                         hideBottomBar = fullscreen
+                    },
+                    onOpenEpg = { streamId ->
+                        outerNavController.navigate(Routes.epgRoute(streamId))
                     }
                 )
             }

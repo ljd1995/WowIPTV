@@ -208,7 +208,8 @@ fun LiveScreen(
             isBuffering = isBuffering,
             epgEntries = epgEntries,
             onBack = { viewModel.exitFullscreen() },
-            onTogglePlay = { viewModel.togglePlay() }
+            onTogglePlay = { viewModel.togglePlay() },
+            onOpenEpg = { currentStream?.let { onOpenEpg(it.id) } }
         )
     } else {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -221,6 +222,7 @@ fun LiveScreen(
                 epgEntries = epgEntries,
                 onTogglePlay = { viewModel.togglePlay() },
                 onFullscreen = { viewModel.toggleFullscreen() },
+                onOpenEpg = { currentStream?.let { onOpenEpg(it.id) } },
                 modifier = Modifier.weight(0.4f)
             )
 
@@ -258,6 +260,7 @@ private fun PlayerSection(
     epgEntries: List<EpgEntry>,
     onTogglePlay: () -> Unit,
     onFullscreen: () -> Unit,
+    onOpenEpg: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -291,7 +294,8 @@ private fun PlayerSection(
                 epgEntries = epgEntries,
                 isPlaying = isPlaying,
                 onTogglePlay = onTogglePlay,
-                onFullscreen = onFullscreen
+                onFullscreen = onFullscreen,
+                onOpenEpg = onOpenEpg
             )
         } else {
             Box(
@@ -315,7 +319,8 @@ private fun PlayerOverlay(
     epgEntries: List<EpgEntry>,
     isPlaying: Boolean,
     onTogglePlay: () -> Unit,
-    onFullscreen: () -> Unit
+    onFullscreen: () -> Unit,
+    onOpenEpg: () -> Unit
 ) {
     var showControls by remember { mutableStateOf(true) }
 
@@ -402,6 +407,15 @@ private fun PlayerOverlay(
                     modifier = Modifier
                         .size(28.dp)
                         .clickable(onClick = onTogglePlay)
+                        .padding(4.dp)
+                )
+                Icon(
+                    imageVector = Icons.Filled.DateRange,
+                    contentDescription = "EPG",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clickable(onClick = onOpenEpg)
                         .padding(4.dp)
                 )
                 Icon(
@@ -762,7 +776,8 @@ private fun FullscreenPlayerView(
     isBuffering: Boolean,
     epgEntries: List<EpgEntry>,
     onBack: () -> Unit,
-    onTogglePlay: () -> Unit
+    onTogglePlay: () -> Unit,
+    onOpenEpg: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -880,6 +895,15 @@ private fun FullscreenPlayerView(
                         modifier = Modifier
                             .size(36.dp)
                             .clickable(onClick = onTogglePlay)
+                            .padding(6.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.DateRange,
+                        contentDescription = "EPG",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clickable(onClick = onOpenEpg)
                             .padding(6.dp)
                     )
                     Icon(
