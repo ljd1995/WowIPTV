@@ -104,6 +104,7 @@ fun LiveScreen(
     val streamUrl by viewModel.streamUrl.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
     val epgEntries by viewModel.epgEntries.collectAsState()
+    val channelEpg by viewModel.channelEpg.collectAsState()
     val isFullscreen by viewModel.isFullscreen.collectAsState()
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -239,6 +240,8 @@ fun LiveScreen(
                 onPlayStream = { viewModel.playStream(it) },
                 onToggleFavorite = { stream -> viewModel.toggleFavorite(stream) },
                 onOpenEpg = onOpenEpg,
+                channelEpgTitles = channelEpg,
+                onLoadChannelEpg = { viewModel.loadChannelEpg(it) },
                 isRefreshing = isRefreshing,
                 onRefresh = {
                     isRefreshing = true
@@ -462,6 +465,8 @@ private fun ContentSection(
     onPlayStream: (LiveStream) -> Unit,
     onToggleFavorite: (LiveStream) -> Unit,
     onOpenEpg: (Int) -> Unit,
+    channelEpgTitles: Map<Int, String>,
+    onLoadChannelEpg: (Int) -> Unit,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
@@ -493,6 +498,8 @@ private fun ContentSection(
                 onPlayStream = onPlayStream,
                 onToggleFavorite = onToggleFavorite,
                 onOpenEpg = onOpenEpg,
+                channelEpgTitles = channelEpgTitles,
+                onLoadChannelEpg = onLoadChannelEpg,
                 isRefreshing = isRefreshing,
                 onRefresh = onRefresh,
                 modifier = Modifier.weight(0.7f)
@@ -609,6 +616,8 @@ private fun ChannelList(
     onPlayStream: (LiveStream) -> Unit,
     onToggleFavorite: (LiveStream) -> Unit,
     onOpenEpg: (Int) -> Unit,
+    channelEpgTitles: Map<Int, String>,
+    onLoadChannelEpg: (Int) -> Unit,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
     modifier: Modifier = Modifier
@@ -691,9 +700,11 @@ private fun ChannelList(
                                     stream = stream,
                                     isFavorite = stream.id in favoriteIds,
                                     isSelected = stream.id == currentStream?.id,
+                                    currentEpgTitle = channelEpgTitles[stream.id],
                                     onClick = { onPlayStream(stream) },
                                     onToggleFavorite = { onToggleFavorite(stream) },
-                                    onOpenEpg = { onOpenEpg(stream.id) }
+                                    onOpenEpg = { onOpenEpg(stream.id) },
+                                    onLoadChannelEpg = { onLoadChannelEpg(stream.id) }
                                 )
                             }
                         }
@@ -710,10 +721,15 @@ private fun ChannelItem(
     stream: LiveStream,
     isFavorite: Boolean,
     isSelected: Boolean,
+    currentEpgTitle: String?,
     onClick: () -> Unit,
     onToggleFavorite: () -> Unit,
-    onOpenEpg: () -> Unit
+    onOpenEpg: () -> Unit,
+    onLoadChannelEpg: () -> Unit
 ) {
+    LaunchedEffect(stream.id) {
+        onLoadChannelEpg()
+    }
     val bgColor = if (isSelected) Color(0xFF333333) else Color.Transparent
     Row(
         modifier = Modifier
@@ -757,14 +773,24 @@ private fun ChannelItem(
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.width(4.dp))
-        Text(
-            text = stream.name,
-            style = MaterialTheme.typography.bodySmall,
-            color = DarkText,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f)
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stream.name,
+                style = MaterialTheme.typography.bodySmall,
+                color = DarkText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (!currentEpgTitle.isNullOrEmpty()) {
+                Text(
+                    text = currentEpgTitle,
+                    color = DarkTextSecondary,
+                    fontSize = 10.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
         IconButton(onClick = onOpenEpg) {
             Icon(
                 imageVector = Icons.Filled.DateRange,

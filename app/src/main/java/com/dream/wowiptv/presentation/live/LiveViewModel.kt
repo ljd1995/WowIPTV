@@ -7,6 +7,7 @@ import com.dream.wowiptv.data.local.entity.FavoriteStreamEntity
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveCategory
 import com.dream.wowiptv.domain.model.LiveStream
+import com.dream.wowiptv.domain.repository.LiveTvRepository
 import com.dream.wowiptv.domain.usecase.GetLiveCategoriesUseCase
 import com.dream.wowiptv.domain.usecase.GetLiveStreamsUseCase
 import com.dream.wowiptv.domain.usecase.GetShortEpgUseCase
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -36,6 +38,7 @@ class LiveViewModel @Inject constructor(
     private val getLiveCategoriesUseCase: GetLiveCategoriesUseCase,
     private val getLiveStreamsUseCase: GetLiveStreamsUseCase,
     private val getShortEpgUseCase: GetShortEpgUseCase,
+    private val liveTvRepository: LiveTvRepository,
     private val playStreamUseCase: PlayStreamUseCase,
     private val sourceRepository: SourceRepository,
     private val favoriteStreamDao: FavoriteStreamDao,
@@ -109,6 +112,11 @@ class LiveViewModel @Inject constructor(
 
     private val _epgEntries = MutableStateFlow<List<EpgEntry>>(emptyList())
     val epgEntries: StateFlow<List<EpgEntry>> = _epgEntries.asStateFlow()
+
+    private val _channelEpg = MutableStateFlow<Map<Int, String>>(emptyMap())
+    val channelEpg: StateFlow<Map<Int, String>> = _channelEpg.asStateFlow()
+
+    private val _epgLoadedIds = MutableStateFlow<Set<Int>>(emptySet())
 
     private val _isFullscreen = MutableStateFlow(false)
     val isFullscreen: StateFlow<Boolean> = _isFullscreen.asStateFlow()
@@ -195,6 +203,25 @@ class LiveViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun loadChannelEpg(streamId: Int) {
+        if (_epgLoadedIds.value.contains(streamId)) return
+        _epgLoadedIds.update { it + streamId }
+        viewModelScope.launch {
+            val cached = runCatching { getShortEpgUseCase(streamId).first() }.getOrNull().orEmpty()
+            publishCurrentEpg(streamId, cached)
+            if (cached.isEmpty()) {
+                runCatching { liveTvRepository.refreshEpg(streamId) }
+                val entries = runCatching { getShortEpgUseCase(streamId).first() }.getOrNull().orEmpty()
+                publishCurrentEpg(streamId, entries)
+            }
+        }
+    }
+
+    private fun publishCurrentEpg(streamId: Int, entries: List<EpgEntry>) {
+        val current = entries.find { it.isNowPlaying } ?: entries.firstOrNull()
+        current?.let { _channelEpg.update { m -> m + (streamId to it.title) } }
     }
 
     private fun loadEpg(streamId: Int) {
