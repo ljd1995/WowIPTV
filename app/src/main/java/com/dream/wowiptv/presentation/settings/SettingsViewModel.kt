@@ -3,6 +3,7 @@ package com.dream.wowiptv.presentation.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.BuildConfig
+import com.dream.wowiptv.data.local.SourcePreferences
 import com.dream.wowiptv.domain.model.UserInfo
 import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.domain.usecase.GetUserInfoUseCase
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -25,7 +27,8 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val manageSourcesUseCase: ManageSourcesUseCase,
     private val switchSourceUseCase: SwitchSourceUseCase,
-    private val getUserInfoUseCase: GetUserInfoUseCase
+    private val getUserInfoUseCase: GetUserInfoUseCase,
+    private val sourcePreferences: SourcePreferences,
 ) : ViewModel() {
 
     val versionName: String = BuildConfig.VERSION_NAME
@@ -34,7 +37,11 @@ class SettingsViewModel @Inject constructor(
     val userInfo: StateFlow<UserInfo?> = _userInfo.asStateFlow()
 
     init {
-        refreshUserInfo()
+        viewModelScope.launch {
+            val cached = sourcePreferences.userInfo.first()
+            if (cached != null) _userInfo.value = cached
+            refreshUserInfo()
+        }
     }
 
     fun refreshUserInfo() {
@@ -42,6 +49,7 @@ class SettingsViewModel @Inject constructor(
             val result = getUserInfoUseCase()
             if (result != null) {
                 _userInfo.value = result
+                sourcePreferences.saveUserInfo(result)
             }
         }
     }
