@@ -15,9 +15,10 @@ WowIPTV is an Android IPTV client supporting Live TV, on-demand Movies and TV Se
 - **EPG guide** — timeline view, current/next program, portrait/landscape toggle
 - **Player experience** — playback speed, audio track selection, volume gestures, refresh on stall, auto-resume after returning from background
 - **Data management** — clear Continue Watching / history / favorites, image cache cleanup, cache re-sync
+- **Version updates** — auto-check for the latest GitHub release on launch (toggleable), one-tap download & install
 - **Bilingual UI** — Chinese / English, follow system, synced with Android 13+ per-app language
-- **Customization** — default playback speed, player status bar toggle, home section visibility, startup preload
-- **Visual style** — dark gradient background, brand-purple glow, frosted cards, edge-to-edge status bar
+- **Customization** — default playback speed, player status bar toggle, home section visibility, startup preload, auto-check-for-updates toggle
+- **Visual style** — dark gradient background, brand glow, frosted cards, edge-to-edge status bar, 14 switchable theme colors
 
 ## Tech Stack
 
