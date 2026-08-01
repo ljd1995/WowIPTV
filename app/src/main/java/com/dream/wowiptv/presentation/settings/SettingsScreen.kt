@@ -83,9 +83,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.imageLoader
 import com.dream.wowiptv.R
+import com.dream.wowiptv.BuildConfig
 import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.update.UpdateCheckDialog
+import com.dream.wowiptv.presentation.update.UpdateState
+import com.dream.wowiptv.presentation.update.UpdateViewModel
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
@@ -122,6 +126,8 @@ fun SettingsScreen(
     val splashPreload by viewModel.splashPreload.collectAsState()
     val showCastAvatars by viewModel.showCastAvatars.collectAsState()
     val tmdbApiKey by viewModel.tmdbApiKey.collectAsState()
+    val updateViewModel: UpdateViewModel = hiltViewModel()
+    val updateState by updateViewModel.state.collectAsState()
 
     val prevSyncingIdsState = remember { mutableStateOf<Set<Long>>(emptySet()) }
     val currentSyncingIds by rememberUpdatedState(syncingIds)
@@ -206,6 +212,14 @@ fun SettingsScreen(
                             }
                         )
                     }
+                    HorizontalDividerItem()
+                    ActionRow(
+                        title = stringResource(R.string.settings_check_update),
+                        subtitle = "",
+                        enabled = updateState != UpdateState.Checking,
+                        loading = updateState == UpdateState.Checking,
+                        onClick = { updateViewModel.check() }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -353,6 +367,16 @@ fun SettingsScreen(
                         showTmdbKeyDialog = false
                         Toast.makeText(context, context.getString(R.string.settings_tmdb_key_saved), Toast.LENGTH_SHORT).show()
                     }
+                )
+            }
+            if (updateState != UpdateState.Idle) {
+                UpdateCheckDialog(
+                    state = updateState,
+                    currentVersion = BuildConfig.VERSION_NAME,
+                    onDismiss = { updateViewModel.dismiss() },
+                    onDownload = { updateViewModel.download() },
+                    onInstall = { updateViewModel.install() },
+                    onRetry = { updateViewModel.check() }
                 )
             }
         }

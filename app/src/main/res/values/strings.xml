@@ -83,6 +83,19 @@
     <string name="movies_duration_ms">%1$d分钟%2$d秒</string>
     <string name="movies_duration_s">%d秒</string>
 
+    <string name="settings_check_update">检查更新</string>
+    <string name="update_available">发现新版本 v%s</string>
+    <string name="update_current">当前版本 v%s</string>
+    <string name="update_up_to_date">已是最新版本</string>
+    <string name="update_download">下载</string>
+    <string name="update_downloading">正在下载… %d%%</string>
+    <string name="update_downloaded">下载完成,点击安装</string>
+    <string name="update_install">安装</string>
+    <string name="update_later">稍后</string>
+    <string name="update_failed">检查失败,请检查网络</string>
+    <string name="update_retry">重试</string>
+    <string name="common_ok">确定</string>
+
     <!-- 剧集 -->
     <string name="series_title">剧集</string>
     <string name="series_all">全部 (%d)</string>

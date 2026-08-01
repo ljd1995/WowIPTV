@@ -2,6 +2,7 @@ package com.dream.wowiptv.di
 
 import com.dream.wowiptv.data.remote.xtream.XtreamApi
 import com.dream.wowiptv.data.remote.tmdb.TmdbApi
+import com.dream.wowiptv.data.remote.github.GithubApi
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -35,5 +36,15 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
             .create(TmdbApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGithubApi(gson: Gson): GithubApi {
+        return Retrofit.Builder()
+            .baseUrl("https://api.github.com/")
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+            .create(GithubApi::class.java)
     }
 }

@@ -52,7 +52,11 @@ import com.dream.wowiptv.presentation.series.SeriesScreen
 import com.dream.wowiptv.presentation.settings.SettingsScreen
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
+import com.dream.wowiptv.presentation.update.UpdateCheckDialog
+import com.dream.wowiptv.presentation.update.UpdateState
+import com.dream.wowiptv.presentation.update.UpdateViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.dream.wowiptv.BuildConfig
 
 @Composable
 fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int? = null) {
@@ -63,6 +67,12 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
     var pendingLiveStream by remember { mutableStateOf(pendingLiveStreamArg) }
     val sourceTypeViewModel: SourceTypeViewModel = hiltViewModel()
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
+    val updateViewModel: UpdateViewModel = hiltViewModel()
+    val updateState by updateViewModel.state.collectAsState()
+
+    LaunchedEffect(Unit) {
+        updateViewModel.check()
+    }
 
     LaunchedEffect(sourceType) {
         if (sourceType == "m3u" &&
@@ -273,5 +283,20 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                 )
             }
         }
+    }
+
+    val autoPrompt = updateState is UpdateState.Available ||
+        updateState is UpdateState.Downloading ||
+        updateState is UpdateState.Downloaded ||
+        updateState is UpdateState.Error
+    if (autoPrompt) {
+        UpdateCheckDialog(
+            state = updateState,
+            currentVersion = BuildConfig.VERSION_NAME,
+            onDismiss = { updateViewModel.dismiss() },
+            onDownload = { updateViewModel.download() },
+            onInstall = { updateViewModel.install() },
+            onRetry = { updateViewModel.check() }
+        )
     }
 }
