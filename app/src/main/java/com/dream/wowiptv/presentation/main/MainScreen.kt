@@ -218,6 +218,9 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                             launchSingleTop = true
                             restoreState = true
                         }
+                    },
+                    onOpenSearch = {
+                        outerNavController.navigate(Routes.GLOBAL_SEARCH)
                     }
                 )
             }

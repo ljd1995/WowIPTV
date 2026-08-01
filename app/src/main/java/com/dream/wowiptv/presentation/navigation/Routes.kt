@@ -10,6 +10,7 @@ object Routes {
     const val ALL_FAVORITES = "all_favorites"
     const val ALL_HISTORY = "all_history"
     const val SETTINGS = "settings"
+    const val GLOBAL_SEARCH = "global_search"
 
     fun allItemsRoute(tab: Int) = "all_items/$tab"
     const val PLAYER = "player/{streamType}/{streamId}?name={name}&position={position}&episodes={episodes}"

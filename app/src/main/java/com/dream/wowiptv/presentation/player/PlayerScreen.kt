@@ -493,9 +493,14 @@ fun PlayerScreen(
                             } else {
                                 audioGroups.forEachIndexed { index, group ->
                                     val fmt = group.mediaTrackGroup.getFormat(0)
+                                    val lang = fmt.language?.takeIf { it.isNotBlank() && !it.equals("und", ignoreCase = true) }
                                     val label = fmt.label?.takeIf { it.isNotBlank() }
-                                        ?: fmt.language?.uppercase()
-                                        ?: context.getString(R.string.common_track_n, index + 1)
+                                        ?: lang?.uppercase()
+                                        ?: when (fmt.channelCount) {
+                                            1 -> context.getString(R.string.common_mono)
+                                            2 -> context.getString(R.string.common_stereo)
+                                            else -> context.getString(R.string.common_channels, fmt.channelCount)
+                                        }
                                     val isSelected = group.isSelected
                                     DropdownMenuItem(
                                         text = { Text(if (isSelected) "$label ✓" else label, color = Color.White) },

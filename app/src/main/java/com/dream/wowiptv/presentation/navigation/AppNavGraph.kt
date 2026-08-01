@@ -16,6 +16,7 @@ import com.dream.wowiptv.presentation.player.PlayerScreen
 import com.dream.wowiptv.presentation.series.SeriesDetailScreen
 import com.dream.wowiptv.presentation.settings.SourceFormScreen
 import com.dream.wowiptv.presentation.settings.SettingsScreen
+import com.dream.wowiptv.presentation.search.GlobalSearchScreen
 import com.dream.wowiptv.presentation.splash.SplashScreen
 
 @Composable
@@ -142,8 +143,7 @@ fun AppNavGraph(navController: NavHostController) {
             )
         }
 
-        composable(
-            route = Routes.ALL_ITEMS,
+        composable(Routes.ALL_ITEMS,
             arguments = listOf(navArgument("tab") { type = NavType.IntType; defaultValue = 0 })
         ) { backStackEntry ->
             val tab = backStackEntry.arguments?.getInt("tab") ?: 0
@@ -157,6 +157,23 @@ fun AppNavGraph(navController: NavHostController) {
                     navController.navigate(Routes.seriesRoute(seriesId))
                 },
                 onLiveClick = { streamId, name ->
+                    navController.navigate(Routes.mainRoute(streamId)) {
+                        popUpTo(Routes.MAIN) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.GLOBAL_SEARCH) {
+            GlobalSearchScreen(
+                onBack = { navController.popBackStack() },
+                onMovieClick = { vodId ->
+                    navController.navigate(Routes.vodRoute(vodId))
+                },
+                onSeriesClick = { seriesId ->
+                    navController.navigate(Routes.seriesRoute(seriesId))
+                },
+                onLiveClick = { streamId, _ ->
                     navController.navigate(Routes.mainRoute(streamId)) {
                         popUpTo(Routes.MAIN) { inclusive = true }
                     }

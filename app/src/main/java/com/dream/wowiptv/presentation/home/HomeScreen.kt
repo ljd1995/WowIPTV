@@ -31,11 +31,13 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -91,7 +93,8 @@ fun HomeScreen(
     onViewAllHistory: () -> Unit,
     onOpenLive: () -> Unit = {},
     onOpenMovies: () -> Unit = {},
-    onOpenSeries: () -> Unit = {}
+    onOpenSeries: () -> Unit = {},
+    onOpenSearch: () -> Unit = {}
 ) {
     val data by viewModel.data.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -116,6 +119,13 @@ fun HomeScreen(
                         )
                     },
                     actions = {
+                        IconButton(onClick = onOpenSearch) {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = stringResource(R.string.common_search),
+                                tint = Color.White
+                            )
+                        }
                         if (data.username.isNotBlank()) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
