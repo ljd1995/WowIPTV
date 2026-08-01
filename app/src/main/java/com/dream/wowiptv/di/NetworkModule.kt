@@ -1,6 +1,7 @@
 package com.dream.wowiptv.di
 
 import com.dream.wowiptv.data.remote.xtream.XtreamApi
+import com.dream.wowiptv.data.remote.tmdb.TmdbApi
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -24,5 +25,15 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
             .create(XtreamApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTmdbApi(gson: Gson): TmdbApi {
+        return Retrofit.Builder()
+            .baseUrl("https://api.themoviedb.org/3/")
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+            .create(TmdbApi::class.java)
     }
 }

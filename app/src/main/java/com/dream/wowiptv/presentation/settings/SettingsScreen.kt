@@ -48,7 +48,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -71,6 +75,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -115,6 +120,8 @@ fun SettingsScreen(
     val showFavorites by viewModel.showFavorites.collectAsState()
     val showRecent by viewModel.showRecent.collectAsState()
     val splashPreload by viewModel.splashPreload.collectAsState()
+    val showCastAvatars by viewModel.showCastAvatars.collectAsState()
+    val tmdbApiKey by viewModel.tmdbApiKey.collectAsState()
 
     val prevSyncingIdsState = remember { mutableStateOf<Set<Long>>(emptySet()) }
     val currentSyncingIds by rememberUpdatedState(syncingIds)
@@ -130,6 +137,8 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     var cacheSize by remember { mutableStateOf(0L) }
     val imageLoader = remember { context.imageLoader }
+    var showTmdbKeyDialog by remember { mutableStateOf(false) }
+    var tmdbKeyInput by remember { mutableStateOf("") }
 
     fun refreshCacheSize() {
         scope.launch(Dispatchers.IO) {
@@ -182,6 +191,21 @@ fun SettingsScreen(
 
                 SectionCard(title = stringResource(R.string.settings_general_section), icon = Icons.Default.Settings) {
                     LanguageRow()
+                    SettingSwitchRow(
+                        title = stringResource(R.string.settings_show_avatars),
+                        subtitle = stringResource(R.string.settings_show_avatars_desc),
+                        checked = showCastAvatars,
+                        onCheckedChange = viewModel::setShowCastAvatars
+                    )
+                    if (showCastAvatars) {
+                        TmdbKeyRow(
+                            key = tmdbApiKey,
+                            onEdit = {
+                                tmdbKeyInput = tmdbApiKey
+                                showTmdbKeyDialog = true
+                            }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -319,6 +343,18 @@ fun SettingsScreen(
                 AboutCard(versionName = viewModel.versionName)
             }
         }
+            if (showTmdbKeyDialog) {
+                TmdbKeyDialog(
+                    initialKey = tmdbKeyInput,
+                    onDismiss = { showTmdbKeyDialog = false },
+                    onSave = { newKey ->
+                        viewModel.setTmdbApiKey(newKey)
+                        tmdbKeyInput = newKey
+                        showTmdbKeyDialog = false
+                        Toast.makeText(context, context.getString(R.string.settings_tmdb_key_saved), Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
         }
     }
 }
@@ -426,6 +462,89 @@ private fun PlaybackSpeedRow(
             }
         }
     }
+}
+
+@Composable
+private fun TmdbKeyRow(key: String, onEdit: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onEdit)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.settings_tmdb_key), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = if (key.isBlank()) {
+                    stringResource(R.string.settings_tmdb_key_empty)
+                } else {
+                    "••••${key.takeLast(4)}"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = Color(0xFF888888)
+            )
+        }
+        Text(
+            text = stringResource(R.string.settings_tmdb_key_edit),
+            color = Color(0xFF6366F1),
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun TmdbKeyDialog(
+    initialKey: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var input by remember { mutableStateOf(initialKey) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF2C2C2C),
+        title = {
+            Text(stringResource(R.string.settings_tmdb_key), color = Color.White)
+        },
+        text = {
+            OutlinedTextField(
+                value = input,
+                onValueChange = { input = it },
+                singleLine = true,
+                placeholder = {
+                    Text(
+                        text = stringResource(R.string.settings_tmdb_key_hint),
+                        color = Color(0xFF666666),
+                        fontSize = 13.sp
+                    )
+                },
+                visualTransformation = PasswordVisualTransformation(),
+                textStyle = MaterialTheme.typography.bodySmall.copy(color = Color.White),
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = Color(0xFF8B5CF6),
+                    focusedBorderColor = Color(0xFF8B5CF6),
+                    unfocusedBorderColor = Color(0xFF3A3A4A),
+                    focusedContainerColor = Color.White.copy(alpha = 0.06f),
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.06f)
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(input) }) {
+                Text(stringResource(R.string.common_save), color = Color(0xFF8B5CF6))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel), color = Color(0xFF999999))
+            }
+        }
+    )
 }
 
 @Composable

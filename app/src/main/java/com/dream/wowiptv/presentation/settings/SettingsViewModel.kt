@@ -70,6 +70,12 @@ class SettingsViewModel @Inject constructor(
     val splashPreload: StateFlow<Boolean> = appPreferences.splashPreload
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
+    val showCastAvatars: StateFlow<Boolean> = appPreferences.showCastAvatars
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    val tmdbApiKey: StateFlow<String> = appPreferences.tmdbApiKey
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
+
     init {
         viewModelScope.launch {
             val cached = sourcePreferences.userInfo.first()
@@ -104,6 +110,14 @@ class SettingsViewModel @Inject constructor(
 
     fun setSplashPreload(enabled: Boolean) {
         viewModelScope.launch { appPreferences.setSplashPreload(enabled) }
+    }
+
+    fun setShowCastAvatars(show: Boolean) {
+        viewModelScope.launch { appPreferences.setShowCastAvatars(show) }
+    }
+
+    fun setTmdbApiKey(key: String) {
+        viewModelScope.launch { appPreferences.setTmdbApiKey(key) }
     }
 
     fun refreshUserInfo() {

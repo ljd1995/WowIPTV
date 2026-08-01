@@ -9,6 +9,7 @@
     <string name="common_empty">No content</string>
     <string name="common_loading">Loading…</string>
     <string name="common_save">Save</string>
+    <string name="common_cancel">Cancel</string>
     <string name="common_import">Import</string>
     <string name="common_favorite">Favorite</string>
     <string name="common_cancel_favorite">Remove favorite</string>
@@ -122,6 +123,14 @@
     <string name="settings_language_system">Follow system</string>
     <string name="settings_language_zh">中文</string>
     <string name="settings_language_en">English</string>
+    <string name="settings_show_avatars">Show cast avatars</string>
+    <string name="settings_show_avatars_desc">Show director &amp; cast avatars from TMDB</string>
+    <string name="settings_tmdb_key">TMDB API Key</string>
+    <string name="settings_tmdb_key_desc">Get a free key at themoviedb.org</string>
+    <string name="settings_tmdb_key_hint">Enter API key</string>
+    <string name="settings_tmdb_key_edit">Edit</string>
+    <string name="settings_tmdb_key_empty">Not set</string>
+    <string name="settings_tmdb_key_saved">Saved</string>
     <string name="settings_speed_x">%sx</string>
     <string name="settings_sources">Sources</string>
     <string name="settings_sync_all">Sync all sources</string>

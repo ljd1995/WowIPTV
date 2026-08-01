@@ -1,12 +1,21 @@
 package com.dream.wowiptv.data.local
 
 import android.content.Context
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import android.util.Base64
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import java.security.KeyStore
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
+import javax.crypto.spec.GCMParameterSpec
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -22,6 +31,10 @@ class AppPreferences(private val context: Context) {
         private val SHOW_FAVORITES = booleanPreferencesKey("show_favorites")
         private val SHOW_RECENT = booleanPreferencesKey("show_recent")
         private val SPLASH_PRELOAD = booleanPreferencesKey("splash_preload")
+        private val SHOW_CAST_AVATARS = booleanPreferencesKey("show_cast_avatars")
+        private val TMDB_API_KEY = stringPreferencesKey("tmdb_api_key")
+
+        private const val KEY_ALIAS = "tmdb_api_key_alias"
     }
 
     val defaultPlaybackSpeed: Flow<Float> = context.appDataStore.data.map { it[DEFAULT_PLAYBACK_SPEED] ?: 1f }
@@ -37,6 +50,65 @@ class AppPreferences(private val context: Context) {
     val showRecent: Flow<Boolean> = context.appDataStore.data.map { it[SHOW_RECENT] ?: true }
 
     val splashPreload: Flow<Boolean> = context.appDataStore.data.map { it[SPLASH_PRELOAD] ?: true }
+
+    val showCastAvatars: Flow<Boolean> = context.appDataStore.data.map { it[SHOW_CAST_AVATARS] ?: true }
+
+    val tmdbApiKey: Flow<String> = context.appDataStore.data.map { prefs ->
+        prefs[TMDB_API_KEY]?.let { decrypt(it) } ?: ""
+    }
+
+    suspend fun setShowCastAvatars(show: Boolean) {
+        context.appDataStore.edit { it[SHOW_CAST_AVATARS] = show }
+    }
+
+    suspend fun setTmdbApiKey(key: String) {
+        val trimmed = key.trim()
+        context.appDataStore.edit { p ->
+            if (trimmed.isEmpty()) {
+                p.remove(TMDB_API_KEY)
+            } else {
+                p[TMDB_API_KEY] = encrypt(trimmed)
+            }
+        }
+    }
+
+    private fun getSecretKey(): SecretKey {
+        val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        (keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry)?.let { return it.secretKey }
+        val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+        generator.init(
+            KeyGenParameterSpec.Builder(
+                KEY_ALIAS,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            )
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(256)
+                .build()
+        )
+        return generator.generateKey()
+    }
+
+    private fun encrypt(plain: String): String {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, getSecretKey())
+        val iv = cipher.iv
+        val ciphertext = cipher.doFinal(plain.toByteArray(Charsets.UTF_8))
+        return Base64.encodeToString(iv + ciphertext, Base64.NO_WRAP)
+    }
+
+    private fun decrypt(encoded: String): String? {
+        return try {
+            val raw = Base64.decode(encoded, Base64.NO_WRAP)
+            val iv = raw.copyOfRange(0, 12)
+            val ciphertext = raw.copyOfRange(12, raw.size)
+            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(Cipher.DECRYPT_MODE, getSecretKey(), GCMParameterSpec(128, iv))
+            String(cipher.doFinal(ciphertext), Charsets.UTF_8)
+        } catch (_: Exception) {
+            null
+        }
+    }
 
     suspend fun setDefaultPlaybackSpeed(speed: Float) {
         context.appDataStore.edit { it[DEFAULT_PLAYBACK_SPEED] = speed }

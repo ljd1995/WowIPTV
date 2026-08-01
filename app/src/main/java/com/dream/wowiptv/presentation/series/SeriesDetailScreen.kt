@@ -62,18 +62,26 @@ import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.Episode
 import com.dream.wowiptv.domain.model.Season
 import com.dream.wowiptv.domain.model.SeriesInfo
+import com.dream.wowiptv.data.local.AppPreferences
+import com.dream.wowiptv.domain.repository.TmdbRepository
 import com.dream.wowiptv.domain.usecase.GetSeriesInfoUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
+import com.dream.wowiptv.presentation.common.components.CastAvatarRow
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
+import com.dream.wowiptv.presentation.common.components.PersonAvatar
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -81,6 +89,8 @@ import javax.inject.Inject
 class SeriesDetailViewModel @Inject constructor(
     private val getSeriesInfoUseCase: GetSeriesInfoUseCase,
     private val watchProgressUseCase: WatchProgressUseCase,
+    private val appPreferences: AppPreferences,
+    private val tmdbRepository: TmdbRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -89,6 +99,34 @@ class SeriesDetailViewModel @Inject constructor(
 
     private val _episodePositions = MutableStateFlow<Map<String, Long>>(emptyMap())
     val episodePositions: StateFlow<Map<String, Long>> = _episodePositions.asStateFlow()
+
+    val avatarsEnabled: StateFlow<Boolean> = combine(
+        appPreferences.showCastAvatars,
+        appPreferences.tmdbApiKey
+    ) { show, key -> show && key.isNotBlank() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    private val _castImages = MutableStateFlow<Map<String, String>>(emptyMap())
+    val castImages: StateFlow<Map<String, String>> = _castImages.asStateFlow()
+
+    fun loadCastImages() {
+        val current = _info.value
+        if (!avatarsEnabled.value || _castImages.value.isNotEmpty()) return
+        val info = (current as? UiState.Success)?.data?.info ?: return
+        viewModelScope.launch {
+            val key = appPreferences.tmdbApiKey.first()
+            if (key.isBlank()) return@launch
+            val names = (listOfNotNull(info.director) + listOfNotNull(info.cast))
+                .flatMap { it.split(",") }
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .take(12)
+            if (names.isEmpty()) return@launch
+            val map = tmdbRepository.fetchPeopleImages(info.name, info.releaseDate, names, key)
+            _castImages.value = map.filterValues { !it.isNullOrBlank() }.mapValues { it.value!! }
+        }
+    }
 
     fun load(seriesId: Int) {
         viewModelScope.launch {
@@ -117,9 +155,17 @@ fun SeriesDetailScreen(
     onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long, episodeIds: List<String>) -> Unit
 ) {
     val infoState by viewModel.info.collectAsState()
+    val avatarsEnabled by viewModel.avatarsEnabled.collectAsState()
+    val castImages by viewModel.castImages.collectAsState()
 
     LaunchedEffect(seriesId) {
         viewModel.load(seriesId)
+    }
+
+    LaunchedEffect(infoState, avatarsEnabled) {
+        if (infoState is UiState.Success && avatarsEnabled) {
+            viewModel.loadCastImages()
+        }
     }
 
     when (val state = infoState) {
@@ -129,6 +175,8 @@ fun SeriesDetailScreen(
         is UiState.Success -> SeriesDetailContent(
             info = state.data,
             episodePositions = viewModel.episodePositions.collectAsState().value,
+            avatarsEnabled = avatarsEnabled,
+            castImages = castImages,
             onBack = onBack,
             onPlayEpisode = onPlayEpisode
         )
@@ -140,6 +188,8 @@ fun SeriesDetailScreen(
 private fun SeriesDetailContent(
     info: SeriesInfo,
     episodePositions: Map<String, Long> = emptyMap(),
+    avatarsEnabled: Boolean = false,
+    castImages: Map<String, String> = emptyMap(),
     onBack: () -> Unit,
     onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long, episodeIds: List<String>) -> Unit
 ) {
@@ -266,12 +316,17 @@ private fun SeriesDetailContent(
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = cast,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val castNames = cast.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    if (avatarsEnabled && castNames.isNotEmpty()) {
+                        CastAvatarRow(names = castNames, images = castImages)
+                    } else {
+                        Text(
+                            text = cast,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 series.director?.let { director ->
@@ -281,12 +336,17 @@ private fun SeriesDetailContent(
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = director,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val directorName = director.trim()
+                    if (avatarsEnabled && directorName.isNotEmpty()) {
+                        PersonAvatar(name = directorName, imageUrl = castImages[directorName])
+                    } else {
+                        Text(
+                            text = director,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
