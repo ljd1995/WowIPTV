@@ -23,6 +23,7 @@
     <string name="common_volume">音量</string>
     <string name="common_fullscreen">全屏</string>
     <string name="common_exit_fullscreen">退出全屏</string>
+    <string name="common_pip">画中画</string>
     <string name="common_track">音轨</string>
     <string name="common_no_track">无音轨</string>
     <string name="common_track_n">音轨 %d</string>

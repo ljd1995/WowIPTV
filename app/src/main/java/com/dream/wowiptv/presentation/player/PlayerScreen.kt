@@ -23,7 +23,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.ClosedCaption
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -73,7 +75,9 @@ import androidx.media3.ui.DefaultTrackNameProvider
 import androidx.media3.ui.PlayerView
 import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
+import com.dream.wowiptv.presentation.common.PipState
 import com.dream.wowiptv.presentation.common.components.PlayerGestureOverlay
+import com.dream.wowiptv.presentation.common.enterPictureInPicture
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import kotlinx.coroutines.delay
@@ -109,6 +113,7 @@ fun PlayerScreen(
 
     val context = LocalContext.current
     val activity = context as? ComponentActivity
+    val inPip = activity?.isInPictureInPictureMode == true
     val trackNameProvider = remember { DefaultTrackNameProvider(context.resources) }
 
 
@@ -124,6 +129,13 @@ fun PlayerScreen(
                 addListener(object : Player.Listener {
                     override fun onVideoSizeChanged(videoSize: VideoSize) {
                         videoHeight = videoSize.height
+                        if (videoSize.height > 0) {
+                            PipState.videoWidth = videoSize.width
+                            PipState.videoHeight = videoSize.height
+                            PipState.pixelRatio = videoSize.pixelWidthHeightRatio
+                            PipState.rotationDegrees = videoSize.unappliedRotationDegrees
+                            PipState.videoActive = true
+                        }
                     }
                     override fun onPlaybackStateChanged(state: Int) {
                         isBuffering = state == Player.STATE_BUFFERING
@@ -218,6 +230,7 @@ fun PlayerScreen(
 
     DisposableEffect(Unit) {
         onDispose {
+            PipState.videoActive = false
             if (duration > 0) viewModel.saveProgress(contentId, exoPlayer.currentPosition, duration.toLong())
             exoPlayer.stop()
             exoPlayer.release()
@@ -257,7 +270,7 @@ fun PlayerScreen(
                     showOverlay = !showOverlay
                 }
         ) {
-        PlayerGestureOverlay(modifier = Modifier.fillMaxSize()) {
+        PlayerGestureOverlay(modifier = Modifier.fillMaxSize(), gesturesEnabled = !inPip) {
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
@@ -277,7 +290,7 @@ fun PlayerScreen(
             )
         }
 
-        if (showOverlay) {
+        if (showOverlay && !inPip) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -321,6 +334,13 @@ fun PlayerScreen(
                                 modifier = Modifier.padding(end = 12.dp)
                             )
                         }
+                    }
+                    IconButton(onClick = { enterPictureInPicture(activity) }) {
+                        Icon(
+                            imageVector = Icons.Filled.PictureInPictureAlt,
+                            contentDescription = stringResource(R.string.common_pip),
+                            tint = Color.White
+                        )
                     }
                 }
             }
@@ -439,7 +459,8 @@ fun PlayerScreen(
                                 cornerRadius = CornerRadius(trackHeight / 2)
                             )
                             val thumbRadius = 3.dp.toPx()
-                            val thumbX = (size.width * position).coerceIn(thumbRadius, size.width - thumbRadius)
+                            val maxThumbX = (size.width - thumbRadius).coerceAtLeast(thumbRadius)
+                            val thumbX = (size.width * position).coerceIn(thumbRadius, maxThumbX)
                             drawCircle(
                                 color = thumbColor,
                                 radius = thumbRadius,

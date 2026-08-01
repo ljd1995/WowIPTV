@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -91,6 +92,7 @@ import com.dream.wowiptv.domain.model.LiveCategory
 import com.dream.wowiptv.domain.model.LiveStream
 import com.dream.wowiptv.presentation.common.LiveDot
 import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
+import com.dream.wowiptv.presentation.common.PipState
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
@@ -99,6 +101,7 @@ import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.components.PlayerGestureOverlay
 import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
+import com.dream.wowiptv.presentation.common.enterPictureInPicture
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
 import com.dream.wowiptv.presentation.common.theme.LiveRed
 import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
@@ -584,10 +587,10 @@ private fun PlayerOverlay(
                                 .padding(4.dp)
                         )
                     }
+                    }
                 }
-            }
 
-        }
+            }
         }
     }
 }
@@ -970,6 +973,16 @@ private fun FullscreenPlayerView(
     onOpenEpg: () -> Unit
 ) {
     val accent = LocalAccentPalette.current
+    val activity = LocalContext.current as? ComponentActivity
+    val inPip = activity?.isInPictureInPictureMode == true
+
+    DisposableEffect(Unit) {
+        PipState.videoActive = true
+        onDispose {
+            PipState.videoActive = false
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1010,8 +1023,8 @@ private fun FullscreenPlayerView(
                     showFullscreenControls = !showFullscreenControls
                 }
         ) {
-            PlayerGestureOverlay(modifier = Modifier.fillMaxSize()) {
-            if (showFullscreenControls) {
+            PlayerGestureOverlay(modifier = Modifier.fillMaxSize(), gesturesEnabled = !inPip) {
+            if (showFullscreenControls && !inPip) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1055,6 +1068,23 @@ private fun FullscreenPlayerView(
                                 modifier = Modifier.size(22.dp)
                             )
                         }
+                    }
+                    IconButton(onClick = {
+                        val vs = exoPlayer.videoSize
+                        if (vs.height > 0) {
+                            PipState.videoWidth = vs.width
+                            PipState.videoHeight = vs.height
+                            PipState.pixelRatio = vs.pixelWidthHeightRatio
+                            PipState.rotationDegrees = vs.unappliedRotationDegrees
+                        }
+                        enterPictureInPicture(activity)
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.PictureInPictureAlt,
+                            contentDescription = stringResource(R.string.common_pip),
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
                     }
                     Row(
                         modifier = Modifier.padding(end = 10.dp),

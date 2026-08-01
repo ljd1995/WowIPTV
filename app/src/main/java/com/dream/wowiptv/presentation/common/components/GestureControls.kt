@@ -47,6 +47,7 @@ private enum class GestureKind { Brightness, Volume }
 @Composable
 fun PlayerGestureOverlay(
     modifier: Modifier = Modifier,
+    gesturesEnabled: Boolean = true,
     content: @Composable BoxScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -100,36 +101,40 @@ fun PlayerGestureOverlay(
     }
 
     Box(
-        modifier = modifier.pointerInput(Unit) {
-            var startFrac = 0f
-            var totalDragY = 0f
-            var activeKind: GestureKind? = null
-            detectVerticalDragGestures(
-                onDragStart = { offset ->
-                    activeKind = if (offset.x < size.width / 2f) GestureKind.Brightness else GestureKind.Volume
-                    totalDragY = 0f
-                    startFrac = if (activeKind == GestureKind.Brightness) {
-                        brightness
-                    } else {
-                        volume / maxVolume.toFloat()
-                    }
-                    kind = activeKind
-                    valueFrac = startFrac
-                    visible = true
-                },
-                onVerticalDrag = { change, dragAmount ->
-                    change.consume()
-                    totalDragY += dragAmount
-                    val newFrac = startFrac - totalDragY / (size.height * 0.8f)
-                    when (activeKind) {
-                        GestureKind.Brightness -> applyBrightness(newFrac)
-                        GestureKind.Volume -> applyVolume(newFrac)
-                        null -> {}
-                    }
-                },
-                onDragEnd = { activeKind = null },
-                onDragCancel = { activeKind = null }
-            )
+        modifier = if (gesturesEnabled) {
+            modifier.pointerInput(Unit) {
+                var startFrac = 0f
+                var totalDragY = 0f
+                var activeKind: GestureKind? = null
+                detectVerticalDragGestures(
+                    onDragStart = { offset ->
+                        activeKind = if (offset.x < size.width / 2f) GestureKind.Brightness else GestureKind.Volume
+                        totalDragY = 0f
+                        startFrac = if (activeKind == GestureKind.Brightness) {
+                            brightness
+                        } else {
+                            volume / maxVolume.toFloat()
+                        }
+                        kind = activeKind
+                        valueFrac = startFrac
+                        visible = true
+                    },
+                    onVerticalDrag = { change, dragAmount ->
+                        change.consume()
+                        totalDragY += dragAmount
+                        val newFrac = startFrac - totalDragY / (size.height * 0.8f)
+                        when (activeKind) {
+                            GestureKind.Brightness -> applyBrightness(newFrac)
+                            GestureKind.Volume -> applyVolume(newFrac)
+                            null -> {}
+                        }
+                    },
+                    onDragEnd = { activeKind = null },
+                    onDragCancel = { activeKind = null }
+                )
+            }
+        } else {
+            modifier
         }
     ) {
         content()

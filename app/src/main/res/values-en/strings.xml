@@ -36,6 +36,7 @@
     <string name="common_volume">Volume</string>
     <string name="common_fullscreen">Fullscreen</string>
     <string name="common_exit_fullscreen">Exit fullscreen</string>
+    <string name="common_pip">Picture-in-picture</string>
     <string name="common_track">Track</string>
     <string name="common_no_track">No track</string>
     <string name="common_track_n">Track %d</string>
