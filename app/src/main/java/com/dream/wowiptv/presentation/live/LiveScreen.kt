@@ -278,7 +278,7 @@ fun LiveScreen(
         GradientBackground {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
-                title = { Text(stringResource(R.string.live_title), color = Color.White) },
+                title = { Text(stringResource(R.string.live_title), color = DarkText) },
                 windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
@@ -833,8 +833,8 @@ private fun ChannelList(
                 textStyle = MaterialTheme.typography.bodySmall.copy(color = Color.White, fontSize = 12.sp),
                 modifier = Modifier.fillMaxWidth().height(32.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White,
+                    focusedTextColor = DarkText,
+                    unfocusedTextColor = DarkText,
                     cursorColor = Color.White,
                     focusedBorderColor = Color(0xFF444444),
                     unfocusedBorderColor = Color(0xFF333333),

@@ -134,9 +134,6 @@
     <string name="settings_language_system">跟随系统</string>
     <string name="settings_language_zh">中文</string>
     <string name="settings_language_en">English</string>
-    <string name="settings_theme">主题</string>
-    <string name="settings_theme_dark">深色</string>
-    <string name="settings_theme_light">浅色</string>
     <string name="settings_show_avatars">显示演员头像</string>
     <string name="settings_show_avatars_desc">从 TMDB 获取导演与演员头像</string>
     <string name="settings_tmdb_key">TMDB API Key</string>

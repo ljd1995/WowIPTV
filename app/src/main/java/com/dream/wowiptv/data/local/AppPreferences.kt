@@ -33,7 +33,6 @@ class AppPreferences(private val context: Context) {
         private val SPLASH_PRELOAD = booleanPreferencesKey("splash_preload")
         private val SHOW_CAST_AVATARS = booleanPreferencesKey("show_cast_avatars")
         private val TMDB_API_KEY = stringPreferencesKey("tmdb_api_key")
-        private val THEME_MODE = stringPreferencesKey("theme_mode")
 
         private const val KEY_ALIAS = "tmdb_api_key_alias"
     }
@@ -58,11 +57,7 @@ class AppPreferences(private val context: Context) {
         prefs[TMDB_API_KEY]?.let { decrypt(it) } ?: ""
     }
 
-    val themeMode: Flow<String> = context.appDataStore.data.map { it[THEME_MODE] ?: "dark" }
 
-    suspend fun setThemeMode(mode: String) {
-        context.appDataStore.edit { it[THEME_MODE] = mode }
-    }
 
     suspend fun setShowCastAvatars(show: Boolean) {
         context.appDataStore.edit { it[SHOW_CAST_AVATARS] = show }

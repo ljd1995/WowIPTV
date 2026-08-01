@@ -126,9 +126,6 @@
     <string name="settings_language_system">Follow system</string>
     <string name="settings_language_zh">中文</string>
     <string name="settings_language_en">English</string>
-    <string name="settings_theme">Theme</string>
-    <string name="settings_theme_dark">Dark</string>
-    <string name="settings_theme_light">Light</string>
     <string name="settings_show_avatars">Show cast avatars</string>
     <string name="settings_show_avatars_desc">Show director &amp; cast avatars from TMDB</string>
     <string name="settings_tmdb_key">TMDB API Key</string>

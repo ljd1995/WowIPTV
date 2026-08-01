@@ -74,7 +74,6 @@ import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.LiveDot
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.EmptyState
-import com.dream.wowiptv.presentation.common.theme.AppTheme
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import kotlinx.coroutines.delay
@@ -349,7 +348,7 @@ private fun StatCard(icon: ImageVector, count: Int, label: String, color: Color,
                     CountUpText(target = count)
                 Text(
                     text = label,
-                    color = AppTheme.colors.onSurfaceVariant,
+                    color = Color(0xFF999999),
                         fontSize = 11.sp
                     )
                 }
@@ -374,7 +373,7 @@ private fun CountUpText(target: Int, durationMillis: Int = 800) {
     }
     Text(
         text = displayed.toString(),
-        color = AppTheme.colors.onSurface,
+        color = Color.White,
         fontWeight = FontWeight.Bold,
         fontSize = 18.sp
     )
@@ -399,7 +398,7 @@ private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = title,
-                color = AppTheme.colors.onSurface,
+                color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )

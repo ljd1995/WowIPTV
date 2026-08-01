@@ -13,15 +13,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.dream.wowiptv.presentation.common.theme.AppTheme
 
 @Composable
 fun GradientBackground(content: @Composable BoxScope.() -> Unit) {
-    val colors = AppTheme.colors
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(colors.background)
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF201E2A), Color(0xFF141318))
+                )
+            )
     ) {
         Box(
             modifier = Modifier
@@ -29,7 +31,7 @@ fun GradientBackground(content: @Composable BoxScope.() -> Unit) {
                 .height(280.dp)
                 .background(
                     Brush.verticalGradient(
-                        listOf(colors.glow, Color.Transparent)
+                        listOf(Color(0xFF6366F1).copy(alpha = 0.14f), Color.Transparent)
                     )
                 )
         )
@@ -40,7 +42,7 @@ fun GradientBackground(content: @Composable BoxScope.() -> Unit) {
                 .align(Alignment.TopEnd)
                 .background(
                     Brush.radialGradient(
-                        listOf(colors.glowTopEnd, Color.Transparent)
+                        listOf(Color(0xFFA855F7).copy(alpha = 0.10f), Color.Transparent)
                     )
                 )
         )

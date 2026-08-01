@@ -89,7 +89,6 @@ import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
-import com.dream.wowiptv.presentation.common.theme.AppTheme
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.SuccessGreen
 import kotlinx.coroutines.Dispatchers
@@ -123,7 +122,6 @@ fun SettingsScreen(
     val splashPreload by viewModel.splashPreload.collectAsState()
     val showCastAvatars by viewModel.showCastAvatars.collectAsState()
     val tmdbApiKey by viewModel.tmdbApiKey.collectAsState()
-    val themeMode by viewModel.themeMode.collectAsState()
 
     val prevSyncingIdsState = remember { mutableStateOf<Set<Long>>(emptySet()) }
     val currentSyncingIds by rememberUpdatedState(syncingIds)
@@ -193,14 +191,6 @@ fun SettingsScreen(
 
                 SectionCard(title = stringResource(R.string.settings_general_section), icon = Icons.Default.Settings) {
                     LanguageRow()
-                    ThemeRow(
-                        mode = themeMode,
-                        onSelect = { mode ->
-                            viewModel.setThemeMode(mode)
-                            AppTheme.setDark(mode != "light")
-                            (context as? Activity)?.recreate()
-                        }
-                    )
                     SettingSwitchRow(
                         title = stringResource(R.string.settings_show_avatars),
                         subtitle = stringResource(R.string.settings_show_avatars_desc),
@@ -284,9 +274,9 @@ fun SettingsScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.settings_image_cache), style = MaterialTheme.typography.bodyLarge, color = AppTheme.colors.onSurface)
+                            Text(stringResource(R.string.settings_image_cache), style = MaterialTheme.typography.bodyLarge, color = Color.White)
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text(stringResource(R.string.settings_image_cache_usage, formatCacheSize(cacheSize)), style = MaterialTheme.typography.bodySmall, color = AppTheme.colors.onSurfaceVariant)
+                            Text(stringResource(R.string.settings_image_cache_usage, formatCacheSize(cacheSize)), style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
                         }
                         Text(
                             text = stringResource(R.string.settings_clear),
@@ -391,12 +381,12 @@ private fun LanguageRow() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.bodyLarge, color = AppTheme.colors.onSurface)
+            Text(stringResource(R.string.settings_language), style = MaterialTheme.typography.bodyLarge, color = Color.White)
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = options.first { it.first == currentTag }.second,
                 style = MaterialTheme.typography.bodySmall,
-                color = AppTheme.colors.onSurfaceVariant
+                color = Color(0xFF888888)
             )
         }
         Box {
@@ -425,51 +415,7 @@ private fun LanguageRow() {
     }
 }
 
-@Composable
-private fun ThemeRow(mode: String, onSelect: (String) -> Unit) {
-    val options = listOf(
-        "dark" to stringResource(R.string.settings_theme_dark),
-        "light" to stringResource(R.string.settings_theme_light)
-    )
-    var expanded by remember { mutableStateOf(false) }
-    val currentLabel = options.firstOrNull { it.first == mode }?.second ?: options.first().second
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { expanded = true }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.bodyLarge, color = AppTheme.colors.onSurface)
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = currentLabel,
-                style = MaterialTheme.typography.bodySmall,
-                color = AppTheme.colors.onSurfaceVariant
-            )
-        }
-        Box {
-            Text(
-                text = currentLabel,
-                color = Color(0xFF6366F1),
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                options.forEach { (value, label) ->
-                    DropdownMenuItem(
-                        text = { Text(label, color = Color.White) },
-                        onClick = {
-                            expanded = false
-                            onSelect(value)
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
+
 
 @Composable
 private fun PlaybackSpeedRow(
@@ -486,9 +432,9 @@ private fun PlaybackSpeedRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.settings_default_speed), style = MaterialTheme.typography.bodyLarge, color = AppTheme.colors.onSurface)
+            Text(stringResource(R.string.settings_default_speed), style = MaterialTheme.typography.bodyLarge, color = Color.White)
             Spacer(modifier = Modifier.height(2.dp))
-            Text(stringResource(R.string.settings_default_speed_desc), style = MaterialTheme.typography.bodySmall, color = AppTheme.colors.onSurfaceVariant)
+            Text(stringResource(R.string.settings_default_speed_desc), style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
         }
         Box {
             Text(
@@ -530,7 +476,7 @@ private fun TmdbKeyRow(key: String, onEdit: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(R.string.settings_tmdb_key), style = MaterialTheme.typography.bodyLarge, color = AppTheme.colors.onSurface)
+            Text(stringResource(R.string.settings_tmdb_key), style = MaterialTheme.typography.bodyLarge, color = Color.White)
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = if (key.isBlank()) {
@@ -539,7 +485,7 @@ private fun TmdbKeyRow(key: String, onEdit: () -> Unit) {
                     "••••${key.takeLast(4)}"
                 },
                 style = MaterialTheme.typography.bodySmall,
-                color = AppTheme.colors.onSurfaceVariant
+                color = Color(0xFF888888)
             )
         }
         Text(
@@ -609,7 +555,7 @@ private fun SectionCard(
     icon: ImageVector,
     content: @Composable () -> Unit
 ) {
-    Card(colors = CardDefaults.cardColors(containerColor = AppTheme.colors.card)) {
+    Card(colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))) {
         Column {
             Row(
                 modifier = Modifier
@@ -619,7 +565,7 @@ private fun SectionCard(
             ) {
                 Icon(icon, contentDescription = null, tint = Color(0xFF6366F1), modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = title, style = MaterialTheme.typography.titleMedium, color = AppTheme.colors.onSurface)
+                Text(text = title, style = MaterialTheme.typography.titleMedium, color = Color.White)
             }
             androidx.compose.material3.HorizontalDivider(color = Color(0xFF3A3A3A), thickness = 0.5.dp)
             content()
@@ -641,9 +587,9 @@ private fun SettingSwitchRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, color = AppTheme.colors.onSurface)
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = Color.White)
             Spacer(modifier = Modifier.height(2.dp))
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = AppTheme.colors.onSurfaceVariant)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
         }
         Switch(
             checked = checked,
@@ -683,7 +629,7 @@ private fun ActionRow(
                 color = if (enabled) Color.White else Color(0xFF888888)
             )
             Spacer(modifier = Modifier.height(2.dp))
-            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = AppTheme.colors.onSurfaceVariant)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
         }
         if (loading) {
             CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
@@ -809,7 +755,7 @@ private fun SourceListCard(
     onAddSource: () -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppTheme.colors.card)
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
     ) {
         Column {
             Row(
@@ -866,7 +812,7 @@ private fun SourceListCard(
                         Text(
                             text = stringResource(R.string.settings_no_source),
                             style = MaterialTheme.typography.bodyLarge,
-                            color = AppTheme.colors.onSurfaceVariant
+                            color = Color(0xFF888888)
                         )
                     }
                 }
@@ -918,7 +864,7 @@ private fun SourceItem(
             .clickable { onEdit() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = AppTheme.colors.card
+            containerColor = Color.White.copy(alpha = 0.05f)
         )
     ) {
         Row(
@@ -989,7 +935,7 @@ private fun SourceItem(
 @Composable
 private fun AboutCard(versionName: String) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppTheme.colors.card)
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
     ) {
         Row(
             modifier = Modifier
@@ -1006,7 +952,7 @@ private fun AboutCard(versionName: String) {
             Text(
                 text = "WowIPTV V$versionName",
                 style = MaterialTheme.typography.bodyMedium,
-                color = AppTheme.colors.onSurfaceVariant
+                color = Color(0xFF888888)
             )
         }
     }
