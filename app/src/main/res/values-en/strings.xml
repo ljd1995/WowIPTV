@@ -39,11 +39,7 @@
     <string name="common_track">Track</string>
     <string name="common_no_track">No track</string>
     <string name="common_track_n">Track %d</string>
-    <string name="common_mono">Mono</string>
-    <string name="common_stereo">Stereo</string>
-    <string name="common_channels">%dch</string>
     <string name="common_subtitle">Subtitles</string>
-    <string name="common_subtitle_n">Subtitles %d</string>
     <string name="common_no_subtitle">No subtitles</string>
     <string name="common_disable">Off</string>
     <string name="common_next_program">Next: %s</string>

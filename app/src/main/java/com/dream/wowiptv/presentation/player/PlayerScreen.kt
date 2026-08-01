@@ -69,6 +69,7 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.DefaultTrackNameProvider
 import androidx.media3.ui.PlayerView
 import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
@@ -108,6 +109,7 @@ fun PlayerScreen(
 
     val context = LocalContext.current
     val activity = context as? ComponentActivity
+    val trackNameProvider = remember { DefaultTrackNameProvider(context.resources) }
 
 
     val networkTracker = remember { NetworkSpeedTracker() }
@@ -499,14 +501,7 @@ fun PlayerScreen(
                             } else {
                                 audioGroups.forEachIndexed { index, group ->
                                     val fmt = group.mediaTrackGroup.getFormat(0)
-                                    val lang = fmt.language?.takeIf { it.isNotBlank() && !it.equals("und", ignoreCase = true) }
-                                    val label = fmt.label?.takeIf { it.isNotBlank() }
-                                        ?: lang?.uppercase()
-                                        ?: when (fmt.channelCount) {
-                                            1 -> context.getString(R.string.common_mono)
-                                            2 -> context.getString(R.string.common_stereo)
-                                            else -> context.getString(R.string.common_channels, fmt.channelCount)
-                                        }
+                                    val label = trackNameProvider.getTrackName(fmt)
                                     val isSelected = group.isSelected
                                     DropdownMenuItem(
                                         text = { Text(if (isSelected) "$label ✓" else label, color = Color.White) },
@@ -559,9 +554,7 @@ fun PlayerScreen(
                                 )
                                 textGroups.forEachIndexed { index, group ->
                                     val fmt = group.mediaTrackGroup.getFormat(0)
-                                    val label = fmt.label?.takeIf { it.isNotBlank() }
-                                        ?: fmt.language?.uppercase()
-                                        ?: context.getString(R.string.common_subtitle_n, index + 1)
+                                    val label = trackNameProvider.getTrackName(fmt)
                                     val disabled = exoPlayer.trackSelectionParameters.disabledTrackTypes.contains(C.TRACK_TYPE_TEXT)
                                     val isSelected = group.isSelected && !disabled
                                     DropdownMenuItem(
