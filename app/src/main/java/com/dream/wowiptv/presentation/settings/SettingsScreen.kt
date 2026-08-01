@@ -12,10 +12,13 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -27,10 +30,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Home
@@ -69,6 +74,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -94,7 +100,9 @@ import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 import com.dream.wowiptv.presentation.common.theme.SuccessGreen
+import com.dream.wowiptv.presentation.common.theme.ThemeAccent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -125,8 +133,12 @@ fun SettingsScreen(
     val splashPreload by viewModel.splashPreload.collectAsState()
     val showCastAvatars by viewModel.showCastAvatars.collectAsState()
     val tmdbApiKey by viewModel.tmdbApiKey.collectAsState()
+    val themeColor by viewModel.themeColor.collectAsState()
     val updateViewModel: UpdateViewModel = hiltViewModel()
     val updateState by updateViewModel.state.collectAsState()
+    val autoCheckUpdate by updateViewModel.autoCheckUpdate.collectAsState()
+
+    val accent = LocalAccentPalette.current
 
     val prevSyncingIdsState = remember { mutableStateOf<Set<Long>>(emptySet()) }
     val currentSyncingIds by rememberUpdatedState(syncingIds)
@@ -196,6 +208,12 @@ fun SettingsScreen(
 
                 SectionCard(title = stringResource(R.string.settings_general_section), icon = Icons.Default.Settings) {
                     LanguageRow()
+                    HorizontalDividerItem()
+                    ThemeColorRow(
+                        selected = themeColor,
+                        onSelect = viewModel::setThemeColor
+                    )
+                    HorizontalDividerItem()
                     SettingSwitchRow(
                         title = stringResource(R.string.settings_show_avatars),
                         subtitle = stringResource(R.string.settings_show_avatars_desc),
@@ -285,7 +303,7 @@ fun SettingsScreen(
                         }
                         Text(
                             text = stringResource(R.string.settings_clear),
-                            color = Color(0xFF6366F1),
+                            color = accent.primary,
                             modifier = Modifier
                                 .clickable {
                                     clearImageCache()
@@ -348,6 +366,8 @@ fun SettingsScreen(
                 AboutCard(
                     versionName = viewModel.versionName,
                     updateState = updateState,
+                    autoCheckUpdate = autoCheckUpdate,
+                    onAutoCheckUpdateChange = updateViewModel::setAutoCheckUpdate,
                     onCheckUpdate = { updateViewModel.check() }
                 )
             }
@@ -392,6 +412,7 @@ private fun LanguageRow() {
         "en" to stringResource(R.string.settings_language_en)
     )
     var expanded by remember { mutableStateOf(false) }
+    val accent = LocalAccentPalette.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -411,7 +432,7 @@ private fun LanguageRow() {
         Box {
             Text(
                 text = options.first { it.first == currentTag }.second,
-                color = Color(0xFF6366F1),
+                color = accent.primary,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
@@ -436,6 +457,51 @@ private fun LanguageRow() {
 
 
 
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ThemeColorRow(
+    selected: String,
+    onSelect: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Text(stringResource(R.string.settings_theme_color), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+        Spacer(modifier = Modifier.height(12.dp))
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            ThemeAccent.entries.forEach { themeAccent ->
+                val isSelected = themeAccent.key == selected
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(themeAccent.palette.vibrant)
+                        .then(
+                            if (isSelected) Modifier.border(2.dp, Color.White, CircleShape)
+                            else Modifier
+                        )
+                        .clickable { onSelect(themeAccent.key) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun PlaybackSpeedRow(
     selected: Float,
@@ -443,6 +509,7 @@ private fun PlaybackSpeedRow(
 ) {
     val speeds = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f)
     var expanded by remember { mutableStateOf(false) }
+    val accent = LocalAccentPalette.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -458,7 +525,7 @@ private fun PlaybackSpeedRow(
         Box {
             Text(
                 text = stringResource(R.string.settings_speed_x, formatSpeedLabel(selected)),
-                color = Color(0xFF6366F1),
+                color = accent.primary,
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
@@ -487,6 +554,7 @@ private fun PlaybackSpeedRow(
 
 @Composable
 private fun TmdbKeyRow(key: String, onEdit: () -> Unit) {
+    val accent = LocalAccentPalette.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -509,7 +577,7 @@ private fun TmdbKeyRow(key: String, onEdit: () -> Unit) {
         }
         Text(
             text = stringResource(R.string.settings_tmdb_key_edit),
-            color = Color(0xFF6366F1),
+            color = accent.primary,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
@@ -523,6 +591,7 @@ private fun TmdbKeyDialog(
     onSave: (String) -> Unit
 ) {
     var input by remember { mutableStateOf(initialKey) }
+    val accent = LocalAccentPalette.current
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF2C2C2C),
@@ -547,8 +616,8 @@ private fun TmdbKeyDialog(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
-                    cursorColor = Color(0xFF8B5CF6),
-                    focusedBorderColor = Color(0xFF8B5CF6),
+                    cursorColor = accent.vibrant,
+                    focusedBorderColor = accent.vibrant,
                     unfocusedBorderColor = Color(0xFF3A3A4A),
                     focusedContainerColor = Color.White.copy(alpha = 0.06f),
                     unfocusedContainerColor = Color.White.copy(alpha = 0.06f)
@@ -557,7 +626,7 @@ private fun TmdbKeyDialog(
         },
         confirmButton = {
             TextButton(onClick = { onSave(input) }) {
-                Text(stringResource(R.string.common_save), color = Color(0xFF8B5CF6))
+                Text(stringResource(R.string.common_save), color = accent.vibrant)
             }
         },
         dismissButton = {
@@ -574,6 +643,7 @@ private fun SectionCard(
     icon: ImageVector,
     content: @Composable () -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     Card(colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))) {
         Column {
             Row(
@@ -582,7 +652,7 @@ private fun SectionCard(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(icon, contentDescription = null, tint = Color(0xFF6366F1), modifier = Modifier.size(18.dp))
+                Icon(icon, contentDescription = null, tint = accent.primary, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(text = title, style = MaterialTheme.typography.titleMedium, color = Color.White)
             }
@@ -599,6 +669,7 @@ private fun SettingSwitchRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -615,7 +686,7 @@ private fun SettingSwitchRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = Color(0xFF8B5CF6)
+                checkedTrackColor = accent.vibrant
             )
         )
     }
@@ -634,6 +705,7 @@ private fun ActionRow(
     loading: Boolean = false,
     onClick: () -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -653,7 +725,7 @@ private fun ActionRow(
         if (loading) {
             CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
         } else {
-            Text(">", color = if (enabled) Color(0xFF6366F1) else Color(0xFF555555), fontSize = 16.sp)
+            Text(">", color = if (enabled) accent.primary else Color(0xFF555555), fontSize = 16.sp)
         }
     }
 }
@@ -673,6 +745,7 @@ private fun UserInfoCard(
     refreshing: Boolean,
     onRefresh: () -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp)
@@ -683,7 +756,7 @@ private fun UserInfoCard(
                 .background(
                     brush = androidx.compose.ui.graphics.Brush.horizontalGradient(
                         colors = if (userInfo != null)
-                            listOf(Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFA855F7))
+                            listOf(accent.primary, accent.vibrant, accent.dark)
                         else
                             listOf(Color(0xFF444444), Color(0xFF333333))
                     )
@@ -727,7 +800,7 @@ private fun UserInfoCard(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = stringResource(R.string.settings_max_connections, userInfo.maxConnections ?: "1"),
+                            text = stringResource(R.string.settings_max_connections, userInfo.maxConnections?.takeIf { it.isNotBlank() } ?: "1"),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White.copy(alpha = 0.7f)
                         )
@@ -773,6 +846,7 @@ private fun SourceListCard(
     onSwitch: (Long) -> Unit,
     onAddSource: () -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
     ) {
@@ -797,7 +871,7 @@ private fun SourceListCard(
                             Icon(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = stringResource(R.string.settings_sync_all),
-                                tint = Color(0xFF6366F1)
+                                tint = accent.primary
                             )
                         }
                     }
@@ -805,7 +879,7 @@ private fun SourceListCard(
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = stringResource(R.string.settings_add_source),
-                            tint = Color(0xFF6366F1)
+                            tint = accent.primary
                         )
                     }
                 }
@@ -866,6 +940,7 @@ private fun SourceItem(
     onDelete: () -> Unit,
     onSwitch: (() -> Unit)?
 ) {
+    val accent = LocalAccentPalette.current
     val infiniteTransition = rememberInfiniteTransition(label = "sync")
     val rotation by animateFloatAsState(
         targetValue = if (isSyncing) 360f else 0f,
@@ -936,7 +1011,7 @@ private fun SourceItem(
                 Icon(
                     Icons.Default.Refresh,
                     contentDescription = stringResource(R.string.settings_sync),
-                    tint = if (isSyncing) Color(0xFF888888) else Color(0xFF6366F1),
+                    tint = if (isSyncing) Color(0xFF888888) else accent.primary,
                     modifier = Modifier.rotate(rotation)
                 )
             }
@@ -955,12 +1030,22 @@ private fun SourceItem(
 private fun AboutCard(
     versionName: String,
     updateState: UpdateState,
+    autoCheckUpdate: Boolean,
+    onAutoCheckUpdateChange: (Boolean) -> Unit,
     onCheckUpdate: () -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
     ) {
         Column {
+            SettingSwitchRow(
+                title = stringResource(R.string.settings_auto_check_update),
+                subtitle = stringResource(R.string.settings_auto_check_update_desc),
+                checked = autoCheckUpdate,
+                onCheckedChange = onAutoCheckUpdateChange
+            )
+            HorizontalDividerItem()
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -977,7 +1062,7 @@ private fun AboutCard(
                 if (updateState == UpdateState.Checking) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("›", color = Color(0xFF8B5CF6), fontSize = 16.sp)
+                    Text("›", color = accent.vibrant, fontSize = 16.sp)
                 }
             }
             HorizontalDividerItem()

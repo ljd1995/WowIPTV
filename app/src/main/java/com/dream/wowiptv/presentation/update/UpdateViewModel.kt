@@ -6,6 +6,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.BuildConfig
+import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.domain.usecase.CheckUpdateUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -13,8 +14,10 @@ import java.io.File
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -34,6 +37,7 @@ sealed interface UpdateState {
 class UpdateViewModel @Inject constructor(
     private val checkUpdateUseCase: CheckUpdateUseCase,
     private val okHttpClient: OkHttpClient,
+    private val appPreferences: AppPreferences,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -45,6 +49,9 @@ class UpdateViewModel @Inject constructor(
     private val _state = MutableStateFlow<UpdateState>(UpdateState.Idle)
     val state: StateFlow<UpdateState> = _state.asStateFlow()
 
+    val autoCheckUpdate: StateFlow<Boolean> = appPreferences.autoCheckUpdate
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
     private var apkFile: File? = null
 
     fun check() {
@@ -54,6 +61,10 @@ class UpdateViewModel @Inject constructor(
             val info = checkUpdateUseCase(OWNER, REPO, BuildConfig.VERSION_NAME)
             _state.value = if (info == null) UpdateState.UpToDate else UpdateState.Available(info.latestVersion, info.downloadUrl)
         }
+    }
+
+    fun setAutoCheckUpdate(enabled: Boolean) {
+        viewModelScope.launch { appPreferences.setAutoCheckUpdate(enabled) }
     }
 
     fun download() {

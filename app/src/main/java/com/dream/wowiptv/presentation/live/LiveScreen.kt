@@ -105,6 +105,7 @@ import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
 import com.dream.wowiptv.presentation.common.theme.LiveRed
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
 private val DarkSurface = Color(0xFF242424)
 private val DarkText = Color(0xFFDDDDDD)
@@ -136,6 +137,8 @@ fun LiveScreen(
     val showStatus by viewModel.showPlayerStatus.collectAsState()
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
     val isM3u = sourceType == "m3u"
+
+    val accent = LocalAccentPalette.current
 
     val context = LocalContext.current
     val activity = context as? ComponentActivity
@@ -347,6 +350,7 @@ private fun PlayerSection(
     onOpenEpg: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val accent = LocalAccentPalette.current
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -400,7 +404,7 @@ private fun PlayerSection(
                         Icon(
                             imageVector = Icons.Filled.LiveTv,
                             contentDescription = null,
-                            tint = Color(0xFF818CF8),
+                            tint = accent.light,
                             modifier = Modifier.size(34.dp)
                         )
                     }
@@ -436,6 +440,7 @@ private fun PlayerOverlay(
     onFullscreen: () -> Unit,
     onOpenEpg: () -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     var showControls by remember { mutableStateOf(true) }
 
     LaunchedEffect(showControls) {
@@ -634,7 +639,7 @@ private fun PlayerOverlay(
                         modifier = Modifier
                             .fillMaxWidth()
                             .fillMaxHeight(volume / maxVolume.toFloat())
-                            .background(Color(0xFF6366F1), RoundedCornerShape(12.dp))
+                            .background(accent.primary, RoundedCornerShape(12.dp))
                     )
                 }
             }
@@ -767,7 +772,8 @@ private fun CategoryItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val bgColor = if (isSelected) Color(0xFF6366F1).copy(alpha = 0.22f) else Color.Transparent
+    val accent = LocalAccentPalette.current
+    val bgColor = if (isSelected) accent.primary.copy(alpha = 0.22f) else Color.Transparent
     val textColor = if (isSelected) Color.White else DarkText
 
     Row(
@@ -920,7 +926,8 @@ private fun ChannelItem(
     LaunchedEffect(stream.id) {
         onLoadChannelEpg()
     }
-    val bgColor = if (isSelected) Color(0xFF6366F1).copy(alpha = 0.22f) else Color.Transparent
+    val accent = LocalAccentPalette.current
+    val bgColor = if (isSelected) accent.primary.copy(alpha = 0.22f) else Color.Transparent
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1017,6 +1024,7 @@ private fun FullscreenPlayerView(
     onRestart: () -> Unit,
     onOpenEpg: () -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1246,7 +1254,7 @@ private fun FullscreenPlayerView(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .fillMaxHeight(fsVolume / fsMaxVolume.toFloat())
-                                .background(Color(0xFF6366F1), RoundedCornerShape(12.dp))
+                                .background(accent.primary, RoundedCornerShape(12.dp))
                         )
                     }
                 }

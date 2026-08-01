@@ -33,6 +33,8 @@ class AppPreferences(private val context: Context) {
         private val SPLASH_PRELOAD = booleanPreferencesKey("splash_preload")
         private val SHOW_CAST_AVATARS = booleanPreferencesKey("show_cast_avatars")
         private val TMDB_API_KEY = stringPreferencesKey("tmdb_api_key")
+        private val THEME_COLOR = stringPreferencesKey("theme_color")
+        private val AUTO_CHECK_UPDATE = booleanPreferencesKey("auto_check_update")
 
         private const val KEY_ALIAS = "tmdb_api_key_alias"
     }
@@ -57,6 +59,10 @@ class AppPreferences(private val context: Context) {
         prefs[TMDB_API_KEY]?.let { decrypt(it) } ?: ""
     }
 
+    val themeColor: Flow<String> = context.appDataStore.data.map { it[THEME_COLOR] ?: "purple" }
+
+    val autoCheckUpdate: Flow<Boolean> = context.appDataStore.data.map { it[AUTO_CHECK_UPDATE] ?: true }
+
 
 
     suspend fun setShowCastAvatars(show: Boolean) {
@@ -72,6 +78,14 @@ class AppPreferences(private val context: Context) {
                 p[TMDB_API_KEY] = encrypt(trimmed)
             }
         }
+    }
+
+    suspend fun setThemeColor(key: String) {
+        context.appDataStore.edit { it[THEME_COLOR] = key }
+    }
+
+    suspend fun setAutoCheckUpdate(enabled: Boolean) {
+        context.appDataStore.edit { it[AUTO_CHECK_UPDATE] = enabled }
     }
 
     private fun getSecretKey(): SecretKey {

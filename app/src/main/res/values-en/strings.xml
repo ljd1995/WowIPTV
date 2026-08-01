@@ -13,6 +13,8 @@
     <string name="common_cancel">Cancel</string>
     <string name="common_ok">OK</string>
     <string name="settings_check_update">Check for updates</string>
+    <string name="settings_auto_check_update">Auto-check for updates</string>
+    <string name="settings_auto_check_update_desc">Check for new versions on app launch</string>
     <string name="update_available">New version v%s available</string>
     <string name="update_current">Current version v%s</string>
     <string name="update_up_to_date">You\'re up to date</string>
@@ -105,6 +107,7 @@
 
     <string name="settings_title">Settings</string>
     <string name="settings_general_section">General</string>
+    <string name="settings_theme_color">Theme Color</string>
     <string name="settings_sync_done">Sync complete</string>
     <string name="settings_member_refreshed">Member info refreshed</string>
     <string name="settings_player_section">Player</string>

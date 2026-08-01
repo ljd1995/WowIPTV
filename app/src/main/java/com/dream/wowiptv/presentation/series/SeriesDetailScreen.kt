@@ -73,6 +73,7 @@ import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.components.PersonAvatar
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -193,6 +194,7 @@ private fun SeriesDetailContent(
     onBack: () -> Unit,
     onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long, episodeIds: List<String>) -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     val series = info.info
     val allEpisodes = info.episodes.values.flatten()
     val seriesEpisodeIds = info.episodes.entries
@@ -379,7 +381,7 @@ private fun SeriesDetailContent(
                             Surface(
                                 onClick = { selectedSeasonIdx = idx },
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (isSelected) Color(0xFF8B5CF6) else Color(0xFF2C2C2C)
+                                color = if (isSelected) accent.vibrant else Color(0xFF2C2C2C)
                             ) {
                                 Text(
                                     text = season.name,
@@ -445,6 +447,7 @@ private fun EpisodeItem(
     onContinue: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val accent = LocalAccentPalette.current
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -456,7 +459,7 @@ private fun EpisodeItem(
             text = episode.episodeNum.toString().padStart(2, '0'),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = Color(0xFF8B5CF6),
+            color = accent.vibrant,
             modifier = Modifier.width(28.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -492,7 +495,7 @@ private fun EpisodeItem(
                         modifier = Modifier
                             .fillMaxHeight()
                             .fillMaxWidth(progress)
-                            .background(Color(0xFF6366F1))
+                            .background(accent.primary)
                     )
                 }
             }
@@ -511,7 +514,7 @@ private fun EpisodeItem(
             Icon(
                 imageVector = Icons.Filled.Replay,
                 contentDescription = stringResource(R.string.common_restart),
-                tint = Color(0xFF8B5CF6),
+                tint = accent.vibrant,
                 modifier = Modifier
                     .size(20.dp)
                     .clickable(onClick = onPlay)
@@ -520,7 +523,7 @@ private fun EpisodeItem(
             Icon(
                 imageVector = Icons.Filled.PlayArrow,
                 contentDescription = stringResource(R.string.common_play),
-                tint = Color(0xFF8B5CF6),
+                tint = accent.vibrant,
                 modifier = Modifier
                     .size(20.dp)
                     .clickable(onClick = onPlay)

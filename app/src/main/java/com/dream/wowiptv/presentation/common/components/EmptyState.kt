@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
 @Composable
 fun EmptyState(
@@ -30,6 +31,7 @@ fun EmptyState(
     icon: ImageVector = Icons.Filled.Movie,
     compact: Boolean = false
 ) {
+    val accent = LocalAccentPalette.current
     if (compact) {
         Row(
             modifier = modifier,
@@ -43,7 +45,7 @@ fun EmptyState(
                     .background(Color(0xFF2D2D3A)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = Color(0xFF8B5CF6), modifier = Modifier.size(11.dp))
+                Icon(icon, contentDescription = null, tint = accent.vibrant, modifier = Modifier.size(11.dp))
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(text, color = Color(0xFF999999), fontSize = 13.sp)
@@ -61,7 +63,7 @@ fun EmptyState(
                     .background(Color(0xFF2D2D3A)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = Color(0xFF8B5CF6), modifier = Modifier.size(28.dp))
+                Icon(icon, contentDescription = null, tint = accent.vibrant, modifier = Modifier.size(28.dp))
             }
             Spacer(modifier = Modifier.height(12.dp))
             Text(text, color = Color(0xFF999999), fontSize = 14.sp)

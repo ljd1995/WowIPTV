@@ -79,6 +79,9 @@ class SettingsViewModel @Inject constructor(
     val tmdbApiKey: StateFlow<String> = appPreferences.tmdbApiKey
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
+    val themeColor: StateFlow<String> = appPreferences.themeColor
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "purple")
+
     init {
         refreshUserInfo()
     }
@@ -123,6 +126,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setTmdbApiKey(key: String) {
         viewModelScope.launch { appPreferences.setTmdbApiKey(key) }
+    }
+
+    fun setThemeColor(key: String) {
+        viewModelScope.launch { appPreferences.setThemeColor(key) }
     }
 
     fun refreshUserInfo() {

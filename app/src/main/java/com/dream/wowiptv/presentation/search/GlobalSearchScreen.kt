@@ -53,6 +53,7 @@ import com.dream.wowiptv.presentation.common.LiveDot
 import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +66,7 @@ fun GlobalSearchScreen(
 ) {
     val query by viewModel.query.collectAsState()
     val results by viewModel.results.collectAsState()
+    val accent = LocalAccentPalette.current
 
     LaunchedEffect(Unit) { viewModel.load() }
 
@@ -93,8 +95,8 @@ fun GlobalSearchScreen(
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedTextColor = Color.White,
                                     unfocusedTextColor = Color.White,
-                                    cursorColor = Color(0xFF8B5CF6),
-                                    focusedBorderColor = Color(0xFF8B5CF6),
+                                    cursorColor = accent.vibrant,
+                                    focusedBorderColor = accent.vibrant,
                                     unfocusedBorderColor = Color(0xFF3A3A4A),
                                     focusedContainerColor = Color.White.copy(alpha = 0.06f),
                                     unfocusedContainerColor = Color.White.copy(alpha = 0.06f)
@@ -166,9 +168,10 @@ fun GlobalSearchScreen(
 
 @Composable
 private fun SectionTitle(title: String) {
+    val accent = LocalAccentPalette.current
     Text(
         text = title,
-        color = Color(0xFF8B5CF6),
+        color = accent.vibrant,
         fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -177,6 +180,7 @@ private fun SectionTitle(title: String) {
 
 @Composable
 private fun ResultRow(icon: String?, name: String, badge: String, isLive: Boolean = false, onClick: () -> Unit) {
+    val accent = LocalAccentPalette.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -201,7 +205,7 @@ private fun ResultRow(icon: String?, name: String, badge: String, isLive: Boolea
             } else {
                 Text(
                     text = name.firstOrNull()?.uppercase() ?: "?",
-                    color = Color(0xFF8B5CF6),
+                    color = accent.vibrant,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )

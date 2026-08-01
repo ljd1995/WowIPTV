@@ -26,9 +26,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
 @Composable
 fun PersonAvatar(name: String, imageUrl: String?, modifier: Modifier = Modifier) {
+    val accent = LocalAccentPalette.current
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -51,7 +53,7 @@ fun PersonAvatar(name: String, imageUrl: String?, modifier: Modifier = Modifier)
             } else {
                 Text(
                     text = name.trim().firstOrNull()?.uppercase() ?: "?",
-                    color = Color(0xFF8B5CF6),
+                    color = accent.vibrant,
                     fontWeight = FontWeight.Bold,
                     fontSize = 22.sp
                 )

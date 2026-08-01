@@ -51,6 +51,7 @@ import com.dream.wowiptv.presentation.navigation.Routes
 import com.dream.wowiptv.presentation.series.SeriesScreen
 import com.dream.wowiptv.presentation.settings.SettingsScreen
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.update.UpdateCheckDialog
 import com.dream.wowiptv.presentation.update.UpdateState
@@ -69,9 +70,12 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
     val updateViewModel: UpdateViewModel = hiltViewModel()
     val updateState by updateViewModel.state.collectAsState()
+    val autoCheckUpdate by updateViewModel.autoCheckUpdate.collectAsState()
+
+    val accent = LocalAccentPalette.current
 
     LaunchedEffect(Unit) {
-        updateViewModel.check()
+        if (autoCheckUpdate) updateViewModel.check()
     }
 
     LaunchedEffect(sourceType) {
@@ -123,7 +127,7 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                                     Brush.horizontalGradient(
                                         listOf(
                                             Color.Transparent,
-                                            Color(0xFF6366F1).copy(alpha = 0.6f),
+                                            accent.primary.copy(alpha = 0.6f),
                                             Color.Transparent
                                         )
                                     )
@@ -136,7 +140,7 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                         ) {
                             visibleItems.forEach { item ->
                                 val selected = currentRoute == item.route
-                                val itemColor = if (selected) Color(0xFF8B5CF6) else Color(0xFF8A8A93)
+                                val itemColor = if (selected) accent.vibrant else Color(0xFF8A8A93)
                                 Column(
                                     modifier = Modifier
                                         .weight(1f)

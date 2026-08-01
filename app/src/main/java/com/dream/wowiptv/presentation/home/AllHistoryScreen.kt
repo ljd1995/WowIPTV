@@ -53,6 +53,7 @@ import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
 private fun decodeName(raw: String): String {
     return try { java.net.URLDecoder.decode(raw, "UTF-8") } catch (_: Exception) { raw }
@@ -119,6 +120,7 @@ private fun HistoryGridCell(
     onSeriesClick: (Int) -> Unit,
     onLiveClick: (Int, String) -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -205,7 +207,7 @@ private fun HistoryGridCell(
                         modifier = Modifier
                             .fillMaxHeight()
                             .fillMaxWidth(p)
-                            .background(Color(0xFF6366F1))
+                            .background(accent.primary)
                     )
                     }
                 }

@@ -62,6 +62,7 @@ import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -156,6 +157,7 @@ private fun SourceFormInner(
     onImport: suspend (name: String, url: String?, content: String?) -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     val initialUrl = if (initialSource != null) "http://${initialSource.serverUrl}:${initialSource.port}" else ""
     var sourceType by remember { mutableStateOf(initialSource?.type ?: "xtream") }
     var name by remember { mutableStateOf(initialSource?.name ?: "") }
@@ -349,17 +351,17 @@ private fun SourceFormInner(
                         enabled = isValid && !testing && !saving,
                         modifier = Modifier.weight(0.35f).height(50.dp),
                         shape = RoundedCornerShape(8.dp),
-                        border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF8B5CF6))
+                        border = BorderStroke(1.dp, accent.vibrant),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = accent.vibrant)
                     ) {
                         if (testing) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp,
-                                color = Color(0xFF8B5CF6)
+                                color = accent.vibrant
                             )
                         } else {
-                            Text(stringResource(R.string.form_test), color = Color(0xFF8B5CF6))
+                            Text(stringResource(R.string.form_test), color = accent.vibrant)
                         }
                     }
                     Button(
@@ -383,7 +385,7 @@ private fun SourceFormInner(
                             .height(50.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8B5CF6)
+                            containerColor = accent.vibrant
                         )
                     ) {
                         if (saving) {
@@ -450,17 +452,17 @@ private fun SourceFormInner(
                         enabled = isImportValid && importError == null && !testing && !saving,
                         modifier = Modifier.weight(0.35f).height(50.dp),
                         shape = RoundedCornerShape(8.dp),
-                        border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF8B5CF6))
+                        border = BorderStroke(1.dp, accent.vibrant),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = accent.vibrant)
                     ) {
                         if (testing) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp,
-                                color = Color(0xFF8B5CF6)
+                                color = accent.vibrant
                             )
                         } else {
-                            Text(stringResource(R.string.form_test), color = Color(0xFF8B5CF6))
+                            Text(stringResource(R.string.form_test), color = accent.vibrant)
                         }
                     }
                     Button(
@@ -490,7 +492,7 @@ private fun SourceFormInner(
                             .height(50.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8B5CF6)
+                            containerColor = accent.vibrant
                         )
                     ) {
                         if (saving) {

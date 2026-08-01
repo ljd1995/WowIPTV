@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
 @Composable
 fun SplashScreen(
@@ -34,6 +35,7 @@ fun SplashScreen(
     onFinished: () -> Unit
 ) {
     val ready by viewModel.ready.collectAsState()
+    val accent = LocalAccentPalette.current
 
     LaunchedEffect(ready) {
         if (ready) onFinished()
@@ -51,7 +53,7 @@ fun SplashScreen(
                 Box(
                     modifier = Modifier
                         .size(80.dp)
-                        .background(Color(0xFF6366F1), CircleShape),
+                        .background(accent.primary, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -70,7 +72,7 @@ fun SplashScreen(
                 )
                 Spacer(modifier = Modifier.height(32.dp))
                 CircularProgressIndicator(
-                    color = Color(0xFF6366F1),
+                    color = accent.primary,
                     strokeWidth = 3.dp
                 )
             }

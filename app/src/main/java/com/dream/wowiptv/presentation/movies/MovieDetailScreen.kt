@@ -68,6 +68,7 @@ import com.dream.wowiptv.presentation.common.components.PersonAvatar
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
@@ -155,6 +156,7 @@ fun MovieDetailScreen(
     val vodInfoState by viewModel.vodInfo.collectAsState()
     val avatarsEnabled by viewModel.avatarsEnabled.collectAsState()
     val castImages by viewModel.castImages.collectAsState()
+    val accent = LocalAccentPalette.current
 
     LaunchedEffect(Unit) {
         viewModel.refreshPosition()
@@ -371,8 +373,8 @@ fun MovieDetailScreen(
                                 onClick = { onPlay(info.id, info.name, 0L) },
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(24.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF8B5CF6)),
-                                border = BorderStroke(1.dp, Color(0xFF8B5CF6))
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = accent.vibrant),
+                                border = BorderStroke(1.dp, accent.vibrant)
                             ) {
                                 Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
@@ -382,7 +384,7 @@ fun MovieDetailScreen(
                                 onClick = { onPlay(info.id, info.name, savedPos) },
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(24.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6)),
+                                colors = ButtonDefaults.buttonColors(containerColor = accent.vibrant),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
                                 Box(modifier = Modifier.fillMaxSize()) {
@@ -417,7 +419,7 @@ fun MovieDetailScreen(
                             onClick = { onPlay(info.id, info.name, 0L) },
                             modifier = Modifier.fillMaxWidth().height(48.dp),
                             shape = RoundedCornerShape(24.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6))
+                            colors = ButtonDefaults.buttonColors(containerColor = accent.vibrant)
                         ) {
                             Icon(Icons.Filled.PlayArrow, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))

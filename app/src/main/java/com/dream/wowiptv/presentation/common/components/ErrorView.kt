@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import com.dream.wowiptv.R
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
 @Composable
 fun ErrorView(
@@ -29,6 +30,7 @@ fun ErrorView(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val accent = LocalAccentPalette.current
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -53,7 +55,7 @@ fun ErrorView(
         Button(
             onClick = onRetry,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF8B5CF6)
+                containerColor = accent.vibrant
             )
         ) {
             Text(stringResource(R.string.common_retry))

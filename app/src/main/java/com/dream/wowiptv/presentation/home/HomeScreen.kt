@@ -78,6 +78,7 @@ import com.dream.wowiptv.presentation.common.LiveDot
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import kotlinx.coroutines.delay
 
@@ -104,6 +105,8 @@ fun HomeScreen(
     val sourceTypeViewModel: SourceTypeViewModel = hiltViewModel()
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
 
+    val accent = LocalAccentPalette.current
+
     MaterialTheme(colorScheme = DarkColorScheme) {
         GradientBackground {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -114,7 +117,7 @@ fun HomeScreen(
                             style = TextStyle(
                                 fontSize = 22.sp,
                                 fontWeight = FontWeight.Bold,
-                                brush = Brush.linearGradient(listOf(Color(0xFF818CF8), Color(0xFFA855F7)))
+                                brush = Brush.linearGradient(listOf(accent.light, accent.dark))
                             )
                         )
                     },
@@ -176,8 +179,8 @@ fun HomeScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = stringResource(R.string.home_channels), color = Color(0xFFEF4444), modifier = Modifier.weight(1f), onClick = onOpenLive)
-                                StatCard(icon = Icons.Filled.Movie, count = data.movieCount, label = stringResource(R.string.home_movies), color = Color(0xFF818CF8), modifier = Modifier.weight(1f), onClick = onOpenMovies)
-                                StatCard(icon = Icons.AutoMirrored.Filled.PlaylistPlay, count = data.seriesCount, label = stringResource(R.string.home_series), color = Color(0xFFA855F7), modifier = Modifier.weight(1f), onClick = onOpenSeries)
+                                StatCard(icon = Icons.Filled.Movie, count = data.movieCount, label = stringResource(R.string.home_movies), color = accent.light, modifier = Modifier.weight(1f), onClick = onOpenMovies)
+                                StatCard(icon = Icons.AutoMirrored.Filled.PlaylistPlay, count = data.seriesCount, label = stringResource(R.string.home_series), color = accent.dark, modifier = Modifier.weight(1f), onClick = onOpenSeries)
                             }
                         }
                     }
@@ -392,6 +395,7 @@ private fun CountUpText(target: Int, durationMillis: Int = 800) {
 
 @Composable
 private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
+    val accent = LocalAccentPalette.current
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -403,7 +407,7 @@ private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
                     .size(width = 4.dp, height = 16.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(
-                        Brush.verticalGradient(listOf(Color(0xFF818CF8), Color(0xFFA855F7)))
+                        Brush.verticalGradient(listOf(accent.light, accent.dark))
                     )
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -422,13 +426,13 @@ private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
             ) {
                 Text(
                     text = stringResource(R.string.home_view_all),
-                    color = Color(0xFF8B5CF6),
+                    color = accent.vibrant,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
                     text = "›",
-                    color = Color(0xFF8B5CF6),
+                    color = accent.vibrant,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -586,6 +590,7 @@ private fun FavCard(name: String, icon: String? = null, badge: String? = null, c
 
 @Composable
 private fun ContinueCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, position: Long = 0L, duration: Long = 0L, rating: String? = null, onClick: () -> Unit = {}) {
+    val accent = LocalAccentPalette.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val cardScale by animateFloatAsState(if (isPressed) 0.97f else 1f, label = "cardScale")
@@ -658,7 +663,7 @@ private fun ContinueCard(name: String, icon: String? = null, badge: String? = nu
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .fillMaxWidth(p)
-                                .background(Color(0xFF6366F1))
+                                .background(accent.primary)
                         )
                     }
                 }

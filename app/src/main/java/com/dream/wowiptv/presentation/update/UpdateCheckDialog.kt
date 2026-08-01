@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dream.wowiptv.R
+import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
 @Composable
 fun UpdateCheckDialog(
@@ -25,6 +26,7 @@ fun UpdateCheckDialog(
     onInstall: () -> Unit,
     onRetry: () -> Unit
 ) {
+    val accent = LocalAccentPalette.current
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF2C2C2C),
@@ -50,7 +52,7 @@ fun UpdateCheckDialog(
                     Spacer(modifier = Modifier.height(8.dp))
                     LinearProgressIndicator(
                         progress = { state.progress },
-                        color = Color(0xFF8B5CF6),
+                        color = accent.vibrant,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -62,16 +64,16 @@ fun UpdateCheckDialog(
         confirmButton = {
             when (state) {
                 is UpdateState.Available -> TextButton(onClick = onDownload) {
-                    Text(stringResource(R.string.update_download), color = Color(0xFF8B5CF6))
+                    Text(stringResource(R.string.update_download), color = accent.vibrant)
                 }
                 is UpdateState.Downloaded -> TextButton(onClick = onInstall) {
-                    Text(stringResource(R.string.update_install), color = Color(0xFF8B5CF6))
+                    Text(stringResource(R.string.update_install), color = accent.vibrant)
                 }
                 is UpdateState.Error -> TextButton(onClick = onRetry) {
-                    Text(stringResource(R.string.update_retry), color = Color(0xFF8B5CF6))
+                    Text(stringResource(R.string.update_retry), color = accent.vibrant)
                 }
                 is UpdateState.Checking, is UpdateState.UpToDate, is UpdateState.Idle -> TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.common_ok), color = Color(0xFF8B5CF6))
+                    Text(stringResource(R.string.common_ok), color = accent.vibrant)
                 }
                 is UpdateState.Downloading -> {}
             }
