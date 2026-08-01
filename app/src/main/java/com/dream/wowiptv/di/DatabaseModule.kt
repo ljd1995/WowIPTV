@@ -9,12 +9,14 @@ import com.dream.wowiptv.data.local.MIGRATION_4_5
 import com.dream.wowiptv.data.local.MIGRATION_5_6
 import com.dream.wowiptv.data.local.MIGRATION_6_7
 import com.dream.wowiptv.data.local.MIGRATION_7_8
+import com.dream.wowiptv.data.local.MIGRATION_8_9
 import com.dream.wowiptv.data.local.dao.EpgDao
 import com.dream.wowiptv.data.local.dao.DataCleanupDao
 import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
 import com.dream.wowiptv.data.local.dao.FavoriteVodDao
 import com.dream.wowiptv.data.local.dao.LiveCategoryDao
 import com.dream.wowiptv.data.local.dao.LiveStreamDao
+import com.dream.wowiptv.data.local.dao.PersonCacheDao
 import com.dream.wowiptv.data.local.dao.SeriesCategoryDao
 import com.dream.wowiptv.data.local.dao.SeriesDao
 import com.dream.wowiptv.data.local.dao.SourceDao
@@ -55,7 +57,7 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "wowiptv.db"
-        ).addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8).build()
+        ).addMigrations(MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9).build()
     }
 
     @Provides fun provideSourceDao(db: AppDatabase): SourceDao = db.sourceDao()
@@ -71,4 +73,5 @@ object DatabaseModule {
     @Provides fun provideFavoriteVodDao(db: AppDatabase): FavoriteVodDao = db.favoriteVodDao()
     @Provides fun provideWatchProgressDao(db: AppDatabase): WatchProgressDao = db.watchProgressDao()
     @Provides fun provideDataCleanupDao(db: AppDatabase): DataCleanupDao = db.dataCleanupDao()
+    @Provides fun providePersonCacheDao(db: AppDatabase): PersonCacheDao = db.personCacheDao()
 }
