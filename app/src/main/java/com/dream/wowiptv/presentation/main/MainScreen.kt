@@ -197,6 +197,27 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                     },
                     onViewAllHistory = {
                         outerNavController.navigate(Routes.ALL_HISTORY)
+                    },
+                    onOpenLive = {
+                        navController.navigate(BottomNavItem.Live.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onOpenMovies = {
+                        navController.navigate(BottomNavItem.Movies.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onOpenSeries = {
+                        navController.navigate(BottomNavItem.Series.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 )
             }

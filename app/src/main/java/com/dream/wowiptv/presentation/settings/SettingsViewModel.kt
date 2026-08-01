@@ -76,6 +76,9 @@ class SettingsViewModel @Inject constructor(
     val tmdbApiKey: StateFlow<String> = appPreferences.tmdbApiKey
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
+    val themeMode: StateFlow<String> = appPreferences.themeMode
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "dark")
+
     init {
         viewModelScope.launch {
             val cached = sourcePreferences.userInfo.first()
@@ -118,6 +121,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setTmdbApiKey(key: String) {
         viewModelScope.launch { appPreferences.setTmdbApiKey(key) }
+    }
+
+    fun setThemeMode(mode: String) {
+        viewModelScope.launch { appPreferences.setThemeMode(mode) }
     }
 
     fun refreshUserInfo() {

@@ -67,6 +67,8 @@ import com.dream.wowiptv.domain.model.VodCategory
 import com.dream.wowiptv.domain.model.VodStream
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.GradientBackground
+import com.dream.wowiptv.presentation.common.components.EmptyState
+import com.dream.wowiptv.presentation.common.theme.AppTheme
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
@@ -96,7 +98,7 @@ fun MoviesScreen(
         GradientBackground {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
-                title = { Text(stringResource(R.string.movies_title), color = Color.White) },
+                title = { Text(stringResource(R.string.movies_title), color = AppTheme.colors.onSurface) },
                 windowInsets = WindowInsets.statusBars,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
@@ -178,22 +180,16 @@ fun MoviesScreen(
                         )
                     }
                     is UiState.Empty -> {
-                        Text(
+                        EmptyState(
                             text = stringResource(R.string.movies_empty),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center)
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                     is UiState.Success -> {
                         if (streams.data.isEmpty()) {
-                            Text(
+                            EmptyState(
                                 text = if (searchQuery.isNotBlank()) stringResource(R.string.movies_not_found) else stringResource(R.string.movies_empty),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxSize().wrapContentSize(Alignment.Center)
+                                modifier = Modifier.fillMaxSize()
                             )
                         } else {
                             PullToRefreshBox(

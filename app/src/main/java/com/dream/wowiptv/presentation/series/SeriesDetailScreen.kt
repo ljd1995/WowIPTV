@@ -195,6 +195,10 @@ private fun SeriesDetailContent(
 ) {
     val series = info.info
     val allEpisodes = info.episodes.values.flatten()
+    val seriesEpisodeIds = info.episodes.entries
+        .sortedBy { it.key }
+        .flatMap { (_, eps) -> eps.sortedBy { it.episodeNum } }
+        .map { it.id }
 
     MaterialTheme(colorScheme = DarkColorScheme) {
     GradientBackground {
@@ -401,18 +405,17 @@ private fun SeriesDetailContent(
                         ) {
                             seasonEpisodes.forEachIndexed { index, episode ->
                                 val savedPos = episodePositions[episode.id] ?: 0L
-                                val seasonIds = seasonEpisodes.map { it.id }
                                 EpisodeItem(
                                     episode = episode,
                                     savedPosition = savedPos,
                                     onPlay = {
                                         val episodeTitle = "${series.name} - ${selectedSeason.name} E${episode.episodeNum}"
-                                        onPlayEpisode(episode.id, episodeTitle, 0L, seasonIds)
+                                        onPlayEpisode(episode.id, episodeTitle, 0L, seriesEpisodeIds)
                                     },
                                     onContinue = if (savedPos > 0) {
                                         {
                                             val episodeTitle = "${series.name} - ${selectedSeason.name} E${episode.episodeNum}"
-                                            onPlayEpisode(episode.id, episodeTitle, savedPos, seasonIds)
+                                            onPlayEpisode(episode.id, episodeTitle, savedPos, seriesEpisodeIds)
                                         }
                                     } else {
                                         null

@@ -200,6 +200,16 @@ class HomeViewModel @Inject constructor(
         return dateStr.take(10)
     }
 
+    fun removeFavorite(item: Any) {
+        viewModelScope.launch {
+            val source = sourceRepository.getActiveSource().first() ?: return@launch
+            when (item) {
+                is FavoriteStreamEntity -> favoriteStreamDao.delete(item.streamId, source.id)
+                is FavoriteVodEntity -> favoriteVodDao.delete(item.vodId, source.id, item.type)
+            }
+        }
+    }
+
     fun refresh() {
         _isRefreshing.value = true
         viewModelScope.launch {

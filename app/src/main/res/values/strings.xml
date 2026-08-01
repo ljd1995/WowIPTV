@@ -25,6 +25,9 @@
     <string name="common_track">音轨</string>
     <string name="common_no_track">无音轨</string>
     <string name="common_track_n">音轨 %d</string>
+    <string name="common_subtitle">字幕</string>
+    <string name="common_subtitle_n">字幕 %d</string>
+    <string name="common_disable">关闭</string>
     <string name="common_next_program">下一节目: %s</string>
     <string name="common_ends_at">结束于 %s</string>
     <string name="common_channel_name">频道 %d</string>
@@ -131,6 +134,9 @@
     <string name="settings_language_system">跟随系统</string>
     <string name="settings_language_zh">中文</string>
     <string name="settings_language_en">English</string>
+    <string name="settings_theme">主题</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_theme_light">浅色</string>
     <string name="settings_show_avatars">显示演员头像</string>
     <string name="settings_show_avatars_desc">从 TMDB 获取导演与演员头像</string>
     <string name="settings_tmdb_key">TMDB API Key</string>

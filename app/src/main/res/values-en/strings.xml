@@ -24,6 +24,9 @@
     <string name="common_track">Track</string>
     <string name="common_no_track">No track</string>
     <string name="common_track_n">Track %d</string>
+    <string name="common_subtitle">Subtitles</string>
+    <string name="common_subtitle_n">Subtitles %d</string>
+    <string name="common_disable">Off</string>
     <string name="common_next_program">Next: %s</string>
     <string name="common_ends_at">Ends at %s</string>
     <string name="common_channel_name">Channel %d</string>
@@ -123,6 +126,9 @@
     <string name="settings_language_system">Follow system</string>
     <string name="settings_language_zh">中文</string>
     <string name="settings_language_en">English</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_light">Light</string>
     <string name="settings_show_avatars">Show cast avatars</string>
     <string name="settings_show_avatars_desc">Show director &amp; cast avatars from TMDB</string>
     <string name="settings_tmdb_key">TMDB API Key</string>

@@ -73,6 +73,8 @@ import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.LiveDot
 import com.dream.wowiptv.presentation.common.components.GradientBackground
+import com.dream.wowiptv.presentation.common.components.EmptyState
+import com.dream.wowiptv.presentation.common.theme.AppTheme
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import kotlinx.coroutines.delay
@@ -86,7 +88,10 @@ fun HomeScreen(
     onLiveClick: (Int, String) -> Unit,
     onViewAllFavorites: () -> Unit,
     onViewAllRecent: () -> Unit,
-    onViewAllHistory: () -> Unit
+    onViewAllHistory: () -> Unit,
+    onOpenLive: () -> Unit = {},
+    onOpenMovies: () -> Unit = {},
+    onOpenSeries: () -> Unit = {}
 ) {
     val data by viewModel.data.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -154,15 +159,15 @@ fun HomeScreen(
                 ) {
                     item {
                         if (sourceType == "m3u") {
-                            StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = stringResource(R.string.home_channels), color = Color(0xFFEF4444), modifier = Modifier.fillMaxWidth())
+                            StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = stringResource(R.string.home_channels), color = Color(0xFFEF4444), modifier = Modifier.fillMaxWidth(), onClick = onOpenLive)
                         } else {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = stringResource(R.string.home_channels), color = Color(0xFFEF4444), modifier = Modifier.weight(1f))
-                                StatCard(icon = Icons.Filled.Movie, count = data.movieCount, label = stringResource(R.string.home_movies), color = Color(0xFF818CF8), modifier = Modifier.weight(1f))
-                                StatCard(icon = Icons.AutoMirrored.Filled.PlaylistPlay, count = data.seriesCount, label = stringResource(R.string.home_series), color = Color(0xFFA855F7), modifier = Modifier.weight(1f))
+                                StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = stringResource(R.string.home_channels), color = Color(0xFFEF4444), modifier = Modifier.weight(1f), onClick = onOpenLive)
+                                StatCard(icon = Icons.Filled.Movie, count = data.movieCount, label = stringResource(R.string.home_movies), color = Color(0xFF818CF8), modifier = Modifier.weight(1f), onClick = onOpenMovies)
+                                StatCard(icon = Icons.AutoMirrored.Filled.PlaylistPlay, count = data.seriesCount, label = stringResource(R.string.home_series), color = Color(0xFFA855F7), modifier = Modifier.weight(1f), onClick = onOpenSeries)
                             }
                         }
                     }
@@ -220,7 +225,11 @@ fun HomeScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                             val items = data.favoriteStreams + data.favoriteMovies + data.favoriteSeries
                             if (items.isEmpty()) {
-                                Text(stringResource(R.string.home_no_favorites), color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
+                                EmptyState(
+                                    text = stringResource(R.string.home_no_favorites),
+                                    modifier = Modifier.padding(vertical = 16.dp),
+                                    compact = true
+                                )
                             } else {
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                     items(items.take(10), key = { it.hashCode() }) { item ->
@@ -300,9 +309,9 @@ private fun formatRating(raw: String?): String? {
 }
 
 @Composable
-private fun StatCard(icon: ImageVector, count: Int, label: String, color: Color, modifier: Modifier = Modifier) {
+private fun StatCard(icon: ImageVector, count: Int, label: String, color: Color, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     Card(
-        modifier = modifier,
+        modifier = modifier.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent),
         border = BorderStroke(1.dp, Color(0xFF3A3A4A))
@@ -338,9 +347,9 @@ private fun StatCard(icon: ImageVector, count: Int, label: String, color: Color,
                 Spacer(modifier = Modifier.weight(1f))
                 Column(horizontalAlignment = Alignment.End) {
                     CountUpText(target = count)
-                    Text(
-                        text = label,
-                        color = Color(0xFF999999),
+                Text(
+                    text = label,
+                    color = AppTheme.colors.onSurfaceVariant,
                         fontSize = 11.sp
                     )
                 }
@@ -365,7 +374,7 @@ private fun CountUpText(target: Int, durationMillis: Int = 800) {
     }
     Text(
         text = displayed.toString(),
-        color = Color.White,
+        color = AppTheme.colors.onSurface,
         fontWeight = FontWeight.Bold,
         fontSize = 18.sp
     )
@@ -390,7 +399,7 @@ private fun SectionHeader(title: String, onViewAll: (() -> Unit)? = null) {
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = title,
-                color = Color.White,
+                color = AppTheme.colors.onSurface,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
             )

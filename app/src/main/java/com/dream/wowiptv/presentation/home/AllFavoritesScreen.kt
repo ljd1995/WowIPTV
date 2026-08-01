@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -48,6 +49,7 @@ import com.dream.wowiptv.R
 import com.dream.wowiptv.data.local.entity.FavoriteStreamEntity
 import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
 import com.dream.wowiptv.presentation.common.components.GradientBackground
+import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -79,7 +81,7 @@ fun AllFavoritesScreen(
         ) { innerPadding ->
             val items = data.favoriteStreams + data.favoriteMovies + data.favoriteSeries
             if (items.isEmpty()) {
-                Text(stringResource(R.string.home_no_favorites), color = Color(0xFF888888), modifier = Modifier.fillMaxSize().padding(innerPadding).wrapContentSize(Alignment.Center))
+                EmptyState(text = stringResource(R.string.home_no_favorites), modifier = Modifier.fillMaxSize().padding(innerPadding))
             } else {
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
@@ -97,7 +99,8 @@ fun AllFavoritesScreen(
                                 icon = item.iconUrl,
                                 badge = "LIVE",
                                 categoryName = catName,
-                                onClick = { onLiveClick(item.streamId, item.name) }
+                                onClick = { onLiveClick(item.streamId, item.name) },
+                                onRemove = { viewModel.removeFavorite(item) }
                             )
                         }
                             is FavoriteVodEntity -> {
@@ -110,7 +113,8 @@ fun AllFavoritesScreen(
                                     categoryName = catName,
                                     onClick = {
                                         if (item.type == "movie") onMovieClick(item.vodId) else onSeriesClick(item.vodId)
-                                    }
+                                    },
+                                    onRemove = { viewModel.removeFavorite(item) }
                                 )
                             }
                         }
@@ -123,7 +127,7 @@ fun AllFavoritesScreen(
 }
 
 @Composable
-private fun FavGridCell(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, onClick: () -> Unit = {}) {
+private fun FavGridCell(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, onClick: () -> Unit = {}, onRemove: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -148,6 +152,23 @@ private fun FavGridCell(name: String, icon: String? = null, badge: String? = nul
                     modifier = Modifier.size(36.dp)
                 )
             }
+        }
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 4.dp, end = 4.dp)
+                .size(22.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(Color(0xCC000000))
+                .clickable(onClick = onRemove),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = stringResource(R.string.settings_delete),
+                tint = Color.White,
+                modifier = Modifier.size(14.dp)
+            )
         }
         if (!badge.isNullOrEmpty()) {
             Box(modifier = Modifier.align(Alignment.TopStart)) {

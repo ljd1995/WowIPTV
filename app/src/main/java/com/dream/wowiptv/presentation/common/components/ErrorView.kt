@@ -20,8 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import com.dream.wowiptv.R
-import com.dream.wowiptv.presentation.common.theme.AccentBlue
 
 @Composable
 fun ErrorView(
@@ -53,7 +53,7 @@ fun ErrorView(
         Button(
             onClick = onRetry,
             colors = ButtonDefaults.buttonColors(
-                containerColor = AccentBlue
+                containerColor = Color(0xFF8B5CF6)
             )
         ) {
             Text(stringResource(R.string.common_retry))

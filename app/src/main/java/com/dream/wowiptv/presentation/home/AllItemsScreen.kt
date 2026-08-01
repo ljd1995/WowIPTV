@@ -55,6 +55,7 @@ import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.presentation.common.components.GradientBackground
+import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 
@@ -127,10 +128,9 @@ fun AllItemsScreen(
 
                 if (items.isEmpty()) {
                     item(span = { GridItemSpan(maxLineSpan) }) {
-                        Text(
-                            stringResource(R.string.common_empty),
-                            color = Color(0xFF888888),
-                            modifier = Modifier.padding(vertical = 32.dp)
+                        EmptyState(
+                            text = stringResource(R.string.common_empty),
+                            modifier = Modifier.padding(vertical = 48.dp)
                         )
                     }
                 } else {

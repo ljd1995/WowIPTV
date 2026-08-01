@@ -99,6 +99,7 @@ import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
+import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
@@ -860,25 +861,17 @@ private fun ChannelList(
                 )
             }
             is UiState.Empty -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = stringResource(R.string.live_no_channels),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = DarkTextSecondary,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                EmptyState(
+                    text = stringResource(R.string.live_no_channels),
+                    modifier = Modifier.fillMaxSize()
+                )
             }
             is UiState.Success -> {
                 if (state.data.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = if (selectedCategoryId == LiveViewModel.FAVORITES_ID) stringResource(R.string.live_no_favorite_channels) else stringResource(R.string.live_no_channels),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = DarkTextSecondary,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                    EmptyState(
+                        text = if (selectedCategoryId == LiveViewModel.FAVORITES_ID) stringResource(R.string.live_no_favorite_channels) else stringResource(R.string.live_no_channels),
+                        modifier = Modifier.fillMaxSize()
+                    )
                 } else {
                     PullToRefreshBox(
                         isRefreshing = isRefreshing,
