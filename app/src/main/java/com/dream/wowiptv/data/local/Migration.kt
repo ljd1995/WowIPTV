@@ -72,3 +72,14 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         db.execSQL("ALTER TABLE live_streams ADD COLUMN m3uUrl TEXT")
     }
 }
+
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            """CREATE TABLE IF NOT EXISTS person_cache (
+                name TEXT NOT NULL PRIMARY KEY,
+                profilePath TEXT NOT NULL
+            )"""
+        )
+    }
+}

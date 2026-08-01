@@ -7,6 +7,7 @@ import com.dream.wowiptv.data.local.dao.DataCleanupDao
 import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
 import com.dream.wowiptv.data.local.dao.FavoriteVodDao
 import com.dream.wowiptv.data.local.dao.LiveCategoryDao
+import com.dream.wowiptv.data.local.dao.PersonCacheDao
 import com.dream.wowiptv.data.local.dao.WatchProgressDao
 import com.dream.wowiptv.data.local.dao.LiveStreamDao
 import com.dream.wowiptv.data.local.dao.SeriesCategoryDao
@@ -16,6 +17,7 @@ import com.dream.wowiptv.data.local.dao.VodCategoryDao
 import com.dream.wowiptv.data.local.dao.VodInfoDao
 import com.dream.wowiptv.data.local.dao.VodStreamDao
 import com.dream.wowiptv.data.local.entity.CachedVodInfoEntity
+import com.dream.wowiptv.data.local.entity.CachedPersonEntity
 import com.dream.wowiptv.data.local.entity.EpisodeEntity
 import com.dream.wowiptv.data.local.entity.EpgEntity
 import com.dream.wowiptv.data.local.entity.FavoriteStreamEntity
@@ -45,9 +47,10 @@ import com.dream.wowiptv.data.local.entity.VodStreamEntity
         EpisodeEntity::class,
         FavoriteStreamEntity::class,
         FavoriteVodEntity::class,
-        WatchProgressEntity::class
+        WatchProgressEntity::class,
+        CachedPersonEntity::class
     ],
-    version = 8
+    version = 9
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun sourceDao(): SourceDao
@@ -63,4 +66,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun favoriteVodDao(): FavoriteVodDao
     abstract fun watchProgressDao(): WatchProgressDao
     abstract fun dataCleanupDao(): DataCleanupDao
+    abstract fun personCacheDao(): PersonCacheDao
 }

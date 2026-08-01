@@ -1,5 +1,7 @@
 package com.dream.wowiptv.data.repository
 
+import com.dream.wowiptv.data.local.dao.PersonCacheDao
+import com.dream.wowiptv.data.local.entity.CachedPersonEntity
 import com.dream.wowiptv.data.remote.tmdb.TmdbApi
 import com.dream.wowiptv.domain.repository.TmdbRepository
 import javax.inject.Inject
@@ -7,10 +9,9 @@ import javax.inject.Singleton
 
 @Singleton
 class TmdbRepositoryImpl @Inject constructor(
-    private val tmdbApi: TmdbApi
+    private val tmdbApi: TmdbApi,
+    private val personCacheDao: PersonCacheDao
 ) : TmdbRepository {
-
-    private val cache = mutableMapOf<String, Map<String, String?>>()
 
     override suspend fun fetchPeopleImages(
         title: String?,
@@ -21,16 +22,16 @@ class TmdbRepositoryImpl @Inject constructor(
         val cleaned = names.map { it.trim() }.filter { it.isNotEmpty() }.distinct()
         if (cleaned.isEmpty() || apiKey.isBlank()) return emptyMap()
 
-        val cacheKey = "${title ?: ""}|${releaseDate ?: ""}"
-        synchronized(cache) {
-            cache[cacheKey]?.let { return it }
-        }
+        val result: MutableMap<String, String?> = personCacheDao.getByNames(cleaned)
+            .associate { it.name to it.profilePath }
+            .toMutableMap()
+        val missing = cleaned.filter { it !in result }
+        if (missing.isEmpty()) return result
 
-        val year = releaseDate?.take(4)?.toIntOrNull()
         val creditsByName = if (!title.isNullOrBlank()) {
             try {
                 val search = tmdbApi.searchMovie(apiKey, title)
-                val movie = search.results.firstOrNull { it.release_date?.take(4)?.toIntOrNull() == year }
+                val movie = search.results.firstOrNull { it.release_date?.take(4)?.toIntOrNull() == releaseDate?.take(4)?.toIntOrNull() }
                     ?: search.results.firstOrNull()
                 if (movie != null) {
                     tmdbApi.getMovieCredits(movie.id, apiKey)
@@ -47,19 +48,16 @@ class TmdbRepositoryImpl @Inject constructor(
             emptyMap()
         }
 
-        val result = linkedMapOf<String, String?>()
-        for (name in cleaned) {
-            val hit = creditsByName[name]
-            if (hit != null) {
-                result[name] = hit
-            } else {
-                result[name] = searchPersonPath(apiKey, name)
-            }
+        for (name in missing) {
+            result[name] = creditsByName[name] ?: searchPersonPath(apiKey, name)
         }
 
-        synchronized(cache) {
-            cache[cacheKey] = result
+        val toSave = missing
+            .mapNotNull { name -> result[name]?.let { CachedPersonEntity(name, it) } }
+        if (toSave.isNotEmpty()) {
+            personCacheDao.upsertAll(toSave)
         }
+
         return result
     }
 
