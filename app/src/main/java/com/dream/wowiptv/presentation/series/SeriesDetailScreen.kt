@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -153,7 +154,6 @@ private fun SeriesDetailContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(250.dp)
-                    .statusBarsPadding()
             ) {
                 AsyncImage(
                     model = series.cover,
@@ -162,15 +162,24 @@ private fun SeriesDetailContent(
                     contentScale = ContentScale.Crop
                 )
                 Box(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color.Black.copy(alpha = 0.7f), Color.Transparent)
+                            )
                         )
-                    }
+                )
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.statusBarsPadding()
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White
+                    )
                 }
             }
 

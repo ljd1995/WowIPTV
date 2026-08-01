@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -131,7 +132,6 @@ fun MovieDetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(250.dp)
-                            .statusBarsPadding()
                     ) {
                         AsyncImage(
                             model = info.cover,
@@ -142,15 +142,22 @@ fun MovieDetailScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color.Black.copy(alpha = 0.3f))
-                        ) {
-                            IconButton(onClick = onBack) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back",
-                                    tint = Color.White
+                                .height(140.dp)
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(Color.Black.copy(alpha = 0.7f), Color.Transparent)
+                                    )
                                 )
-                            }
+                        )
+                        IconButton(
+                            onClick = onBack,
+                            modifier = Modifier.statusBarsPadding()
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.White
+                            )
                         }
                     }
 
