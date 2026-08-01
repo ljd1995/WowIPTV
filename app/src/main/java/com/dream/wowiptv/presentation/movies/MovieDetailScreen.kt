@@ -186,7 +186,7 @@ fun MovieDetailScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(250.dp)
+                            .height(320.dp)
                     ) {
                         AsyncImage(
                             model = info.cover,

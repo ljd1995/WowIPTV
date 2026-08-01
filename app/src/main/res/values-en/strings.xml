@@ -9,6 +9,7 @@
     <string name="common_empty">No content</string>
     <string name="common_loading">Loading…</string>
     <string name="common_save">Save</string>
+    <string name="form_test">Test</string>
     <string name="common_cancel">Cancel</string>
     <string name="common_ok">OK</string>
     <string name="settings_check_update">Check for updates</string>

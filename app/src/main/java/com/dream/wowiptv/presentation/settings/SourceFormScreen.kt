@@ -3,6 +3,7 @@ package com.dream.wowiptv.presentation.settings
 import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dream.wowiptv.R
@@ -91,6 +93,7 @@ fun SourceFormScreen(
         SourceFormInner(
             initialSource = editingSource,
             isEditing = sourceId != null,
+            viewModel = viewModel,
             onSave = { name, serverUrl, username, password ->
                 scope.launch {
                     val (host, port) = parseServerUrl(serverUrl)
@@ -148,6 +151,7 @@ private suspend fun writeM3uFile(context: Context, id: Long, content: String): S
 private fun SourceFormInner(
     initialSource: XtreamSource?,
     isEditing: Boolean,
+    viewModel: SettingsViewModel,
     onSave: (name: String, serverUrl: String, username: String, password: String) -> Unit,
     onImport: suspend (name: String, url: String?, content: String?) -> Unit,
     onNavigateBack: () -> Unit
@@ -163,15 +167,34 @@ private fun SourceFormInner(
     var selectedFileName by remember { mutableStateOf<String?>(null) }
     var importError by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
+    var testing by remember { mutableStateOf(false) }
+    var testResult by remember { mutableStateOf<com.dream.wowiptv.domain.usecase.SourceTestResult?>(null) }
 
     val isValid = name.isNotBlank() && serverUrl.isNotBlank() && username.isNotBlank() && password.isNotBlank()
     val isImportValid = name.isNotBlank() && (m3uUrl.isNotBlank() || selectedFileContent != null)
     val textColor = Color.White
     val labelColor = Color(0xFF999999)
-    val fieldBg = Color(0xFF2C2C2C)
+    val fieldBg = Color.White.copy(alpha = 0.06f)
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    fun runTest() {
+        if (testing || saving) return
+        testing = true
+        testResult = null
+        scope.launch {
+            val res = if (sourceType == "xtream") {
+                val (host, port) = parseServerUrl(serverUrl)
+                viewModel.testXtream(host, port, username, password)
+            } else {
+                viewModel.testM3u(m3uUrl.trim().ifBlank { null }, selectedFileContent)
+            }
+            testResult = res
+            testing = false
+        }
+    }
+
     val filePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             scope.launch {
@@ -260,7 +283,7 @@ private fun SourceFormInner(
                     value = serverUrl,
                     onValueChange = { serverUrl = it },
                     label = { Text(stringResource(R.string.form_server_url), color = labelColor) },
-                    placeholder = { Text("http://example.com:25461", color = Color(0xFF666666)) },
+                    placeholder = { Text("http://example.com:80", color = Color(0xFF666666)) },
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodyMedium.copy(color = textColor),
                     modifier = Modifier.fillMaxWidth(),
@@ -317,29 +340,71 @@ private fun SourceFormInner(
                     shape = RoundedCornerShape(8.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = {
-                        saving = true
-                        onSave(name.trim(), serverUrl.trim(), username.trim(), password.trim())
-                    },
-                    enabled = isValid && !saving,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1E88E5)
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (saving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp,
-                            color = Color.White
-                        )
-                    } else {
-                        Text(stringResource(R.string.common_save), color = Color.White)
+                    OutlinedButton(
+                        onClick = { runTest() },
+                        enabled = isValid && !testing && !saving,
+                        modifier = Modifier.weight(0.35f).height(50.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF8B5CF6))
+                    ) {
+                        if (testing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = Color(0xFF8B5CF6)
+                            )
+                        } else {
+                            Text(stringResource(R.string.form_test), color = Color(0xFF8B5CF6))
+                        }
                     }
+                    Button(
+                        onClick = {
+                            if (testing) return@Button
+                            saving = true
+                            scope.launch {
+                                val (host, port) = parseServerUrl(serverUrl)
+                                val res = viewModel.testXtream(host, port, username, password)
+                                if (res.ok) {
+                                    onSave(name.trim(), serverUrl.trim(), username.trim(), password.trim())
+                                } else {
+                                    testResult = res
+                                    saving = false
+                                }
+                            }
+                        },
+                        enabled = isValid && !saving,
+                        modifier = Modifier
+                            .weight(0.65f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF8B5CF6)
+                        )
+                    ) {
+                        if (saving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.White
+                            )
+                        } else {
+                            Text(stringResource(R.string.common_save), color = Color.White)
+                        }
+                    }
+                }
+                testResult?.let { r ->
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = r.message,
+                        color = if (r.ok) Color(0xFF43A047) else Color(0xFFFF5252),
+                        fontSize = 13.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             } else {
                 OutlinedTextField(
@@ -376,39 +441,77 @@ private fun SourceFormInner(
                     Text(importError!!, color = Color(0xFFFF5252))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = {
-                        saving = true
-                        importError = null
-                        scope.launch {
-                            try {
-                                onImport(name.trim(), m3uUrl.trim().ifBlank { null }, selectedFileContent)
-                                onNavigateBack()
-                            } catch (e: Exception) {
-                                importError = e.message ?: context.getString(R.string.form_import_failed)
-                            } finally {
-                                saving = false
-                            }
-                        }
-                    },
-                    enabled = isImportValid && importError == null && !saving,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1E88E5)
-                    )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (saving) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp,
-                            color = Color.White
-                        )
-                    } else {
-                        Text(stringResource(R.string.common_import), color = Color.White)
+                    OutlinedButton(
+                        onClick = { runTest() },
+                        enabled = isImportValid && importError == null && !testing && !saving,
+                        modifier = Modifier.weight(0.35f).height(50.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color(0xFF8B5CF6)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF8B5CF6))
+                    ) {
+                        if (testing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = Color(0xFF8B5CF6)
+                            )
+                        } else {
+                            Text(stringResource(R.string.form_test), color = Color(0xFF8B5CF6))
+                        }
                     }
+                    Button(
+                        onClick = {
+                            if (testing) return@Button
+                            saving = true
+                            importError = null
+                            scope.launch {
+                                try {
+                                    val res = viewModel.testM3u(m3uUrl.trim().ifBlank { null }, selectedFileContent)
+                                    if (res.ok) {
+                                        onImport(name.trim(), m3uUrl.trim().ifBlank { null }, selectedFileContent)
+                                        onNavigateBack()
+                                    } else {
+                                        testResult = res
+                                        saving = false
+                                    }
+                                } catch (e: Exception) {
+                                    importError = e.message ?: context.getString(R.string.form_import_failed)
+                                    saving = false
+                                }
+                            }
+                        },
+                        enabled = isImportValid && importError == null && !saving,
+                        modifier = Modifier
+                            .weight(0.65f)
+                            .height(50.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF8B5CF6)
+                        )
+                    ) {
+                        if (saving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.White
+                            )
+                        } else {
+                            Text(stringResource(R.string.common_import), color = Color.White)
+                        }
+                    }
+                }
+                testResult?.let { r ->
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = r.message,
+                        color = if (r.ok) Color(0xFF43A047) else Color(0xFFFF5252),
+                        fontSize = 13.sp,
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }

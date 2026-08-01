@@ -10,6 +10,7 @@
     <string name="common_empty">暂无内容</string>
     <string name="common_loading">加载中…</string>
     <string name="common_save">保存</string>
+    <string name="form_test">测试</string>
     <string name="common_cancel">取消</string>
     <string name="common_import">导入</string>
     <string name="common_favorite">收藏</string>

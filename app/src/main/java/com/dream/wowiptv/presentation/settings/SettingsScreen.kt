@@ -115,7 +115,6 @@ fun SettingsScreen(
     val refreshingUser by viewModel.refreshingUser.collectAsState()
     val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
-    val isM3u = sourceType == "m3u"
 
     val defaultSpeed by viewModel.defaultPlaybackSpeed.collectAsState()
     val showPlayerStatus by viewModel.showPlayerStatus.collectAsState()
@@ -183,7 +182,7 @@ fun SettingsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                if (!isM3u) {
+                if (sourceType == "xtream") {
                     UserInfoCard(
                         userInfo = userInfo,
                         refreshing = refreshingUser,
@@ -212,14 +211,6 @@ fun SettingsScreen(
                             }
                         )
                     }
-                    HorizontalDividerItem()
-                    ActionRow(
-                        title = stringResource(R.string.settings_check_update),
-                        subtitle = "",
-                        enabled = updateState != UpdateState.Checking,
-                        loading = updateState == UpdateState.Checking,
-                        onClick = { updateViewModel.check() }
-                    )
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -354,7 +345,11 @@ fun SettingsScreen(
                     onAddSource = onAddSource
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                AboutCard(versionName = viewModel.versionName)
+                AboutCard(
+                    versionName = viewModel.versionName,
+                    updateState = updateState,
+                    onCheckUpdate = { updateViewModel.check() }
+                )
             }
         }
             if (showTmdbKeyDialog) {
@@ -957,27 +952,53 @@ private fun SourceItem(
 }
 
 @Composable
-private fun AboutCard(versionName: String) {
+private fun AboutCard(
+    versionName: String,
+    updateState: UpdateState,
+    onCheckUpdate: () -> Unit
+) {
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.05f))
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(R.string.settings_about),
-                style = MaterialTheme.typography.titleMedium,
-                color = Color.White
-            )
-            Text(
-                text = "WowIPTV V$versionName",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF888888)
-            )
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = updateState != UpdateState.Checking, onClick = onCheckUpdate)
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_check_update),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                if (updateState == UpdateState.Checking) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("›", color = Color(0xFF8B5CF6), fontSize = 16.sp)
+                }
+            }
+            HorizontalDividerItem()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_about),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White
+                )
+                Text(
+                    text = "WowIPTV V$versionName",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF888888)
+                )
+            }
         }
     }
 }

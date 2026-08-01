@@ -11,6 +11,8 @@ import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.domain.usecase.GetUserInfoUseCase
 import com.dream.wowiptv.domain.usecase.ManageSourcesUseCase
 import com.dream.wowiptv.domain.usecase.SwitchSourceUseCase
+import com.dream.wowiptv.domain.usecase.TestSourceUseCase
+import com.dream.wowiptv.domain.usecase.SourceTestResult
 import com.dream.wowiptv.presentation.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,12 +35,13 @@ class SettingsViewModel @Inject constructor(
     private val sourcePreferences: SourcePreferences,
     private val appPreferences: AppPreferences,
     private val dataCleanupDao: DataCleanupDao,
+    private val testSourceUseCase: TestSourceUseCase,
 ) : ViewModel() {
 
     val versionName: String = BuildConfig.VERSION_NAME
 
-    private val _userInfo = MutableStateFlow<UserInfo?>(null)
-    val userInfo: StateFlow<UserInfo?> = _userInfo.asStateFlow()
+    val userInfo: StateFlow<UserInfo?> = sourcePreferences.userInfo
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val _refreshingUser = MutableStateFlow(false)
     val refreshingUser: StateFlow<Boolean> = _refreshingUser.asStateFlow()
@@ -77,12 +80,14 @@ class SettingsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
     init {
-        viewModelScope.launch {
-            val cached = sourcePreferences.userInfo.first()
-            if (cached != null) _userInfo.value = cached
-            refreshUserInfo()
-        }
+        refreshUserInfo()
     }
+
+    suspend fun testXtream(host: String, port: Int, username: String, password: String): SourceTestResult =
+        testSourceUseCase.testXtream(host, port, username, password)
+
+    suspend fun testM3u(url: String?, content: String?): SourceTestResult =
+        testSourceUseCase.testM3u(url, content)
 
     fun setDefaultPlaybackSpeed(speed: Float) {
         viewModelScope.launch { appPreferences.setDefaultPlaybackSpeed(speed) }
@@ -125,7 +130,6 @@ class SettingsViewModel @Inject constructor(
             _refreshingUser.value = true
             val result = getUserInfoUseCase()
             if (result != null) {
-                _userInfo.value = result
                 sourcePreferences.saveUserInfo(result)
             }
             _refreshingUser.value = false

@@ -207,7 +207,7 @@ private fun SeriesDetailContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp)
+                    .height(320.dp)
             ) {
                 AsyncImage(
                     model = series.cover,
