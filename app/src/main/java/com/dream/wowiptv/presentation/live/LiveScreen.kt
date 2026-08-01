@@ -1,11 +1,9 @@
 package com.dream.wowiptv.presentation.live
 
 import android.content.pm.ActivityInfo
-import android.media.AudioManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,7 +27,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.DateRange
@@ -62,7 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -102,6 +97,7 @@ import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
+import com.dream.wowiptv.presentation.common.components.PlayerGestureOverlay
 import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
 import com.dream.wowiptv.presentation.common.theme.LiveRed
@@ -255,6 +251,7 @@ fun LiveScreen(
                 else -> {}
             }
         }
+
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
@@ -450,20 +447,14 @@ private fun PlayerOverlay(
         }
     }
 
-    val context = LocalContext.current
-    val audioManager = remember { context.getSystemService(AudioManager::class.java) }
-    val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC) ?: 100
-    var volume by remember { mutableStateOf(audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0) }
-    var showVolumeSlider by remember { mutableStateOf(false) }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .clickable {
                 showControls = !showControls
-                showVolumeSlider = false
             }
     ) {
+        PlayerGestureOverlay(modifier = Modifier.fillMaxSize()) {
         if (showControls) {
             Row(
                 modifier = Modifier
@@ -584,15 +575,6 @@ private fun PlayerOverlay(
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = stringResource(R.string.common_volume),
-                            tint = Color.White,
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clickable(onClick = { showVolumeSlider = !showVolumeSlider })
-                                .padding(4.dp)
-                        )
-                        Icon(
                             imageVector = Icons.Filled.Fullscreen,
                             contentDescription = stringResource(R.string.common_fullscreen),
                             tint = Color.White,
@@ -605,44 +587,7 @@ private fun PlayerOverlay(
                 }
             }
 
-            if (showControls && showVolumeSlider) {
-                val trackHeight = 160.dp
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .offset(x = (-38).dp, y = (-34).dp)
-                        .width(24.dp)
-                        .height(trackHeight)
-                        .background(Color(0xCC000000), RoundedCornerShape(12.dp))
-                        .pointerInput(maxVolume) {
-                            var dragStartVolume = volume
-                            var totalDragY = 0f
-                            detectDragGestures(
-                                onDragStart = {
-                                    dragStartVolume = volume
-                                    totalDragY = 0f
-                                },
-                                onDrag = { change, dragAmount ->
-                                    change.consume()
-                                    totalDragY += dragAmount.y
-                                    val newVol = (dragStartVolume - totalDragY / trackHeight.value * maxVolume)
-                                        .toInt()
-                                        .coerceIn(0, maxVolume)
-                                    audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
-                                    volume = newVol
-                                }
-                            )
-                        },
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(volume / maxVolume.toFloat())
-                            .background(accent.primary, RoundedCornerShape(12.dp))
-                    )
-                }
-            }
+        }
         }
     }
 }
@@ -1058,20 +1003,14 @@ private fun FullscreenPlayerView(
             }
         }
 
-        val fsContext = LocalContext.current
-        val fsAudioManager = remember { fsContext.getSystemService(AudioManager::class.java) }
-        val fsMaxVolume = fsAudioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC) ?: 100
-        var fsVolume by remember { mutableStateOf(fsAudioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0) }
-        var showFsVolumeSlider by remember { mutableStateOf(false) }
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .clickable {
                     showFullscreenControls = !showFullscreenControls
-                    showFsVolumeSlider = false
                 }
         ) {
+            PlayerGestureOverlay(modifier = Modifier.fillMaxSize()) {
             if (showFullscreenControls) {
                 Row(
                     modifier = Modifier
@@ -1200,15 +1139,6 @@ private fun FullscreenPlayerView(
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = stringResource(R.string.common_volume),
-                            tint = Color.White,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clickable(onClick = { showFsVolumeSlider = !showFsVolumeSlider })
-                                .padding(6.dp)
-                        )
-                        Icon(
                             imageVector = Icons.Filled.Fullscreen,
                             contentDescription = stringResource(R.string.common_exit_fullscreen),
                             tint = Color.White,
@@ -1220,46 +1150,9 @@ private fun FullscreenPlayerView(
                     }
                 }
 
-                if (showFullscreenControls && showFsVolumeSlider) {
-                    val trackHeight = 160.dp
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .offset(x = (-54).dp, y = (-34).dp)
-                            .width(24.dp)
-                            .height(trackHeight)
-                            .background(Color(0xCC000000), RoundedCornerShape(12.dp))
-                            .pointerInput(fsMaxVolume) {
-                                var dragStartVolume = fsVolume
-                                var totalDragY = 0f
-                                detectDragGestures(
-                                    onDragStart = {
-                                        dragStartVolume = fsVolume
-                                        totalDragY = 0f
-                                    },
-                                    onDrag = { change, dragAmount ->
-                                        change.consume()
-                                        totalDragY += dragAmount.y
-                                        val newVol = (dragStartVolume - totalDragY / trackHeight.value * fsMaxVolume)
-                                            .toInt()
-                                            .coerceIn(0, fsMaxVolume)
-                                        fsAudioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
-                                        fsVolume = newVol
-                                    }
-                                )
-                            },
-                        contentAlignment = Alignment.BottomCenter
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight(fsVolume / fsMaxVolume.toFloat())
-                                .background(accent.primary, RoundedCornerShape(12.dp))
-                        )
-                    }
-                }
             }
         }
+    }
     }
 }
 

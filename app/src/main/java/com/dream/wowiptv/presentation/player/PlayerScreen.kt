@@ -2,12 +2,10 @@ package com.dream.wowiptv.presentation.player
 
 import com.dream.wowiptv.R
 import android.content.pm.ActivityInfo
-import android.media.AudioManager
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -15,18 +13,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.ClosedCaption
 import androidx.compose.material.icons.filled.Pause
@@ -78,6 +72,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
+import com.dream.wowiptv.presentation.common.components.PlayerGestureOverlay
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import kotlinx.coroutines.delay
@@ -114,10 +109,6 @@ fun PlayerScreen(
     val context = LocalContext.current
     val activity = context as? ComponentActivity
 
-    val audioManager = remember { context.getSystemService(AudioManager::class.java) }
-    val maxVolume = audioManager?.getStreamMaxVolume(AudioManager.STREAM_MUSIC) ?: 100
-    var volume by remember { mutableStateOf(audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0) }
-    var showVolumeSlider by remember { mutableStateOf(false) }
 
     val networkTracker = remember { NetworkSpeedTracker() }
 
@@ -262,9 +253,9 @@ fun PlayerScreen(
                 .background(Color.Black)
                 .clickable {
                     showOverlay = !showOverlay
-                    showVolumeSlider = false
                 }
         ) {
+        PlayerGestureOverlay(modifier = Modifier.fillMaxSize()) {
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
@@ -483,18 +474,6 @@ fun PlayerScreen(
                         )
                     }
 
-                    IconButton(
-                        onClick = { showVolumeSlider = !showVolumeSlider },
-                        modifier = Modifier.size(28.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                            contentDescription = stringResource(R.string.common_volume),
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-
                     Box {
                         IconButton(
                             onClick = { showAudioMenu = true },
@@ -634,45 +613,8 @@ fun PlayerScreen(
                     }
                 }
 
-                if (showOverlay && showVolumeSlider) {
-                    val trackHeight = 160.dp
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .offset(x = (-82).dp, y = (-38).dp)
-                            .width(24.dp)
-                            .height(trackHeight)
-                            .background(Color(0xCC444444), RoundedCornerShape(12.dp))
-                            .pointerInput(maxVolume) {
-                                var dragStartVolume = volume
-                                var totalDragY = 0f
-                                detectDragGestures(
-                                    onDragStart = {
-                                        dragStartVolume = volume
-                                        totalDragY = 0f
-                                    },
-                                    onDrag = { change, dragAmount ->
-                                        change.consume()
-                                        totalDragY += dragAmount.y
-                                        val newVol = (dragStartVolume - totalDragY / trackHeight.value * maxVolume)
-                                            .toInt()
-                                            .coerceIn(0, maxVolume)
-                                        audioManager?.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
-                                        volume = newVol
-                                    }
-                                )
-                            },
-                        contentAlignment = Alignment.BottomCenter
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight(volume / maxVolume.toFloat())
-                                .background(Color(0xFF1E88E5), RoundedCornerShape(12.dp))
-                        )
-                    }
-                }
             }
+        }
         }
     }
     }
