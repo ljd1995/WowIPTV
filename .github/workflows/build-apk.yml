@@ -61,12 +61,15 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon
-
-      - name: Rename APK with version
         run: |
-          VERSION=$(./gradlew -q printVersionName --no-daemon | tail -n1)
-          cp app/build/outputs/apk/release/*.apk "wowiptv-v${VERSION}.apk"
+          if [[ "$GITHUB_REF_NAME" == v* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+            ./gradlew assembleRelease -PversionName="$VERSION" --no-daemon
+            cp app/build/outputs/apk/release/*.apk "wowiptv-v${VERSION}.apk"
+          else
+            ./gradlew assembleRelease --no-daemon
+            cp app/build/outputs/apk/release/*.apk "wowiptv-dev.apk"
+          fi
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
