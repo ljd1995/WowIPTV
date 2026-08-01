@@ -57,6 +57,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,6 +70,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.VideoSize
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -107,6 +109,7 @@ fun PlayerScreen(
     var showAudioMenu by remember { mutableStateOf(false) }
     var showSubtitleMenu by remember { mutableStateOf(false) }
     var hasSeeked by remember { mutableStateOf(false) }
+    var videoHeight by remember { mutableStateOf(0) }
 
     val context = LocalContext.current
     val activity = context as? ComponentActivity
@@ -126,6 +129,9 @@ fun PlayerScreen(
             .build().apply {
                 playWhenReady = true
                 addListener(object : Player.Listener {
+                    override fun onVideoSizeChanged(videoSize: VideoSize) {
+                        videoHeight = videoSize.height
+                    }
                     override fun onPlaybackStateChanged(state: Int) {
                         isBuffering = state == Player.STATE_BUFFERING
                         if (state == Player.STATE_READY) {
@@ -455,6 +461,27 @@ fun PlayerScreen(
                         fontSize = 11.sp,
                         modifier = Modifier.width(78.dp)
                     )
+
+                    val qualityLabel = when {
+                        videoHeight >= 2160 -> "4K"
+                        videoHeight >= 1440 -> "1440p"
+                        videoHeight >= 1080 -> "1080p"
+                        videoHeight >= 720 -> "720p"
+                        videoHeight >= 576 -> "576p"
+                        videoHeight >= 480 -> "480p"
+                        videoHeight >= 360 -> "360p"
+                        videoHeight >= 240 -> "240p"
+                        else -> ""
+                    }
+                    if (qualityLabel.isNotEmpty()) {
+                        Text(
+                            text = qualityLabel,
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        )
+                    }
 
                     IconButton(
                         onClick = { showVolumeSlider = !showVolumeSlider },
