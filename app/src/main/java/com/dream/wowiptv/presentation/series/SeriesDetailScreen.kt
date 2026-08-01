@@ -67,7 +67,6 @@ import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
-import com.dream.wowiptv.presentation.common.theme.AccentBlue
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -307,7 +306,7 @@ private fun SeriesDetailContent(
                             Surface(
                                 onClick = { selectedSeasonIdx = idx },
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (isSelected) Color(0xFF1E88E5) else Color(0xFF2C2C2C)
+                                color = if (isSelected) Color(0xFF8B5CF6) else Color(0xFF2C2C2C)
                             ) {
                                 Text(
                                     text = season.name,
@@ -385,7 +384,7 @@ private fun EpisodeItem(
             text = episode.episodeNum.toString().padStart(2, '0'),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
-            color = AccentBlue,
+            color = Color(0xFF8B5CF6),
             modifier = Modifier.width(28.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -440,7 +439,7 @@ private fun EpisodeItem(
             Icon(
                 imageVector = Icons.Filled.Replay,
                 contentDescription = stringResource(R.string.common_restart),
-                tint = AccentBlue,
+                tint = Color(0xFF8B5CF6),
                 modifier = Modifier
                     .size(20.dp)
                     .clickable(onClick = onPlay)
@@ -449,7 +448,7 @@ private fun EpisodeItem(
             Icon(
                 imageVector = Icons.Filled.PlayArrow,
                 contentDescription = stringResource(R.string.common_play),
-                tint = AccentBlue,
+                tint = Color(0xFF8B5CF6),
                 modifier = Modifier
                     .size(20.dp)
                     .clickable(onClick = onPlay)
