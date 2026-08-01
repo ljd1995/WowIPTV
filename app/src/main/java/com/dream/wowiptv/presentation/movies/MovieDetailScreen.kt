@@ -2,6 +2,7 @@ package com.dream.wowiptv.presentation.movies
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,10 +10,12 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -31,6 +34,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,8 +48,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
@@ -128,9 +134,13 @@ class MovieDetailViewModel @Inject constructor(
     private val _savedPosition = MutableStateFlow(0L)
     val savedPosition: StateFlow<Long> = _savedPosition.asStateFlow()
 
+    private val _savedDuration = MutableStateFlow(0L)
+    val savedDuration: StateFlow<Long> = _savedDuration.asStateFlow()
+
     fun refreshPosition() {
         viewModelScope.launch {
             _savedPosition.value = watchProgressUseCase.getProgress("vod_$vodId")
+            _savedDuration.value = watchProgressUseCase.getProgressDuration("vod_$vodId")
         }
     }
 }
@@ -171,6 +181,7 @@ fun MovieDetailScreen(
             GradientBackground {
             Box(modifier = Modifier.fillMaxSize()) {
                 val savedPos by viewModel.savedPosition.collectAsState()
+                val savedDuration by viewModel.savedDuration.collectAsState()
                 Column(modifier = Modifier.fillMaxSize()) {
                     Box(
                         modifier = Modifier
@@ -220,60 +231,68 @@ fun MovieDetailScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            info.releasedate?.take(4)?.let { year ->
-                                Text(
-                                    text = year,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                            }
-                            info.rating?.let { rating ->
-                                Icon(
-                                    imageVector = Icons.Filled.Star,
-                                    contentDescription = null,
-                                    tint = Color(0xFFFFC107),
-                                    modifier = Modifier.height(16.dp)
-                                )
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = "%.1f".format(rating),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            info.durationSecs?.let { secs ->
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = formatDuration(secs, LocalContext.current),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        info.genre?.let { genreStr ->
-                            Spacer(modifier = Modifier.height(12.dp))
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                genreStr.split(",").forEach { tag ->
-                                    SuggestionChip(
-                                        onClick = { },
-                                        label = {
-                                            Text(
-                                                text = tag.trim(),
-                                                style = MaterialTheme.typography.labelSmall
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    info.releasedate?.take(4)?.let { year ->
+                                        Text(
+                                            text = year,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                    }
+                                    info.rating?.let { rating ->
+                                        Icon(
+                                            imageVector = Icons.Filled.Star,
+                                            contentDescription = null,
+                                            tint = Color(0xFFFFC107),
+                                            modifier = Modifier.height(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "%.1f".format(rating),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    info.durationSecs?.let { secs ->
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Text(
+                                            text = formatDuration(secs, LocalContext.current),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                info.genre?.let { genreStr ->
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    FlowRow(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        genreStr.split(",").forEach { tag ->
+                                            SuggestionChip(
+                                                onClick = { },
+                                                label = {
+                                                    Text(
+                                                        text = tag.trim(),
+                                                        style = MaterialTheme.typography.labelSmall
+                                                    )
+                                                }
                                             )
                                         }
-                                    )
+                                    }
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(4.dp))
 
                         info.plot?.let { plot ->
                             Spacer(modifier = Modifier.height(16.dp))
@@ -338,19 +357,21 @@ fun MovieDetailScreen(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.surface)
+                        .background(Color(0xFF201E2A).copy(alpha = 0.92f))
                         .navigationBarsPadding()
                         .padding(16.dp)
                 ) {
+                    val durationMs = if (savedDuration > 0) savedDuration else (info.durationSecs ?: 0) * 1000L
+                    val progress = if (savedPos > 0 && durationMs > 0) {
+                        (savedPos.toFloat() / durationMs).coerceIn(0f, 1f)
+                    } else 0f
                     if (savedPos > 0) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             OutlinedButton(
                                 onClick = { onPlay(info.id, info.name, 0L) },
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(24.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFF8B5CF6)
-                                ),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF8B5CF6)),
                                 border = BorderStroke(1.dp, Color(0xFF8B5CF6))
                             ) {
                                 Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -361,11 +382,34 @@ fun MovieDetailScreen(
                                 onClick = { onPlay(info.id, info.name, savedPos) },
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(24.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6))
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6)),
+                                contentPadding = PaddingValues(0.dp)
                             ) {
-                                Icon(Icons.Filled.PlayArrow, contentDescription = null)
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(stringResource(R.string.common_continue))
+                                Box(modifier = Modifier.fillMaxSize()) {
+                                    Row(
+                                        modifier = Modifier.fillMaxSize(),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(stringResource(R.string.common_continue), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomStart)
+                                            .fillMaxWidth()
+                                            .height(3.dp)
+                                            .background(Color.Black.copy(alpha = 0.35f))
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight()
+                                                .fillMaxWidth(progress)
+                                                .background(Color.White)
+                                        )
+                                    }
+                                }
                             }
                         }
                     } else {
@@ -378,12 +422,13 @@ fun MovieDetailScreen(
                             Icon(Icons.Filled.PlayArrow, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(text = stringResource(R.string.common_play))
+                        }
                     }
                 }
+
             }
             }
         }
-    }
     }
     }
 }

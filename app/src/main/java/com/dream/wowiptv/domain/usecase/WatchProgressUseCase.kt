@@ -49,6 +49,11 @@ class WatchProgressUseCase @Inject constructor(
         return watchProgressDao.getByContentId(contentId, sourceId)?.position ?: 0L
     }
 
+    suspend fun getProgressDuration(contentId: String): Long {
+        val sourceId = getSourceId()
+        return watchProgressDao.getByContentId(contentId, sourceId)?.duration ?: 0L
+    }
+
     suspend fun getProgressName(contentId: String): String? {
         val source = sourceRepository.getActiveSource().first() ?: return null
         return watchProgressDao.getByContentId(contentId, source.id)?.name
