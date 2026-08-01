@@ -42,7 +42,11 @@ jobs:
           KS_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -n "$KS_BASE64" ]; then
-            echo "$KS_BASE64" | base64 -d > keystore.jks
+            echo "$KS_BASE64" | tr -d '[:space:]' | base64 -d > keystore.jks
+            if ! keytool -list -keystore keystore.jks -storepass "$KS_PASSWORD" -alias "$KS_ALIAS" > /dev/null 2>&1; then
+              echo "::error::Invalid keystore: check ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD / ANDROID_KEY_ALIAS"
+              exit 1
+            fi
             echo "storeFile=keystore.jks" >> keystore.properties
             echo "storePassword=$KS_PASSWORD" >> keystore.properties
             echo "keyAlias=$KS_ALIAS" >> keystore.properties
