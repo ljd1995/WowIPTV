@@ -27,6 +27,7 @@
     <string name="common_track_n">音轨 %d</string>
     <string name="common_subtitle">字幕</string>
     <string name="common_subtitle_n">字幕 %d</string>
+    <string name="common_no_subtitle">无可用字幕</string>
     <string name="common_disable">关闭</string>
     <string name="common_next_program">下一节目: %s</string>
     <string name="common_ends_at">结束于 %s</string>

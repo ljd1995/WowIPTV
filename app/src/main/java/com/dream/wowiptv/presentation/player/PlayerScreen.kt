@@ -517,13 +517,12 @@ fun PlayerScreen(
                         val textGroups = exoPlayer.currentTracks.groups.filter { it.type == C.TRACK_TYPE_TEXT }
                         IconButton(
                             onClick = { showSubtitleMenu = true },
-                            enabled = textGroups.isNotEmpty(),
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.ClosedCaption,
                                 contentDescription = stringResource(R.string.common_subtitle),
-                                tint = if (textGroups.isEmpty()) Color(0xFF666666) else Color.White,
+                                tint = Color.White,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
@@ -531,34 +530,42 @@ fun PlayerScreen(
                             expanded = showSubtitleMenu,
                             onDismissRequest = { showSubtitleMenu = false }
                         ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.common_disable), color = Color.White) },
-                                onClick = {
-                                    exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters.buildUpon()
-                                        .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
-                                        .build()
-                                    showSubtitleMenu = false
-                                }
-                            )
-                            textGroups.forEachIndexed { index, group ->
-                                val fmt = group.mediaTrackGroup.getFormat(0)
-                                val label = fmt.label?.takeIf { it.isNotBlank() }
-                                    ?: fmt.language?.uppercase()
-                                    ?: context.getString(R.string.common_subtitle_n, index + 1)
-                                val disabled = exoPlayer.trackSelectionParameters.disabledTrackTypes.contains(C.TRACK_TYPE_TEXT)
-                                val isSelected = group.isSelected && !disabled
+                            if (textGroups.isEmpty()) {
                                 DropdownMenuItem(
-                                    text = { Text(if (isSelected) "$label ✓" else label, color = Color.White) },
+                                    text = { Text(stringResource(R.string.common_no_subtitle), color = Color(0xFF888888)) },
+                                    onClick = { showSubtitleMenu = false },
+                                    enabled = false
+                                )
+                            } else {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.common_disable), color = Color.White) },
                                     onClick = {
-                                        val groupTracks = (0 until group.mediaTrackGroup.length).toList()
-                                        val params = exoPlayer.trackSelectionParameters.buildUpon()
-                                            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
-                                            .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, groupTracks))
+                                        exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters.buildUpon()
+                                            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
                                             .build()
-                                        exoPlayer.trackSelectionParameters = params
                                         showSubtitleMenu = false
                                     }
                                 )
+                                textGroups.forEachIndexed { index, group ->
+                                    val fmt = group.mediaTrackGroup.getFormat(0)
+                                    val label = fmt.label?.takeIf { it.isNotBlank() }
+                                        ?: fmt.language?.uppercase()
+                                        ?: context.getString(R.string.common_subtitle_n, index + 1)
+                                    val disabled = exoPlayer.trackSelectionParameters.disabledTrackTypes.contains(C.TRACK_TYPE_TEXT)
+                                    val isSelected = group.isSelected && !disabled
+                                    DropdownMenuItem(
+                                        text = { Text(if (isSelected) "$label ✓" else label, color = Color.White) },
+                                        onClick = {
+                                            val groupTracks = (0 until group.mediaTrackGroup.length).toList()
+                                            val params = exoPlayer.trackSelectionParameters.buildUpon()
+                                                .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
+                                                .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, groupTracks))
+                                                .build()
+                                            exoPlayer.trackSelectionParameters = params
+                                            showSubtitleMenu = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

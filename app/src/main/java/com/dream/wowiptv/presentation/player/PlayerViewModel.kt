@@ -28,7 +28,7 @@ class PlayerViewModel @Inject constructor(
 
     val streamType: String = savedStateHandle["streamType"] ?: "live"
     val streamId: String = savedStateHandle["streamId"] ?: "0"
-    val streamName: String = savedStateHandle["name"] ?: ""
+    val streamName: String = decodeName(savedStateHandle["name"] ?: "")
     val episodeIds: List<String> = (savedStateHandle["episodes"] ?: "").split(",").filter { it.isNotBlank() }
 
     val defaultPlaybackSpeed: StateFlow<Float> = appPreferences.defaultPlaybackSpeed
@@ -144,5 +144,13 @@ class PlayerViewModel @Inject constructor(
 
     fun togglePlay() {
         _isPlaying.value = !_isPlaying.value
+    }
+
+    private fun decodeName(raw: String): String {
+        return try {
+            java.net.URLDecoder.decode(raw, "UTF-8")
+        } catch (_: Exception) {
+            raw
+        }
     }
 }

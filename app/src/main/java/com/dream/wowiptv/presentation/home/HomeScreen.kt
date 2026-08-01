@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.LiveTv
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
@@ -235,7 +236,7 @@ fun HomeScreen(
                                         when (item) {
                                             is FavoriteStreamEntity -> {
                                                 val catName = data.liveCategoryNames[item.categoryId]
-                                                FavCard(name = item.name, icon = item.iconUrl, badge = "LIVE", categoryName = catName, onClick = { onLiveClick(item.streamId, item.name) })
+                                                FavCard(name = item.name, icon = item.iconUrl, badge = "LIVE", categoryName = catName, onClick = { onLiveClick(item.streamId, item.name) }, onRemove = { viewModel.removeFavorite(item) })
                                             }
                                             is FavoriteVodEntity -> {
                                                 val catMap = if (item.type == "movie") data.vodCategoryNames else data.seriesCategoryNames
@@ -244,7 +245,7 @@ fun HomeScreen(
                                                 val favRating = if (item.type == "movie") data.vodRating[item.vodId] else data.seriesRating[item.vodId]
                                                 FavCard(name = item.name, icon = item.icon, badge = badge, categoryName = catName, rating = favRating, onClick = {
                                                     if (item.type == "movie") onMovieClick(item.vodId) else onSeriesClick(item.vodId)
-                                                })
+                                                }, onRemove = { viewModel.removeFavorite(item) })
                                             }
                                         }
                                     }
@@ -453,7 +454,7 @@ private fun TypeBadge(text: String) {
 }
 
 @Composable
-private fun MediaCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, rating: String? = null, onClick: () -> Unit = {}) {
+private fun MediaCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, rating: String? = null, onClick: () -> Unit = {}, onRemove: (() -> Unit)? = null) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val cardScale by animateFloatAsState(if (isPressed) 0.97f else 1f, label = "cardScale")
@@ -487,6 +488,25 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
         if (!badge.isNullOrEmpty()) {
             Box(modifier = Modifier.align(Alignment.TopStart)) {
                 TypeBadge(text = badge)
+            }
+        }
+        if (onRemove != null) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 4.dp, end = 4.dp)
+                    .size(22.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color(0xCC000000))
+                    .clickable(onClick = onRemove),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = stringResource(R.string.settings_delete),
+                    tint = Color.White,
+                    modifier = Modifier.size(14.dp)
+                )
             }
         }
         Box(
@@ -550,8 +570,8 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
     }
 
 @Composable
-private fun FavCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, rating: String? = null, onClick: () -> Unit = {}) {
-    MediaCard(name, icon, badge, categoryName, rating, onClick)
+private fun FavCard(name: String, icon: String? = null, badge: String? = null, categoryName: String? = null, rating: String? = null, onClick: () -> Unit = {}, onRemove: (() -> Unit)? = null) {
+    MediaCard(name, icon, badge, categoryName, rating, onClick, onRemove)
 }
 
 @Composable
