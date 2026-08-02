@@ -141,7 +141,7 @@ private fun FavGridCell(name: String, icon: String? = null, badge: String? = nul
                 model = icon,
                 contentDescription = name,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Fit
             )
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

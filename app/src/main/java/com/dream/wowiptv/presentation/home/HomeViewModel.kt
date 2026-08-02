@@ -146,7 +146,7 @@ class HomeViewModel @Inject constructor(
                     e.added?.let {
                         try { fmt.parse(it)?.after(cutoff) == true } catch (_: Exception) { false }
                     } ?: false
-                }.ifEmpty { vod.take(10) }
+                }.ifEmpty { vod.take(50) }
 
                 _data.value = _data.value.copy(
                     username = source.username,
@@ -156,9 +156,9 @@ class HomeViewModel @Inject constructor(
                     favoriteStreams = favStreams,
                     favoriteMovies = favVods.filter { it.type == "movie" },
                     favoriteSeries = favVods.filter { it.type == "series" },
-                    recentLive = live.take(10),
+                    recentLive = live.take(50),
                     recentMovies = recentMovies,
-                    recentSeries = series.take(10),
+                    recentSeries = series.take(50),
                     continueWatching = enriched.take(10),
                     continueCategoryNames = catNames,
                     liveCategoryNames = liveCatMap,
@@ -230,7 +230,7 @@ class HomeViewModel @Inject constructor(
                 e.added?.let {
                     try { fmt.parse(it)?.after(cutoff) == true } catch (_: Exception) { false }
                 } ?: false
-            }.ifEmpty { vod.take(10) }
+            }.ifEmpty { vod.take(50) }
 
             val enriched = progress.map { wp ->
                 val icon = when (wp.contentType) {

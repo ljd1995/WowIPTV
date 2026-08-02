@@ -80,7 +80,7 @@ fun AllItemsScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(stringResource(R.string.home_all_content), color = Color.White) },
+                    title = { Text(stringResource(R.string.home_recent), color = Color.White) },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = Color.White)
@@ -193,7 +193,7 @@ private fun GridCell(icon: String? = null, name: String, badge: String? = null, 
                 model = icon,
                 contentDescription = name,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Fit
             )
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

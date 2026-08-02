@@ -138,7 +138,7 @@ private fun HistoryGridCell(
                 model = item.icon,
                 contentDescription = item.name,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Fit
             )
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
