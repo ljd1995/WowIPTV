@@ -18,20 +18,17 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -44,7 +41,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -54,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import com.dream.wowiptv.R
 import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.domain.model.VodInfo
@@ -65,8 +60,10 @@ import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.CastAvatarRow
 import com.dream.wowiptv.presentation.common.components.PersonAvatar
+import com.dream.wowiptv.presentation.common.components.DetailPosterHeader
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
+import com.dream.wowiptv.presentation.common.components.posterContentScaleFromKey
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -79,6 +76,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -111,6 +109,10 @@ class MovieDetailViewModel @Inject constructor(
         appPreferences.tmdbApiKey
     ) { show, key -> show && key.isNotBlank() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val posterContentScale: StateFlow<ContentScale> = appPreferences.posterContentScale
+        .map { posterContentScaleFromKey(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ContentScale.Crop)
 
     private val _castImages = MutableStateFlow<Map<String, String>>(emptyMap())
     val castImages: StateFlow<Map<String, String>> = _castImages.asStateFlow()
@@ -155,6 +157,7 @@ fun MovieDetailScreen(
 ) {
     val vodInfoState by viewModel.vodInfo.collectAsState()
     val avatarsEnabled by viewModel.avatarsEnabled.collectAsState()
+    val posterContentScale by viewModel.posterContentScale.collectAsState()
     val castImages by viewModel.castImages.collectAsState()
     val accent = LocalAccentPalette.current
 
@@ -185,38 +188,12 @@ fun MovieDetailScreen(
                 val savedPos by viewModel.savedPosition.collectAsState()
                 val savedDuration by viewModel.savedDuration.collectAsState()
                 Column(modifier = Modifier.fillMaxSize()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(320.dp)
-                    ) {
-                        AsyncImage(
-                            model = info.cover,
-                            contentDescription = info.name,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(140.dp)
-                                .background(
-                                    Brush.verticalGradient(
-                                        listOf(Color.Black.copy(alpha = 0.7f), Color.Transparent)
-                                    )
-                                )
-                        )
-                        IconButton(
-                            onClick = onBack,
-                            modifier = Modifier.statusBarsPadding()
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back",
-                                tint = Color.White
-                            )
-                        }
-                    }
+                    DetailPosterHeader(
+                        model = info.cover,
+                        contentDescription = info.name,
+                        contentScale = posterContentScale,
+                        onBack = onBack
+                    )
 
                     Column(
                         modifier = Modifier

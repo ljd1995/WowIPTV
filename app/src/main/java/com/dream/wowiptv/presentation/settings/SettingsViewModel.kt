@@ -85,6 +85,9 @@ class SettingsViewModel @Inject constructor(
     val contentGridColumns: StateFlow<Int> = appPreferences.contentGridColumns
         .stateIn(viewModelScope, SharingStarted.Eagerly, 2)
 
+    val posterContentScale: StateFlow<String> = appPreferences.posterContentScale
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "cover")
+
     init {
         refreshUserInfo()
     }
@@ -137,6 +140,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setContentGridColumns(columns: Int) {
         viewModelScope.launch { appPreferences.setContentGridColumns(columns) }
+    }
+
+    fun setPosterContentScale(scale: String) {
+        viewModelScope.launch { appPreferences.setPosterContentScale(scale) }
     }
 
     fun refreshUserInfo() {

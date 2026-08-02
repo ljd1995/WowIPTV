@@ -164,6 +164,13 @@
     <string name="settings_grid_columns">每行显示数量</string>
     <string name="settings_grid_columns_desc">电影与剧集列表每行显示的卡片数</string>
     <string name="settings_grid_columns_value">%1$d 列</string>
+    <string name="settings_poster_content_scale">海报展示方式</string>
+    <string name="settings_poster_content_scale_desc">电影剧集详情页海报的展示形式</string>
+    <string name="settings_poster_cover">封面填充</string>
+    <string name="settings_poster_fit">完整显示</string>
+    <string name="settings_poster_inside">等比含内</string>
+    <string name="settings_poster_fill_width">宽度铺满</string>
+    <string name="settings_poster_fill_height">高度铺满</string>
     <string name="settings_sources">源列表</string>
     <string name="settings_sync_all">同步全部源</string>
     <string name="settings_add_source">添加源</string>

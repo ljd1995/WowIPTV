@@ -37,6 +37,7 @@ class AppPreferences(private val context: Context) {
         private val THEME_COLOR = stringPreferencesKey("theme_color")
         private val AUTO_CHECK_UPDATE = booleanPreferencesKey("auto_check_update")
         private val CONTENT_GRID_COLUMNS = intPreferencesKey("content_grid_columns")
+        private val POSTER_CONTENT_SCALE = stringPreferencesKey("poster_content_scale")
 
         private const val KEY_ALIAS = "tmdb_api_key_alias"
     }
@@ -69,6 +70,10 @@ class AppPreferences(private val context: Context) {
         (it[CONTENT_GRID_COLUMNS] ?: 2)
     }
 
+    val posterContentScale: Flow<String> = context.appDataStore.data.map {
+        it[POSTER_CONTENT_SCALE] ?: "cover"
+    }
+
 
 
     suspend fun setShowCastAvatars(show: Boolean) {
@@ -96,6 +101,10 @@ class AppPreferences(private val context: Context) {
 
     suspend fun setContentGridColumns(columns: Int) {
         context.appDataStore.edit { it[CONTENT_GRID_COLUMNS] = columns }
+    }
+
+    suspend fun setPosterContentScale(scale: String) {
+        context.appDataStore.edit { it[POSTER_CONTENT_SCALE] = scale }
     }
 
     private fun getSecretKey(): SecretKey {

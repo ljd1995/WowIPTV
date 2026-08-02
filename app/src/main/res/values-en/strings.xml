@@ -155,6 +155,13 @@
     <string name="settings_grid_columns">Columns per row</string>
     <string name="settings_grid_columns_desc">Number of cards per row in Movies &amp; Series</string>
     <string name="settings_grid_columns_value">%1$d</string>
+    <string name="settings_poster_content_scale">Poster mode</string>
+    <string name="settings_poster_content_scale_desc">How the poster is displayed on the details screen</string>
+    <string name="settings_poster_cover">Cover</string>
+    <string name="settings_poster_fit">Fit</string>
+    <string name="settings_poster_inside">Inside</string>
+    <string name="settings_poster_fill_width">Fill width</string>
+    <string name="settings_poster_fill_height">Fill height</string>
     <string name="settings_sources">Sources</string>
     <string name="settings_sync_all">Sync all sources</string>
     <string name="settings_add_source">Add source</string>

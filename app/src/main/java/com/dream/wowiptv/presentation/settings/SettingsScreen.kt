@@ -135,6 +135,7 @@ fun SettingsScreen(
     val tmdbApiKey by viewModel.tmdbApiKey.collectAsState()
     val themeColor by viewModel.themeColor.collectAsState()
     val gridColumns by viewModel.contentGridColumns.collectAsState()
+    val posterContentScale by viewModel.posterContentScale.collectAsState()
     val updateViewModel: UpdateViewModel = hiltViewModel()
     val updateState by updateViewModel.state.collectAsState()
     val autoCheckUpdate by updateViewModel.autoCheckUpdate.collectAsState()
@@ -218,6 +219,11 @@ fun SettingsScreen(
                     GridColumnsRow(
                         selected = gridColumns,
                         onSelect = viewModel::setContentGridColumns
+                    )
+                    HorizontalDividerItem()
+                    PosterScaleRow(
+                        selected = posterContentScale,
+                        onSelect = viewModel::setPosterContentScale
                     )
                     HorizontalDividerItem()
                     SettingSwitchRow(
@@ -462,6 +468,62 @@ private fun LanguageRow() {
 }
 
 
+
+@Composable
+private fun PosterScaleRow(
+    selected: String,
+    onSelect: (String) -> Unit
+) {
+    val options = listOf(
+        "cover" to stringResource(R.string.settings_poster_cover),
+        "fit" to stringResource(R.string.settings_poster_fit),
+        "inside" to stringResource(R.string.settings_poster_inside),
+        "fill_width" to stringResource(R.string.settings_poster_fill_width),
+        "fill_height" to stringResource(R.string.settings_poster_fill_height)
+    )
+    var expanded by remember { mutableStateOf(false) }
+    val accent = LocalAccentPalette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = true }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.settings_poster_content_scale), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(stringResource(R.string.settings_poster_content_scale_desc), style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+        }
+        Box {
+            Text(
+                text = options.first { it.first == selected }.second,
+                color = accent.primary,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                options.forEach { (key, label) ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = label + if (key == selected) " ✓" else "",
+                                color = Color.White
+                            )
+                        },
+                        onClick = {
+                            onSelect(key)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -24,14 +23,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
@@ -46,7 +42,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -57,7 +52,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import coil.compose.AsyncImage
 import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.Episode
 import com.dream.wowiptv.domain.model.Season
@@ -67,11 +61,13 @@ import com.dream.wowiptv.domain.repository.TmdbRepository
 import com.dream.wowiptv.domain.usecase.GetSeriesInfoUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.common.components.DetailPosterHeader
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.CastAvatarRow
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.components.PersonAvatar
+import com.dream.wowiptv.presentation.common.components.posterContentScaleFromKey
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -82,6 +78,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -106,6 +103,10 @@ class SeriesDetailViewModel @Inject constructor(
         appPreferences.tmdbApiKey
     ) { show, key -> show && key.isNotBlank() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val posterContentScale: StateFlow<ContentScale> = appPreferences.posterContentScale
+        .map { posterContentScaleFromKey(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ContentScale.Crop)
 
     private val _castImages = MutableStateFlow<Map<String, String>>(emptyMap())
     val castImages: StateFlow<Map<String, String>> = _castImages.asStateFlow()
@@ -157,6 +158,7 @@ fun SeriesDetailScreen(
 ) {
     val infoState by viewModel.info.collectAsState()
     val avatarsEnabled by viewModel.avatarsEnabled.collectAsState()
+    val posterContentScale by viewModel.posterContentScale.collectAsState()
     val castImages by viewModel.castImages.collectAsState()
 
     LaunchedEffect(seriesId) {
@@ -178,6 +180,7 @@ fun SeriesDetailScreen(
             episodePositions = viewModel.episodePositions.collectAsState().value,
             avatarsEnabled = avatarsEnabled,
             castImages = castImages,
+            posterContentScale = posterContentScale,
             onBack = onBack,
             onPlayEpisode = onPlayEpisode
         )
@@ -191,6 +194,7 @@ private fun SeriesDetailContent(
     episodePositions: Map<String, Long> = emptyMap(),
     avatarsEnabled: Boolean = false,
     castImages: Map<String, String> = emptyMap(),
+    posterContentScale: ContentScale = ContentScale.Crop,
     onBack: () -> Unit,
     onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long, episodeIds: List<String>) -> Unit
 ) {
@@ -206,38 +210,12 @@ private fun SeriesDetailContent(
     GradientBackground {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(320.dp)
-            ) {
-                AsyncImage(
-                    model = series.cover,
-                    contentDescription = series.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(140.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color.Black.copy(alpha = 0.7f), Color.Transparent)
-                            )
-                        )
-                )
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier.statusBarsPadding()
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White
-                    )
-                }
-            }
+            DetailPosterHeader(
+                model = series.cover,
+                contentDescription = series.name,
+                contentScale = posterContentScale,
+                onBack = onBack
+            )
 
             Column(
                 modifier = Modifier
