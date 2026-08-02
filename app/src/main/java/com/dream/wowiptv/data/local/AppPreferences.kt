@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -38,6 +39,8 @@ class AppPreferences(private val context: Context) {
         private val AUTO_CHECK_UPDATE = booleanPreferencesKey("auto_check_update")
         private val CONTENT_GRID_COLUMNS = intPreferencesKey("content_grid_columns")
         private val POSTER_CONTENT_SCALE = stringPreferencesKey("poster_content_scale")
+        private val CATEGORY_LOCK_PASSWORD = stringPreferencesKey("category_lock_password")
+        private val CATEGORY_LOCKS = stringSetPreferencesKey("category_locks")
 
         private const val KEY_ALIAS = "tmdb_api_key_alias"
     }
@@ -74,6 +77,14 @@ class AppPreferences(private val context: Context) {
         it[POSTER_CONTENT_SCALE] ?: "cover"
     }
 
+    val categoryLockPassword: Flow<String> = context.appDataStore.data.map { prefs ->
+        prefs[CATEGORY_LOCK_PASSWORD]?.let { decrypt(it) } ?: ""
+    }
+
+    val categoryLocks: Flow<Set<String>> = context.appDataStore.data.map {
+        it[CATEGORY_LOCKS] ?: emptySet()
+    }
+
 
 
     suspend fun setShowCastAvatars(show: Boolean) {
@@ -105,6 +116,21 @@ class AppPreferences(private val context: Context) {
 
     suspend fun setPosterContentScale(scale: String) {
         context.appDataStore.edit { it[POSTER_CONTENT_SCALE] = scale }
+    }
+
+    suspend fun setCategoryLockPassword(password: String) {
+        val trimmed = password.trim()
+        context.appDataStore.edit { p ->
+            if (trimmed.isEmpty()) {
+                p.remove(CATEGORY_LOCK_PASSWORD)
+            } else {
+                p[CATEGORY_LOCK_PASSWORD] = encrypt(trimmed)
+            }
+        }
+    }
+
+    suspend fun setCategoryLocks(locks: Set<String>) {
+        context.appDataStore.edit { it[CATEGORY_LOCKS] = locks }
     }
 
     private fun getSecretKey(): SecretKey {

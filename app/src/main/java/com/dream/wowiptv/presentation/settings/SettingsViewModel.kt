@@ -88,6 +88,9 @@ class SettingsViewModel @Inject constructor(
     val posterContentScale: StateFlow<String> = appPreferences.posterContentScale
         .stateIn(viewModelScope, SharingStarted.Eagerly, "cover")
 
+    val categoryLockPassword: StateFlow<String> = appPreferences.categoryLockPassword
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
+
     init {
         refreshUserInfo()
     }
@@ -144,6 +147,15 @@ class SettingsViewModel @Inject constructor(
 
     fun setPosterContentScale(scale: String) {
         viewModelScope.launch { appPreferences.setPosterContentScale(scale) }
+    }
+
+    fun setCategoryLockPassword(password: String) {
+        viewModelScope.launch {
+            appPreferences.setCategoryLockPassword(password)
+            if (password.trim().isEmpty()) {
+                appPreferences.setCategoryLocks(emptySet())
+            }
+        }
     }
 
     fun refreshUserInfo() {

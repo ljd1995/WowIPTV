@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
@@ -111,6 +112,7 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     onAddSource: () -> Unit,
     onEditSource: (Long) -> Unit,
+    onManageLocks: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     sourceTypeViewModel: SourceTypeViewModel = hiltViewModel()
 ) {
@@ -136,6 +138,7 @@ fun SettingsScreen(
     val themeColor by viewModel.themeColor.collectAsState()
     val gridColumns by viewModel.contentGridColumns.collectAsState()
     val posterContentScale by viewModel.posterContentScale.collectAsState()
+    val lockPassword by viewModel.categoryLockPassword.collectAsState()
     val updateViewModel: UpdateViewModel = hiltViewModel()
     val updateState by updateViewModel.state.collectAsState()
     val autoCheckUpdate by updateViewModel.autoCheckUpdate.collectAsState()
@@ -158,6 +161,8 @@ fun SettingsScreen(
     val imageLoader = remember { context.imageLoader }
     var showTmdbKeyDialog by remember { mutableStateOf(false) }
     var tmdbKeyInput by remember { mutableStateOf("") }
+    var showLockPasswordDialog by remember { mutableStateOf(false) }
+    var lockPasswordInput by remember { mutableStateOf("") }
 
     fun refreshCacheSize() {
         scope.launch(Dispatchers.IO) {
@@ -359,6 +364,34 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                SectionCard(title = stringResource(R.string.settings_lock_section), icon = Icons.Default.Lock) {
+                    ActionRow(
+                        title = stringResource(R.string.settings_lock_password),
+                        subtitle = if (lockPassword.isNotEmpty()) stringResource(R.string.settings_lock_password_set) else stringResource(R.string.settings_lock_password_not_set),
+                        enabled = true,
+                        onClick = {
+                            lockPasswordInput = lockPassword
+                            showLockPasswordDialog = true
+                        }
+                    )
+                    HorizontalDividerItem()
+                    ActionRow(
+                        title = stringResource(R.string.settings_lock_manage),
+                        subtitle = stringResource(R.string.settings_lock_manage_desc),
+                        enabled = true,
+                        onClick = {
+                            if (lockPassword.isEmpty()) {
+                                lockPasswordInput = ""
+                                showLockPasswordDialog = true
+                            } else {
+                                onManageLocks()
+                            }
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 SourceListCard(
                     sources = sourcesState,
                     activeSourceId = activeSourceId,
@@ -393,6 +426,18 @@ fun SettingsScreen(
                         tmdbKeyInput = newKey
                         showTmdbKeyDialog = false
                         Toast.makeText(context, context.getString(R.string.settings_tmdb_key_saved), Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+            if (showLockPasswordDialog) {
+                SetLockPasswordDialog(
+                    initial = lockPasswordInput,
+                    onDismiss = { showLockPasswordDialog = false },
+                    onSave = { newPassword ->
+                        viewModel.setCategoryLockPassword(newPassword)
+                        lockPasswordInput = newPassword
+                        showLockPasswordDialog = false
+                        Toast.makeText(context, context.getString(R.string.settings_lock_saved), Toast.LENGTH_SHORT).show()
                     }
                 )
             }
@@ -744,6 +789,59 @@ private fun TmdbKeyDialog(
         },
         confirmButton = {
             TextButton(onClick = { onSave(input) }) {
+                Text(stringResource(R.string.common_save), color = accent.vibrant)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.common_cancel), color = Color(0xFF999999))
+            }
+        }
+    )
+}
+
+@Composable
+private fun SetLockPasswordDialog(
+    initial: String,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var input by remember { mutableStateOf(initial) }
+    val accent = LocalAccentPalette.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF2C2C2C),
+        title = {
+            Text(stringResource(R.string.settings_lock_password_title), color = Color.White)
+        },
+        text = {
+            OutlinedTextField(
+                value = input,
+                onValueChange = { input = it },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                placeholder = {
+                    Text(
+                        text = stringResource(R.string.settings_lock_password_hint),
+                        color = Color(0xFF666666),
+                        fontSize = 13.sp
+                    )
+                },
+                textStyle = MaterialTheme.typography.bodySmall.copy(color = Color.White),
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    cursorColor = accent.vibrant,
+                    focusedBorderColor = accent.vibrant,
+                    unfocusedBorderColor = Color(0xFF3A3A4A),
+                    focusedContainerColor = Color.White.copy(alpha = 0.06f),
+                    unfocusedContainerColor = Color.White.copy(alpha = 0.06f)
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(input.trim()) }) {
                 Text(stringResource(R.string.common_save), color = accent.vibrant)
             }
         },

@@ -19,6 +19,7 @@ WowIPTV is an Android IPTV client supporting Live TV, on-demand Movies and TV Se
 - **Version updates** — auto-check for the latest GitHub release on launch (toggleable), one-tap download & install
 - **Bilingual UI** — Chinese / English, follow system, synced with Android 13+ per-app language
 - **Customization** — default playback speed, player status bar toggle, home section visibility, startup preload, auto-check-for-updates toggle
+- **Parental / category lock** — per-category lock on Live / Movies / Series with a management password; locked category content is hidden from the "All" view, favorites lists and the home page, and locks re-apply when you switch away
 - **Visual style** — dark gradient background, brand glow, frosted cards, edge-to-edge status bar, 14 switchable theme colors
 
 ## Tech Stack

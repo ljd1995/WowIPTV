@@ -24,6 +24,7 @@ import com.dream.wowiptv.data.local.SourcePreferences
 import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.domain.repository.SourceRepository
+import com.dream.wowiptv.presentation.common.CategoryLocks
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +41,13 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 import javax.inject.Inject
+
+data class Quad(
+    val liveCat: List<LiveCategoryEntity>,
+    val vodCat: List<VodCategoryEntity>,
+    val seriesCat: List<SeriesCategoryEntity>,
+    val locks: Set<String>
+)
 
 data class HomeSection(
     val username: String = "",
@@ -77,7 +85,7 @@ class HomeViewModel @Inject constructor(
     private val vodCategoryDao: VodCategoryDao,
     private val seriesCategoryDao: SeriesCategoryDao,
     private val sourcePreferences: SourcePreferences,
-    appPreferences: AppPreferences
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
@@ -109,7 +117,7 @@ class HomeViewModel @Inject constructor(
                     if (source == null) {
                         flowOf(_data.value.copy(isRefreshing = false))
                     } else {
-                        val content = combine(
+val content = combine(
                             liveStreamDao.getBySource(source.id),
                             vodStreamDao.getBySource(source.id)
                         ) { l, v -> l to v }
@@ -124,11 +132,20 @@ class HomeViewModel @Inject constructor(
                         val cats = combine(
                             liveCategoryDao.getBySource(source.id),
                             vodCategoryDao.getBySource(source.id),
-                            seriesCategoryDao.getBySource(source.id)
-                        ) { l, v, s -> Triple(l, v, s) }
-                        combine(content, content2, favs, cats, _refreshTrigger) {
-                                c1, c2, fav, cat, _ ->
-                            buildSection(source, c1.first, c1.second, c2.first, c2.second, fav.first, fav.second, cat.first, cat.second, cat.third)
+                            seriesCategoryDao.getBySource(source.id),
+                            appPreferences.categoryLocks,
+                            _refreshTrigger
+                        ) { l, v, s, lbs, _ -> Quad(l, v, s, lbs) }
+                        combine(content, content2, favs, cats) {
+                                c1, c2, fav, quad ->
+                            buildSection(
+                                source,
+                                c1.first, c1.second,
+                                c2.first, c2.second,
+                                fav.first, fav.second,
+                                quad.liveCat, quad.vodCat, quad.seriesCat,
+                                quad.locks
+                            )
                         }
                     }
                 }
@@ -149,12 +166,17 @@ class HomeViewModel @Inject constructor(
         favVods: List<FavoriteVodEntity>,
         liveCat: List<LiveCategoryEntity>,
         vodCat: List<VodCategoryEntity>,
-        seriesCat: List<SeriesCategoryEntity>
+        seriesCat: List<SeriesCategoryEntity>,
+        locks: Set<String>
     ): HomeSection {
         val liveCatMap = liveCat.associate { it.categoryId to it.name }
         val vodCatMap = vodCat.associate { it.categoryId to it.name }
         val seriesCatMap = seriesCat.associate { it.categoryId to it.name }
         val (vodRatingMap, seriesRatingMap) = buildRatingMaps(vod, series)
+
+        val lockedLiveIds = CategoryLocks.lockedIds(CategoryLocks.TYPE_LIVE, locks, source.id)
+        val lockedVodIds = CategoryLocks.lockedIds(CategoryLocks.TYPE_VOD, locks, source.id)
+        val lockedSeriesIds = CategoryLocks.lockedIds(CategoryLocks.TYPE_SERIES, locks, source.id)
 
         val enriched = progress.map { wp ->
             val icon = when (wp.contentType) {
@@ -192,9 +214,9 @@ class HomeViewModel @Inject constructor(
             liveCount = live.size,
             movieCount = vod.size,
             seriesCount = series.size,
-            favoriteStreams = favStreams,
-            favoriteMovies = favVods.filter { it.type == "movie" },
-            favoriteSeries = favVods.filter { it.type == "series" },
+            favoriteStreams = favStreams.filter { it.categoryId !in lockedLiveIds },
+            favoriteMovies = favVods.filter { it.type == "movie" && it.categoryId !in lockedVodIds },
+            favoriteSeries = favVods.filter { it.type == "series" && it.categoryId !in lockedSeriesIds },
             recentLive = live.take(50),
             recentMovies = recentMovies,
             recentSeries = series.take(50),

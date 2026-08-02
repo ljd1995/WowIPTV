@@ -26,6 +26,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
@@ -65,6 +67,7 @@ import com.dream.wowiptv.domain.model.VodCategory
 import com.dream.wowiptv.domain.model.VodStream
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.components.GradientBackground
+import com.dream.wowiptv.presentation.common.components.CategoryLockDialog
 import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
@@ -85,7 +88,17 @@ fun MoviesScreen(
     val categoryCounts by viewModel.categoryCounts.collectAsState()
     val movieFavoriteIds by viewModel.favoriteIds.collectAsState()
     val gridColumns by viewModel.gridColumns.collectAsState()
+    val lockedCategories by viewModel.lockedCategories.collectAsState()
+    val unlockedCategories by viewModel.unlockedCategories.collectAsState()
+    val pendingLockedCategory by viewModel.pendingLockedCategory.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
+
+    fun onCategorySelected(id: Int?) {
+        viewModel.selectCategory(id)
+        if (viewModel.pendingLockedCategory.value == null) {
+            viewModel.setSearchQuery("")
+        }
+    }
 
     LaunchedEffect(streamsState) {
         if (streamsState !is UiState.Loading) {
@@ -120,15 +133,37 @@ fun MoviesScreen(
                         item {
                             FilterChip(
                                 selected = selectedCategoryId == null,
-                                onClick = { viewModel.selectCategory(null); viewModel.setSearchQuery("") },
+                                onClick = { onCategorySelected(null) },
                                 label = { Text(stringResource(R.string.movies_all, categoryCounts.values.sum())) }
                             )
                         }
                         items(cats, key = { it.id }) { category ->
+                            val isLocked = category.id in lockedCategories
                             FilterChip(
                                 selected = selectedCategoryId == category.id,
-                                onClick = { viewModel.selectCategory(category.id); viewModel.setSearchQuery("") },
-                                label = { Text("${category.name} (${categoryCounts[category.id] ?: 0})") }
+                                onClick = { onCategorySelected(category.id) },
+                                label = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        if (category.id in unlockedCategories && isLocked) {
+                                            Icon(
+                                                imageVector = Icons.Filled.LockOpen,
+                                                contentDescription = stringResource(R.string.common_unlocked),
+                                                tint = Color(0xFF4CAF50),
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(3.dp))
+                                        } else if (isLocked) {
+                                            Icon(
+                                                imageVector = Icons.Filled.Lock,
+                                                contentDescription = stringResource(R.string.common_locked),
+                                                tint = Color(0xFFE6B34C),
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(3.dp))
+                                        }
+                                        Text("${category.name} (${categoryCounts[category.id] ?: 0})")
+                                    }
+                                }
                             )
                         }
                     }
@@ -202,6 +237,15 @@ fun MoviesScreen(
                     }
                 }
             }
+        }
+        pendingLockedCategory?.let { lockedId ->
+            val lockedName = (categoriesState as? UiState.Success)?.data?.find { it.id == lockedId }?.name
+                ?: stringResource(R.string.common_locked)
+            CategoryLockDialog(
+                categoryName = lockedName,
+                onDismiss = { viewModel.dismissCategoryLock() },
+                onVerifyPassword = { viewModel.confirmCategoryLock(it) }
+            )
         }
         }
     }

@@ -21,6 +21,7 @@ import com.dream.wowiptv.domain.usecase.GetShortEpgUseCase
 import com.dream.wowiptv.domain.usecase.PlayStreamUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.domain.repository.SourceRepository
+import com.dream.wowiptv.presentation.common.CategoryLocks
 import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.R
@@ -55,7 +56,7 @@ class LiveViewModel @Inject constructor(
     private val sourceRepository: SourceRepository,
     private val favoriteStreamDao: FavoriteStreamDao,
     private val watchProgressUseCase: WatchProgressUseCase,
-    appPreferences: AppPreferences,
+    private val appPreferences: AppPreferences,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -65,7 +66,8 @@ class LiveViewModel @Inject constructor(
 
     private data class CategoryAndFavorites(
         val categoryId: Int?,
-        val favoriteIds: Set<Int>
+        val favoriteIds: Set<Int>,
+        val blockedCategoryIds: Set<Int>
     )
 
     val defaultPlaybackSpeed: StateFlow<Float> = appPreferences.defaultPlaybackSpeed
@@ -90,23 +92,71 @@ class LiveViewModel @Inject constructor(
     private val _selectedCategoryId = MutableStateFlow<Int?>(null)
     val selectedCategoryId: StateFlow<Int?> = _selectedCategoryId.asStateFlow()
 
+    val lockedCategories: StateFlow<Set<Int>> = combine(
+        appPreferences.categoryLocks,
+        sourceRepository.getActiveSource()
+    ) { locks, source ->
+        CategoryLocks.lockedIds(CategoryLocks.TYPE_LIVE, locks, source?.id)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
+    private val _pendingLockedCategory = MutableStateFlow<Int?>(null)
+    val pendingLockedCategory: StateFlow<Int?> = _pendingLockedCategory.asStateFlow()
+
+    private val _unlockedCategories = MutableStateFlow<Set<Int>>(emptySet())
+    val unlockedCategories: StateFlow<Set<Int>> = _unlockedCategories.asStateFlow()
+
+    val categoryLockPassword: StateFlow<String> = appPreferences.categoryLockPassword
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "")
+
     private val _refreshTrigger = MutableStateFlow(0L)
 
     private val _favoriteIds = MutableStateFlow<Set<Int>>(emptySet())
     val favoriteIds: StateFlow<Set<Int>> = _favoriteIds.asStateFlow()
 
+    val visibleFavoriteCount: StateFlow<Int> = combine(
+        sourceRepository.getActiveSource(),
+        lockedCategories,
+        unlockedCategories
+    ) { source, locked, unlocked -> Pair(source, locked - unlocked) }
+        .flatMapLatest { (source, blocked) ->
+            if (source == null) {
+                flowOf(0)
+            } else {
+                favoriteStreamDao.getAllBySource(source.id)
+                    .map { favs -> favs.count { it.categoryId !in blocked } }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
+
     val streams: StateFlow<UiState<List<LiveStream>>> = combine(
         _selectedCategoryId,
         _refreshTrigger,
-        _favoriteIds
-    ) { categoryId, _, favIds -> CategoryAndFavorites(categoryId, favIds) }
+        _favoriteIds,
+        lockedCategories,
+        unlockedCategories
+    ) { categoryId, _, favIds, locked, unlocked ->
+        CategoryAndFavorites(categoryId, favIds, locked - unlocked)
+    }
         .flatMapLatest { selection ->
             if (selection.categoryId == FAVORITES_ID) {
                 getLiveStreamsUseCase(null)
                     .map { allStreams ->
-                        UiState.Success(allStreams.filter { it.id in selection.favoriteIds }) as UiState<List<LiveStream>>
+                        UiState.Success(
+                            allStreams.filter {
+                                it.id in selection.favoriteIds && it.categoryId !in selection.blockedCategoryIds
+                            }
+                        ) as UiState<List<LiveStream>>
                     }
                     .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_favorites))) }
+                    .onStart { emit(UiState.Loading) }
+            } else if (selection.categoryId == null) {
+                getLiveStreamsUseCase(null)
+                    .map { allStreams ->
+                        UiState.Success(
+                            allStreams.filter { it.categoryId !in selection.blockedCategoryIds }
+                        ) as UiState<List<LiveStream>>
+                    }
+                    .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_channels))) }
                     .onStart { emit(UiState.Loading) }
             } else {
                 getLiveStreamsUseCase(selection.categoryId)
@@ -128,13 +178,24 @@ class LiveViewModel @Inject constructor(
         UiState.Success(s.data.filter { it.name.contains(query, ignoreCase = true) })
     }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState.Loading)
 
-    val categoryCounts: StateFlow<Map<Int, Int>> = sourceRepository.getActiveSource()
-        .flatMapLatest { source ->
+    val categoryCounts: StateFlow<Map<Int, Int>> = combine(
+        sourceRepository.getActiveSource(),
+        lockedCategories,
+        unlockedCategories
+    ) { source, locked, unlocked ->
+        Pair(source, locked - unlocked)
+    }
+        .flatMapLatest { (source, blockedCategoryIds) ->
             if (source == null) {
                 flowOf(emptyMap())
             } else {
                 getLiveStreamsUseCase(null)
-                    .map { streams -> streams.groupBy { it.categoryId }.mapValues { it.value.size } }
+                    .map { streams ->
+                        streams
+                            .filter { it.categoryId !in blockedCategoryIds }
+                            .groupBy { it.categoryId }
+                            .mapValues { it.value.size }
+                    }
             }
         }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
@@ -269,7 +330,30 @@ class LiveViewModel @Inject constructor(
     }
 
     fun selectCategory(id: Int?) {
+        if (id != null && id in lockedCategories.value && id !in _unlockedCategories.value) {
+            _pendingLockedCategory.value = id
+            return
+        }
+        val prev = _selectedCategoryId.value
         _selectedCategoryId.value = id
+        if (prev != null && prev != id) {
+            _unlockedCategories.update { it - prev }
+        }
+    }
+
+    fun dismissCategoryLock() {
+        _pendingLockedCategory.value = null
+    }
+
+    fun confirmCategoryLock(password: String): Boolean {
+        val pending = _pendingLockedCategory.value ?: return false
+        if (password.isEmpty() || password != categoryLockPassword.value || categoryLockPassword.value.isEmpty()) {
+            return false
+        }
+        _unlockedCategories.update { it + pending }
+        _selectedCategoryId.value = pending
+        _pendingLockedCategory.value = null
+        return true
     }
 
     fun setSearchQuery(query: String) {

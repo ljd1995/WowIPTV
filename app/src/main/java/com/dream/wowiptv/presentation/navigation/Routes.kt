@@ -19,6 +19,7 @@ object Routes {
     const val SERIES = "series/{seriesId}"
     const val SOURCE_ADD = "source_add"
     const val SOURCE_EDIT = "source_edit/{sourceId}"
+    const val MANAGE_LOCKS = "manage_locks"
 
     fun playerRoute(streamType: String, streamId: String, name: String = "", position: Long = 0L, episodes: List<String> = emptyList()) =
         "player/$streamType/$streamId?name=${java.net.URLEncoder.encode(name, "UTF-8")}&position=$position&episodes=${episodes.joinToString(",")}"

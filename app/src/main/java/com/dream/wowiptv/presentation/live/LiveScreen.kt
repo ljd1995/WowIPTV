@@ -31,6 +31,8 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.LiveTv
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.PlayArrow
@@ -87,6 +89,7 @@ import com.dream.wowiptv.presentation.common.LiveDot
 import com.dream.wowiptv.presentation.common.PipState
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.common.components.CategoryLockDialog
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.components.GradientBackground
@@ -124,8 +127,12 @@ fun LiveScreen(
     val channelEpg by viewModel.channelEpg.collectAsState()
     val isFullscreen by viewModel.isFullscreen.collectAsState()
     val favoriteIds by viewModel.favoriteIds.collectAsState()
+    val visibleFavoriteCount by viewModel.visibleFavoriteCount.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val categoryCounts by viewModel.categoryCounts.collectAsState()
+    val lockedCategories by viewModel.lockedCategories.collectAsState()
+    val pendingLockedCategory by viewModel.pendingLockedCategory.collectAsState()
+    val unlockedCategories by viewModel.unlockedCategories.collectAsState()
     val showStatus by viewModel.showPlayerStatus.collectAsState()
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
     val isM3u = sourceType == "m3u"
@@ -241,9 +248,12 @@ fun LiveScreen(
                 selectedCategoryId = selectedCategoryId,
                 streamsState = filteredStreams,
                 favoriteIds = favoriteIds,
+                visibleFavoriteCount = visibleFavoriteCount,
                 currentStream = currentStream,
                 searchQuery = searchQuery,
                 categoryCounts = categoryCounts,
+                lockedCategoryIds = lockedCategories,
+                unlockedCategoryIds = unlockedCategories,
                 onSearchQueryChange = { viewModel.setSearchQuery(it) },
                 onSelectCategory = { viewModel.selectCategory(it) },
                 onPlayStream = { viewModel.playStream(it) },
@@ -261,6 +271,17 @@ fun LiveScreen(
             )
         }
         }
+
+    }
+
+    pendingLockedCategory?.let { lockedId ->
+        val lockedName = (categoriesState as? UiState.Success)?.data?.find { it.id == lockedId }?.name
+            ?: stringResource(R.string.common_locked)
+        CategoryLockDialog(
+            categoryName = lockedName,
+            onDismiss = { viewModel.dismissCategoryLock() },
+            onVerifyPassword = { viewModel.confirmCategoryLock(it) }
+        )
     }
 }
 
@@ -532,9 +553,12 @@ private fun ContentSection(
     selectedCategoryId: Int?,
     streamsState: UiState<List<LiveStream>>,
     favoriteIds: Set<Int>,
+    visibleFavoriteCount: Int,
     currentStream: LiveStream?,
     searchQuery: String,
     categoryCounts: Map<Int, Int>,
+    lockedCategoryIds: Set<Int>,
+    unlockedCategoryIds: Set<Int>,
     onSearchQueryChange: (String) -> Unit,
     onSelectCategory: (Int?) -> Unit,
     onPlayStream: (LiveStream) -> Unit,
@@ -553,7 +577,9 @@ private fun ContentSection(
                 categoriesState = categoriesState,
                 selectedCategoryId = selectedCategoryId,
                 categoryCounts = categoryCounts,
-                favoriteIds = favoriteIds,
+                lockedCategoryIds = lockedCategoryIds,
+                unlockedCategoryIds = unlockedCategoryIds,
+                visibleFavoriteCount = visibleFavoriteCount,
                 onSelectCategory = onSelectCategory,
                 modifier = Modifier.weight(0.3f)
             )
@@ -593,7 +619,9 @@ private fun CategorySidebar(
     categoriesState: UiState<List<LiveCategory>>,
     selectedCategoryId: Int?,
     categoryCounts: Map<Int, Int>,
-    favoriteIds: Set<Int>,
+    lockedCategoryIds: Set<Int>,
+    unlockedCategoryIds: Set<Int>,
+    visibleFavoriteCount: Int,
     onSelectCategory: (Int?) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -614,7 +642,7 @@ private fun CategorySidebar(
                     )
                     CategoryItem(
                         name = stringResource(R.string.live_category_favorites),
-                        count = favoriteIds.size,
+                        count = visibleFavoriteCount,
                         isSelected = selectedCategoryId == LiveViewModel.FAVORITES_ID,
                         onClick = { onSelectCategory(LiveViewModel.FAVORITES_ID) }
                     )
@@ -630,10 +658,13 @@ private fun CategorySidebar(
                             verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             items(cats, key = { it.id }) { category ->
+                                val isLocked = category.id in lockedCategoryIds
                                 CategoryItem(
                                     name = category.name,
                                     count = categoryCounts[category.id],
                                     isSelected = selectedCategoryId == category.id,
+                                    isLocked = isLocked,
+                                    isUnlocked = isLocked && category.id in unlockedCategoryIds,
                                     onClick = { onSelectCategory(category.id) }
                                 )
                             }
@@ -650,6 +681,8 @@ private fun CategoryItem(
     name: String,
     count: Int?,
     isSelected: Boolean,
+    isLocked: Boolean = false,
+    isUnlocked: Boolean = false,
     onClick: () -> Unit
 ) {
     val accent = LocalAccentPalette.current
@@ -675,6 +708,23 @@ private fun CategoryItem(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
+        if (isUnlocked) {
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
+                imageVector = Icons.Filled.LockOpen,
+                contentDescription = stringResource(R.string.common_unlocked),
+                tint = Color(0xFF4CAF50),
+                modifier = Modifier.size(12.dp)
+            )
+        } else if (isLocked) {
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
+                imageVector = Icons.Filled.Lock,
+                contentDescription = stringResource(R.string.common_locked),
+                tint = Color(0xFFE6B34C),
+                modifier = Modifier.size(12.dp)
+            )
+        }
         if (count != null) {
             Spacer(modifier = Modifier.width(4.dp))
             Box(

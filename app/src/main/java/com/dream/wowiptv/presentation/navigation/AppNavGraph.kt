@@ -14,6 +14,7 @@ import com.dream.wowiptv.presentation.main.MainScreen
 import com.dream.wowiptv.presentation.movies.MovieDetailScreen
 import com.dream.wowiptv.presentation.player.PlayerScreen
 import com.dream.wowiptv.presentation.series.SeriesDetailScreen
+import com.dream.wowiptv.presentation.settings.ManageCategoryLocksScreen
 import com.dream.wowiptv.presentation.settings.SourceFormScreen
 import com.dream.wowiptv.presentation.settings.SettingsScreen
 import com.dream.wowiptv.presentation.search.GlobalSearchScreen
@@ -201,7 +202,14 @@ fun AppNavGraph(navController: NavHostController) {
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 onAddSource = { navController.navigate(Routes.SOURCE_ADD) },
-                onEditSource = { sourceId -> navController.navigate(Routes.sourceEditRoute(sourceId.toInt())) }
+                onEditSource = { sourceId -> navController.navigate(Routes.sourceEditRoute(sourceId.toInt())) },
+                onManageLocks = { navController.navigate(Routes.MANAGE_LOCKS) }
+            )
+        }
+
+        composable(Routes.MANAGE_LOCKS) {
+            ManageCategoryLocksScreen(
+                onBack = { navController.popBackStack() }
             )
         }
     }

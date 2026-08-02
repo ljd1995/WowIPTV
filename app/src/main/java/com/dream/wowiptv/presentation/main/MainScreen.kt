@@ -280,7 +280,8 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
             ) {
                 SettingsScreen(
                     onAddSource = { outerNavController.navigate(Routes.SOURCE_ADD) },
-                    onEditSource = { sourceId -> outerNavController.navigate(Routes.sourceEditRoute(sourceId.toInt())) }
+                    onEditSource = { sourceId -> outerNavController.navigate(Routes.sourceEditRoute(sourceId.toInt())) },
+                    onManageLocks = { outerNavController.navigate(Routes.MANAGE_LOCKS) }
                 )
             }
         }
