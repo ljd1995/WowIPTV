@@ -161,6 +161,9 @@
     <string name="settings_tmdb_key_empty">未设置</string>
     <string name="settings_tmdb_key_saved">已保存</string>
     <string name="settings_speed_x">%sx</string>
+    <string name="settings_grid_columns">每行显示数量</string>
+    <string name="settings_grid_columns_desc">电影与剧集列表每行显示的卡片数</string>
+    <string name="settings_grid_columns_value">%1$d 列</string>
     <string name="settings_sources">源列表</string>
     <string name="settings_sync_all">同步全部源</string>
     <string name="settings_add_source">添加源</string>

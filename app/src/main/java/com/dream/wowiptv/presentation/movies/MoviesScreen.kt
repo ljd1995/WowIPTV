@@ -84,6 +84,7 @@ fun MoviesScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val categoryCounts by viewModel.categoryCounts.collectAsState()
     val movieFavoriteIds by viewModel.favoriteIds.collectAsState()
+    val gridColumns by viewModel.gridColumns.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(streamsState) {
@@ -179,7 +180,7 @@ fun MoviesScreen(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 LazyVerticalGrid(
-                                    columns = GridCells.Fixed(2),
+                                    columns = GridCells.Fixed(gridColumns),
                                     modifier = Modifier.fillMaxSize(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp),

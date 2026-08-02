@@ -152,6 +152,9 @@
     <string name="settings_tmdb_key_empty">Not set</string>
     <string name="settings_tmdb_key_saved">Saved</string>
     <string name="settings_speed_x">%sx</string>
+    <string name="settings_grid_columns">Columns per row</string>
+    <string name="settings_grid_columns_desc">Number of cards per row in Movies &amp; Series</string>
+    <string name="settings_grid_columns_value">%1$d</string>
     <string name="settings_sources">Sources</string>
     <string name="settings_sync_all">Sync all sources</string>
     <string name="settings_add_source">Add source</string>

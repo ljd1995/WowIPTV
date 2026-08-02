@@ -13,11 +13,12 @@ import com.dream.wowiptv.domain.model.VodInfo
 import com.dream.wowiptv.domain.model.VodStream
 import com.dream.wowiptv.domain.repository.SourceRepository
 import com.dream.wowiptv.domain.repository.VodRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,31 +32,29 @@ class VodRepositoryImpl @Inject constructor(
     private val baseUrlInterceptor: DynamicBaseUrlInterceptor
 ) : VodRepository {
 
-    override fun getCategories(): Flow<List<VodCategory>> = flow {
-        val source = sourceRepository.getActiveSource().first()
-        if (source == null) {
-            emit(emptyList())
-            return@flow
-        }
-        emitAll(
-            vodCategoryDao.getBySource(source.id).map { entities ->
-                entities.map { it.toDomain() }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getCategories(): Flow<List<VodCategory>> =
+        sourceRepository.getActiveSource().flatMapLatest { source ->
+            if (source == null) {
+                flowOf(emptyList())
+            } else {
+                vodCategoryDao.getBySource(source.id).map { entities ->
+                    entities.map { it.toDomain() }
+                }
             }
-        )
-    }
+        }
 
-    override fun getStreams(categoryId: Int?): Flow<List<VodStream>> = flow {
-        val source = sourceRepository.getActiveSource().first()
-        if (source == null) {
-            emit(emptyList())
-            return@flow
-        }
-        emitAll(
-            vodStreamDao.getBySourceAndCategory(source.id, categoryId).map { entities ->
-                entities.map { it.toDomain() }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getStreams(categoryId: Int?): Flow<List<VodStream>> =
+        sourceRepository.getActiveSource().flatMapLatest { source ->
+            if (source == null) {
+                flowOf(emptyList())
+            } else {
+                vodStreamDao.getBySourceAndCategory(source.id, categoryId).map { entities ->
+                    entities.map { it.toDomain() }
+                }
             }
-        )
-    }
+        }
 
     override suspend fun getInfo(vodId: Int): VodInfo {
         val source = sourceRepository.getActiveSource().first() ?: error("No active source")

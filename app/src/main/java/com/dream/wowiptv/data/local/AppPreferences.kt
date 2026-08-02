@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import java.security.KeyStore
@@ -35,6 +36,7 @@ class AppPreferences(private val context: Context) {
         private val TMDB_API_KEY = stringPreferencesKey("tmdb_api_key")
         private val THEME_COLOR = stringPreferencesKey("theme_color")
         private val AUTO_CHECK_UPDATE = booleanPreferencesKey("auto_check_update")
+        private val CONTENT_GRID_COLUMNS = intPreferencesKey("content_grid_columns")
 
         private const val KEY_ALIAS = "tmdb_api_key_alias"
     }
@@ -63,6 +65,10 @@ class AppPreferences(private val context: Context) {
 
     val autoCheckUpdate: Flow<Boolean> = context.appDataStore.data.map { it[AUTO_CHECK_UPDATE] ?: true }
 
+    val contentGridColumns: Flow<Int> = context.appDataStore.data.map {
+        (it[CONTENT_GRID_COLUMNS] ?: 2)
+    }
+
 
 
     suspend fun setShowCastAvatars(show: Boolean) {
@@ -86,6 +92,10 @@ class AppPreferences(private val context: Context) {
 
     suspend fun setAutoCheckUpdate(enabled: Boolean) {
         context.appDataStore.edit { it[AUTO_CHECK_UPDATE] = enabled }
+    }
+
+    suspend fun setContentGridColumns(columns: Int) {
+        context.appDataStore.edit { it[CONTENT_GRID_COLUMNS] = columns }
     }
 
     private fun getSecretKey(): SecretKey {

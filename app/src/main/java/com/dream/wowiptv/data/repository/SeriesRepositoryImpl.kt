@@ -13,10 +13,11 @@ import com.dream.wowiptv.domain.model.SeriesInfo
 import com.dream.wowiptv.domain.model.SeriesItem
 import com.dream.wowiptv.domain.repository.SeriesRepository
 import com.dream.wowiptv.domain.repository.SourceRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,31 +31,29 @@ class SeriesRepositoryImpl @Inject constructor(
     private val baseUrlInterceptor: DynamicBaseUrlInterceptor
 ) : SeriesRepository {
 
-    override fun getCategories(): Flow<List<SeriesCategory>> = flow {
-        val source = sourceRepository.getActiveSource().first()
-        if (source == null) {
-            emit(emptyList())
-            return@flow
-        }
-        emitAll(
-            seriesCategoryDao.getBySource(source.id).map { entities ->
-                entities.map { it.toDomain() }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getCategories(): Flow<List<SeriesCategory>> =
+        sourceRepository.getActiveSource().flatMapLatest { source ->
+            if (source == null) {
+                flowOf(emptyList())
+            } else {
+                seriesCategoryDao.getBySource(source.id).map { entities ->
+                    entities.map { it.toDomain() }
+                }
             }
-        )
-    }
+        }
 
-    override fun getSeries(categoryId: Int?): Flow<List<SeriesItem>> = flow {
-        val source = sourceRepository.getActiveSource().first()
-        if (source == null) {
-            emit(emptyList())
-            return@flow
-        }
-        emitAll(
-            seriesDao.getBySourceAndCategory(source.id, categoryId).map { entities ->
-                entities.map { it.toDomain() }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun getSeries(categoryId: Int?): Flow<List<SeriesItem>> =
+        sourceRepository.getActiveSource().flatMapLatest { source ->
+            if (source == null) {
+                flowOf(emptyList())
+            } else {
+                seriesDao.getBySourceAndCategory(source.id, categoryId).map { entities ->
+                    entities.map { it.toDomain() }
+                }
             }
-        )
-    }
+        }
 
     override suspend fun getInfo(seriesId: Int): SeriesInfo {
         val source = sourceRepository.getActiveSource().first() ?: error("No active source")

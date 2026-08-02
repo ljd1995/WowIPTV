@@ -84,6 +84,7 @@ fun SeriesScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val categoryCounts by viewModel.categoryCounts.collectAsState()
     val seriesFavoriteIds by viewModel.favoriteIds.collectAsState()
+    val gridColumns by viewModel.gridColumns.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(seriesListState) {
@@ -179,7 +180,7 @@ fun SeriesScreen(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 LazyVerticalGrid(
-                                    columns = GridCells.Fixed(2),
+                                    columns = GridCells.Fixed(gridColumns),
                                     modifier = Modifier.fillMaxSize(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp),

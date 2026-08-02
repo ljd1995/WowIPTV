@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.R
+import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.domain.model.VodCategory
 import com.dream.wowiptv.domain.model.VodStream
 import com.dream.wowiptv.domain.usecase.CreateFavoriteUseCase
@@ -32,8 +33,12 @@ class MoviesViewModel @Inject constructor(
     private val getVodCategoriesUseCase: GetVodCategoriesUseCase,
     private val getVodStreamsUseCase: GetVodStreamsUseCase,
     private val createFavoriteUseCase: CreateFavoriteUseCase,
+    private val appPreferences: AppPreferences,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
+
+    val gridColumns: StateFlow<Int> = appPreferences.contentGridColumns
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 2)
 
     val categories: StateFlow<UiState<List<VodCategory>>> = getVodCategoriesUseCase()
         .map { UiState.Success(it) as UiState<List<VodCategory>> }

@@ -134,6 +134,7 @@ fun SettingsScreen(
     val showCastAvatars by viewModel.showCastAvatars.collectAsState()
     val tmdbApiKey by viewModel.tmdbApiKey.collectAsState()
     val themeColor by viewModel.themeColor.collectAsState()
+    val gridColumns by viewModel.contentGridColumns.collectAsState()
     val updateViewModel: UpdateViewModel = hiltViewModel()
     val updateState by updateViewModel.state.collectAsState()
     val autoCheckUpdate by updateViewModel.autoCheckUpdate.collectAsState()
@@ -212,6 +213,11 @@ fun SettingsScreen(
                     ThemeColorRow(
                         selected = themeColor,
                         onSelect = viewModel::setThemeColor
+                    )
+                    HorizontalDividerItem()
+                    GridColumnsRow(
+                        selected = gridColumns,
+                        onSelect = viewModel::setContentGridColumns
                     )
                     HorizontalDividerItem()
                     SettingSwitchRow(
@@ -543,6 +549,56 @@ private fun PlaybackSpeedRow(
                         },
                         onClick = {
                             onSelect(speed)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GridColumnsRow(
+    selected: Int,
+    onSelect: (Int) -> Unit
+) {
+    val options = listOf(2, 3)
+    var expanded by remember { mutableStateOf(false) }
+    val accent = LocalAccentPalette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { expanded = true }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(stringResource(R.string.settings_grid_columns), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(stringResource(R.string.settings_grid_columns_desc), style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+        }
+        Box {
+            Text(
+                text = stringResource(R.string.settings_grid_columns_value, selected),
+                color = accent.primary,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                options.forEach { columns ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(R.string.settings_grid_columns_value, columns) + if (columns == selected) " ✓" else "",
+                                color = Color.White
+                            )
+                        },
+                        onClick = {
+                            onSelect(columns)
                             expanded = false
                         }
                     )

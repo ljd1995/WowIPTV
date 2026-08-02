@@ -82,6 +82,9 @@ class SettingsViewModel @Inject constructor(
     val themeColor: StateFlow<String> = appPreferences.themeColor
         .stateIn(viewModelScope, SharingStarted.Eagerly, "purple")
 
+    val contentGridColumns: StateFlow<Int> = appPreferences.contentGridColumns
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 2)
+
     init {
         refreshUserInfo()
     }
@@ -130,6 +133,10 @@ class SettingsViewModel @Inject constructor(
 
     fun setThemeColor(key: String) {
         viewModelScope.launch { appPreferences.setThemeColor(key) }
+    }
+
+    fun setContentGridColumns(columns: Int) {
+        viewModelScope.launch { appPreferences.setContentGridColumns(columns) }
     }
 
     fun refreshUserInfo() {
