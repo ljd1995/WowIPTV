@@ -52,7 +52,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,9 +74,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
-import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -88,7 +84,6 @@ import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveCategory
 import com.dream.wowiptv.domain.model.LiveStream
 import com.dream.wowiptv.presentation.common.LiveDot
-import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.PipState
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
@@ -131,7 +126,6 @@ fun LiveScreen(
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val categoryCounts by viewModel.categoryCounts.collectAsState()
-    val defaultSpeed by viewModel.defaultPlaybackSpeed.collectAsState()
     val showStatus by viewModel.showPlayerStatus.collectAsState()
     val sourceType by sourceTypeViewModel.sourceType.collectAsState()
     val isM3u = sourceType == "m3u"
@@ -179,77 +173,16 @@ fun LiveScreen(
         }
     }
 
-    val networkTracker = remember { NetworkSpeedTracker() }
-
-    val exoPlayer = remember {
-        val dataSourceFactory = DefaultHttpDataSource.Factory()
-            .setTransferListener(networkTracker)
-        ExoPlayer.Builder(context)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
-            .build()
-    }
-
-    var networkSpeed by remember { mutableStateOf(0L) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            networkSpeed = networkTracker.currentBps()
-            kotlinx.coroutines.delay(1000)
-        }
-    }
-
-    LaunchedEffect(defaultSpeed) {
-        exoPlayer.setPlaybackSpeed(defaultSpeed)
-    }
-
-    var isBuffering by remember { mutableStateOf(false) }
-
-    LaunchedEffect(streamUrl) {
-        if (streamUrl.isNotEmpty()) {
-            exoPlayer.setMediaItem(MediaItem.fromUri(streamUrl))
-            exoPlayer.prepare()
-            exoPlayer.playWhenReady = true
-            isBuffering = true
-        }
-    }
-
-    LaunchedEffect(isPlaying) {
-        exoPlayer.playWhenReady = isPlaying && streamUrl.isNotEmpty()
-    }
-
-    DisposableEffect(exoPlayer) {
-        val listener = object : Player.Listener {
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                isBuffering = when (playbackState) {
-                    Player.STATE_BUFFERING -> true
-                    else -> false
-                }
-            }
-            override fun onIsLoadingChanged(isLoading: Boolean) {
-                if (isLoading) isBuffering = true
-            }
-        }
-        exoPlayer.addListener(listener)
-        onDispose { exoPlayer.removeListener(listener) }
-    }
+    val exoPlayer = viewModel.player
+    val isBuffering by viewModel.isBuffering.collectAsState()
+    val networkSpeed by viewModel.networkSpeed.collectAsState()
 
     val lifecycleOwner = LocalLifecycleOwner.current
-    val currentStreamUrl by rememberUpdatedState(streamUrl)
-    val currentIsPlaying by rememberUpdatedState(isPlaying)
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_STOP -> {
-                    exoPlayer.stop()
-                    exoPlayer.clearMediaItems()
-                }
-                Lifecycle.Event.ON_START -> {
-                    if (currentStreamUrl.isNotEmpty() && currentIsPlaying) {
-                        exoPlayer.setMediaItem(MediaItem.fromUri(currentStreamUrl))
-                        exoPlayer.prepare()
-                        exoPlayer.playWhenReady = true
-                        isBuffering = true
-                    }
-                }
+                Lifecycle.Event.ON_STOP -> viewModel.onAppBackgrounded()
+                Lifecycle.Event.ON_START -> viewModel.onAppForegrounded()
                 else -> {}
             }
         }
@@ -257,7 +190,6 @@ fun LiveScreen(
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            exoPlayer.release()
         }
     }
 

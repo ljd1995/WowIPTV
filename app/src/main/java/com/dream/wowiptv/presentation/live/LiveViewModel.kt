@@ -3,6 +3,11 @@ package com.dream.wowiptv.presentation.live
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.dream.wowiptv.data.local.dao.FavoriteStreamDao
 import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.data.local.entity.FavoriteStreamEntity
@@ -16,11 +21,13 @@ import com.dream.wowiptv.domain.usecase.GetShortEpgUseCase
 import com.dream.wowiptv.domain.usecase.PlayStreamUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.domain.repository.SourceRepository
+import com.dream.wowiptv.presentation.common.NetworkSpeedTracker
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -78,7 +85,7 @@ class LiveViewModel @Inject constructor(
                     .onStart { emit(UiState.Loading) }
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, UiState.Loading)
 
     private val _selectedCategoryId = MutableStateFlow<Int?>(null)
     val selectedCategoryId: StateFlow<Int?> = _selectedCategoryId.asStateFlow()
@@ -108,7 +115,7 @@ class LiveViewModel @Inject constructor(
                     .onStart { emit(UiState.Loading) }
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, UiState.Loading)
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -119,7 +126,7 @@ class LiveViewModel @Inject constructor(
         if (s !is UiState.Success) return@combine s
         if (query.isBlank()) return@combine s
         UiState.Success(s.data.filter { it.name.contains(query, ignoreCase = true) })
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState.Loading)
 
     val categoryCounts: StateFlow<Map<Int, Int>> = sourceRepository.getActiveSource()
         .flatMapLatest { source ->
@@ -130,7 +137,7 @@ class LiveViewModel @Inject constructor(
                     .map { streams -> streams.groupBy { it.categoryId }.mapValues { it.value.size } }
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     private val _currentStream = MutableStateFlow<LiveStream?>(null)
     val currentStream: StateFlow<LiveStream?> = _currentStream.asStateFlow()
@@ -152,11 +159,80 @@ class LiveViewModel @Inject constructor(
     private val _isFullscreen = MutableStateFlow(false)
     val isFullscreen: StateFlow<Boolean> = _isFullscreen.asStateFlow()
 
+    private val networkTracker = NetworkSpeedTracker()
+    val player: ExoPlayer by lazy {
+        val dataSourceFactory = DefaultHttpDataSource.Factory()
+            .setTransferListener(networkTracker)
+        ExoPlayer.Builder(context)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            .build()
+    }
+
+    private val _isBuffering = MutableStateFlow(false)
+    val isBuffering: StateFlow<Boolean> = _isBuffering.asStateFlow()
+
+    private val _networkSpeed = MutableStateFlow(0L)
+    val networkSpeed: StateFlow<Long> = _networkSpeed.asStateFlow()
+
     private var currentSourceId: Long = 0
 
     init {
         loadFavoriteIds()
         observeSourceChange()
+        observePlayback()
+    }
+
+    private fun observePlayback() {
+        player.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                _isBuffering.value = when (playbackState) {
+                    Player.STATE_BUFFERING -> true
+                    else -> false
+                }
+            }
+            override fun onIsLoadingChanged(isLoading: Boolean) {
+                if (isLoading) _isBuffering.value = true
+            }
+        })
+        viewModelScope.launch {
+            while (true) {
+                _networkSpeed.value = networkTracker.currentBps()
+                delay(1000)
+            }
+        }
+        viewModelScope.launch {
+            defaultPlaybackSpeed.collect { player.setPlaybackSpeed(it) }
+        }
+        viewModelScope.launch {
+            combine(_streamUrl, _isPlaying) { url, playing -> url to playing }
+                .collect { (url, playing) ->
+                    if (url.isNotEmpty()) {
+                        player.setMediaItem(MediaItem.fromUri(url))
+                        player.prepare()
+                        player.playWhenReady = playing && url.isNotEmpty()
+                        _isBuffering.value = true
+                    }
+                }
+        }
+    }
+
+    fun onAppBackgrounded() {
+        player.stop()
+        player.clearMediaItems()
+    }
+
+    fun onAppForegrounded() {
+        if (_streamUrl.value.isNotEmpty() && _isPlaying.value) {
+            player.setMediaItem(MediaItem.fromUri(_streamUrl.value))
+            player.prepare()
+            player.playWhenReady = true
+            _isBuffering.value = true
+        }
+    }
+
+    override fun onCleared() {
+        player.release()
+        super.onCleared()
     }
 
     private fun observeSourceChange() {

@@ -15,19 +15,26 @@ import com.dream.wowiptv.data.local.entity.FavoriteVodEntity
 import com.dream.wowiptv.data.local.entity.LiveStreamEntity
 import com.dream.wowiptv.data.local.entity.SeriesEntity
 import com.dream.wowiptv.data.local.entity.VodStreamEntity
+import com.dream.wowiptv.data.local.entity.LiveCategoryEntity
+import com.dream.wowiptv.data.local.entity.VodCategoryEntity
+import com.dream.wowiptv.data.local.entity.SeriesCategoryEntity
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.data.local.dao.WatchProgressDao
 import com.dream.wowiptv.data.local.SourcePreferences
 import com.dream.wowiptv.data.local.AppPreferences
+import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.domain.repository.SourceRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -56,6 +63,7 @@ data class HomeSection(
     val isRefreshing: Boolean = false
 )
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val sourceRepository: SourceRepository,
@@ -87,90 +95,117 @@ class HomeViewModel @Inject constructor(
     private val _data = MutableStateFlow(HomeSection())
     val data: StateFlow<HomeSection> = _data.asStateFlow()
 
+    private val _refreshTrigger = MutableStateFlow(0L)
+
     init {
         loadUserInfo()
         loadData()
     }
 
-    private suspend fun loadCategoryMaps(sourceId: Long): Triple<Map<Int, String>, Map<Int, String>, Map<Int, String>> {
-        val live = liveCategoryDao.getBySource(sourceId).first().associate { it.categoryId to it.name }
-        val vod = vodCategoryDao.getBySource(sourceId).first().associate { it.categoryId to it.name }
-        val series = seriesCategoryDao.getBySource(sourceId).first().associate { it.categoryId to it.name }
-        return Triple(live, vod, series)
-    }
-
     private fun loadData() {
         viewModelScope.launch {
-            while (true) {
-                val source = sourceRepository.getActiveSource().first() ?: run {
-                    delay(2000)
-                    continue
-                }
-
-                val (liveCatMap, vodCatMap, seriesCatMap) = loadCategoryMaps(source.id)
-                val progress = watchProgressDao.getAllBySource(source.id).first()
-                val live = liveStreamDao.getBySource(source.id).first()
-                val vod = vodStreamDao.getBySource(source.id).first()
-                val series = seriesDao.getBySource(source.id).first()
-                val (vodRatingMap, seriesRatingMap) = buildRatingMaps(vod, series)
-
-                val enriched = progress.map { wp ->
-                    val icon = when (wp.contentType) {
-                        "vod" -> vod.find { it.streamId == wp.contentId.removePrefix("vod_").toIntOrNull() }?.streamIcon
-                        "series" -> series.find { it.seriesId == wp.contentId.removePrefix("series_").toIntOrNull() }?.cover
-                        "live" -> live.find { it.streamId == wp.contentId.removePrefix("live_").toIntOrNull() }?.streamIcon
-                        else -> null
+            sourceRepository.getActiveSource()
+                .flatMapLatest { source ->
+                    if (source == null) {
+                        flowOf(_data.value.copy(isRefreshing = false))
+                    } else {
+                        val content = combine(
+                            liveStreamDao.getBySource(source.id),
+                            vodStreamDao.getBySource(source.id)
+                        ) { l, v -> l to v }
+                        val content2 = combine(
+                            seriesDao.getBySource(source.id),
+                            watchProgressDao.getAllBySource(source.id)
+                        ) { s, p -> s to p }
+                        val favs = combine(
+                            favoriteStreamDao.getAllBySource(source.id),
+                            favoriteVodDao.getAllBySource(source.id)
+                        ) { f, v -> f to v }
+                        val cats = combine(
+                            liveCategoryDao.getBySource(source.id),
+                            vodCategoryDao.getBySource(source.id),
+                            seriesCategoryDao.getBySource(source.id)
+                        ) { l, v, s -> Triple(l, v, s) }
+                        combine(content, content2, favs, cats, _refreshTrigger) {
+                                c1, c2, fav, cat, _ ->
+                            buildSection(source, c1.first, c1.second, c2.first, c2.second, fav.first, fav.second, cat.first, cat.second, cat.third)
+                        }
                     }
-                    wp.copy(icon = icon ?: wp.icon)
                 }
-                val catNames = progress.associate { wp ->
-                    val id = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_").toIntOrNull()
-                    val name = when (wp.contentType) {
-                        "live" -> live.find { it.streamId == id }?.categoryId?.let { cid -> liveCatMap[cid] }
-                        "vod" -> vod.find { it.streamId == id }?.categoryId?.let { cid -> vodCatMap[cid] }
-                        "series" -> series.find { it.seriesId == id }?.categoryId?.let { cid -> seriesCatMap[cid] }
-                        else -> null
-                    }
-                    wp.contentId to (name ?: "")
-                }.filter { it.value.isNotEmpty() }
-
-                val favStreams = favoriteStreamDao.getAllBySource(source.id).first()
-                val favVods = favoriteVodDao.getAllBySource(source.id).first()
-
-                val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val cal = Calendar.getInstance()
-                cal.add(Calendar.DAY_OF_YEAR, -7)
-                val cutoff = cal.time
-
-                val recentMovies = vod.filter { e ->
-                    e.added?.let {
-                        try { fmt.parse(it)?.after(cutoff) == true } catch (_: Exception) { false }
-                    } ?: false
-                }.ifEmpty { vod.take(50) }
-
-                _data.value = _data.value.copy(
-                    username = source.username,
-                    liveCount = live.size,
-                    movieCount = vod.size,
-                    seriesCount = series.size,
-                    favoriteStreams = favStreams,
-                    favoriteMovies = favVods.filter { it.type == "movie" },
-                    favoriteSeries = favVods.filter { it.type == "series" },
-                    recentLive = live.take(50),
-                    recentMovies = recentMovies,
-                    recentSeries = series.take(50),
-                    continueWatching = enriched.take(10),
-                    continueCategoryNames = catNames,
-                    liveCategoryNames = liveCatMap,
-                    vodCategoryNames = vodCatMap,
-                    seriesCategoryNames = seriesCatMap,
-                    vodRating = vodRatingMap,
-                    seriesRating = seriesRatingMap
-                )
-                _isRefreshing.value = false
-                delay(2000)
-            }
+                .collect { section ->
+                    _data.value = section
+                    _isRefreshing.value = false
+                }
         }
+    }
+
+    private suspend fun buildSection(
+        source: XtreamSource,
+        live: List<LiveStreamEntity>,
+        vod: List<VodStreamEntity>,
+        series: List<SeriesEntity>,
+        progress: List<WatchProgressEntity>,
+        favStreams: List<FavoriteStreamEntity>,
+        favVods: List<FavoriteVodEntity>,
+        liveCat: List<LiveCategoryEntity>,
+        vodCat: List<VodCategoryEntity>,
+        seriesCat: List<SeriesCategoryEntity>
+    ): HomeSection {
+        val liveCatMap = liveCat.associate { it.categoryId to it.name }
+        val vodCatMap = vodCat.associate { it.categoryId to it.name }
+        val seriesCatMap = seriesCat.associate { it.categoryId to it.name }
+        val (vodRatingMap, seriesRatingMap) = buildRatingMaps(vod, series)
+
+        val enriched = progress.map { wp ->
+            val icon = when (wp.contentType) {
+                "vod" -> vod.find { it.streamId == wp.contentId.removePrefix("vod_").toIntOrNull() }?.streamIcon
+                "series" -> series.find { it.seriesId == wp.contentId.removePrefix("series_").toIntOrNull() }?.cover
+                "live" -> live.find { it.streamId == wp.contentId.removePrefix("live_").toIntOrNull() }?.streamIcon
+                else -> null
+            }
+            wp.copy(icon = icon ?: wp.icon)
+        }
+        val catNames = progress.associate { wp ->
+            val id = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_").toIntOrNull()
+            val name = when (wp.contentType) {
+                "live" -> live.find { it.streamId == id }?.categoryId?.let { cid -> liveCatMap[cid] }
+                "vod" -> vod.find { it.streamId == id }?.categoryId?.let { cid -> vodCatMap[cid] }
+                "series" -> series.find { it.seriesId == id }?.categoryId?.let { cid -> seriesCatMap[cid] }
+                else -> null
+            }
+            wp.contentId to (name ?: "")
+        }.filter { it.value.isNotEmpty() }
+
+        val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DAY_OF_YEAR, -7)
+        val cutoff = cal.time
+
+        val recentMovies = vod.filter { e ->
+            e.added?.let {
+                try { fmt.parse(it)?.after(cutoff) == true } catch (_: Exception) { false }
+            } ?: false
+        }.ifEmpty { vod.take(50) }
+
+        return HomeSection(
+            username = source.username,
+            liveCount = live.size,
+            movieCount = vod.size,
+            seriesCount = series.size,
+            favoriteStreams = favStreams,
+            favoriteMovies = favVods.filter { it.type == "movie" },
+            favoriteSeries = favVods.filter { it.type == "series" },
+            recentLive = live.take(50),
+            recentMovies = recentMovies,
+            recentSeries = series.take(50),
+            continueWatching = enriched.take(10),
+            continueCategoryNames = catNames,
+            liveCategoryNames = liveCatMap,
+            vodCategoryNames = vodCatMap,
+            seriesCategoryNames = seriesCatMap,
+            vodRating = vodRatingMap,
+            seriesRating = seriesRatingMap
+        )
     }
 
     private fun buildRatingMaps(vod: List<VodStreamEntity>, series: List<SeriesEntity>): Pair<Map<Int, String>, Map<Int, String>> {
@@ -212,68 +247,6 @@ class HomeViewModel @Inject constructor(
 
     fun refresh() {
         _isRefreshing.value = true
-        viewModelScope.launch {
-            val source = sourceRepository.getActiveSource().first() ?: return@launch
-            val progress = watchProgressDao.getAllBySource(source.id).first()
-            val live = liveStreamDao.getBySource(source.id).first()
-            val vod = vodStreamDao.getBySource(source.id).first()
-            val series = seriesDao.getBySource(source.id).first()
-            val favStreams = favoriteStreamDao.getAllBySource(source.id).first()
-            val favVods = favoriteVodDao.getAllBySource(source.id).first()
-
-            val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-            val cal = Calendar.getInstance()
-            cal.add(Calendar.DAY_OF_YEAR, -7)
-            val cutoff = cal.time
-
-            val recentMovies = vod.filter { e ->
-                e.added?.let {
-                    try { fmt.parse(it)?.after(cutoff) == true } catch (_: Exception) { false }
-                } ?: false
-            }.ifEmpty { vod.take(50) }
-
-            val enriched = progress.map { wp ->
-                val icon = when (wp.contentType) {
-                    "vod" -> vod.find { it.streamId == wp.contentId.removePrefix("vod_").toIntOrNull() }?.streamIcon
-                    "series" -> series.find { it.seriesId == wp.contentId.removePrefix("series_").toIntOrNull() }?.cover
-                    "live" -> live.find { it.streamId == wp.contentId.removePrefix("live_").toIntOrNull() }?.streamIcon
-                    else -> null
-                }
-                wp.copy(icon = icon ?: wp.icon)
-            }
-
-            val liveCatMap = liveCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
-            val vodCatMap = vodCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
-            val seriesCatMap = seriesCategoryDao.getBySource(source.id).first().associate { it.categoryId to it.name }
-            val (vodRatingMap, seriesRatingMap) = buildRatingMaps(vod, series)
-
-            val catNames = progress.associate { wp ->
-                val id = wp.contentId.removePrefix("vod_").removePrefix("series_").removePrefix("live_").toIntOrNull()
-                val name = when (wp.contentType) {
-                    "live" -> live.find { it.streamId == id }?.categoryId?.let { cid -> liveCatMap[cid] }
-                    "vod" -> vod.find { it.streamId == id }?.categoryId?.let { cid -> vodCatMap[cid] }
-                    "series" -> series.find { it.seriesId == id }?.categoryId?.let { cid -> seriesCatMap[cid] }
-                    else -> null
-                }
-                wp.contentId to (name ?: "")
-            }.filter { it.value.isNotEmpty() }
-
-            _data.value = _data.value.copy(
-                continueWatching = enriched.take(10),
-                continueCategoryNames = catNames,
-                favoriteStreams = favStreams,
-                favoriteMovies = favVods.filter { it.type == "movie" },
-                favoriteSeries = favVods.filter { it.type == "series" },
-                recentLive = live.take(10),
-                recentMovies = recentMovies,
-                recentSeries = series.take(10),
-                liveCategoryNames = liveCatMap,
-                vodCategoryNames = vodCatMap,
-                seriesCategoryNames = seriesCatMap,
-                vodRating = vodRatingMap,
-                seriesRating = seriesRatingMap
-            )
-            _isRefreshing.value = false
-        }
+        _refreshTrigger.value = System.currentTimeMillis()
     }
 }

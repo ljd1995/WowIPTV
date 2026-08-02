@@ -1,8 +1,5 @@
 package com.dream.wowiptv.presentation.main
 
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -185,8 +182,8 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
         ) {
             composable(
                 route = BottomNavItem.Home.route,
-                enterTransition = { fadeIn(animationSpec = tween(250)) },
-                exitTransition = { fadeOut(animationSpec = tween(200)) }
+                enterTransition = null,
+                exitTransition = null
             ) {
                 HomeScreen(
                     onMovieClick = { vodId ->
@@ -240,8 +237,8 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
             }
             composable(
                 route = BottomNavItem.Live.route,
-                enterTransition = { fadeIn(animationSpec = tween(250)) },
-                exitTransition = { fadeOut(animationSpec = tween(200)) }
+                enterTransition = null,
+                exitTransition = null
             ) {
                 LiveScreen(
                     pendingStreamId = pendingLiveStream,
@@ -256,8 +253,8 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
             }
             composable(
                 route = BottomNavItem.Movies.route,
-                enterTransition = { fadeIn(animationSpec = tween(250)) },
-                exitTransition = { fadeOut(animationSpec = tween(200)) }
+                enterTransition = null,
+                exitTransition = null
             ) {
                 MoviesScreen(
                     onMovieClick = { vodId ->
@@ -267,8 +264,8 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
             }
             composable(
                 route = BottomNavItem.Series.route,
-                enterTransition = { fadeIn(animationSpec = tween(250)) },
-                exitTransition = { fadeOut(animationSpec = tween(200)) }
+                enterTransition = null,
+                exitTransition = null
             ) {
                 SeriesScreen(
                     onSeriesClick = { seriesId ->
@@ -278,8 +275,8 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
             }
             composable(
                 route = BottomNavItem.Settings.route,
-                enterTransition = { fadeIn(animationSpec = tween(250)) },
-                exitTransition = { fadeOut(animationSpec = tween(200)) }
+                enterTransition = null,
+                exitTransition = null
             ) {
                 SettingsScreen(
                     onAddSource = { outerNavController.navigate(Routes.SOURCE_ADD) },

@@ -39,7 +39,7 @@ class SeriesViewModel @Inject constructor(
         .map { UiState.Success(it) as UiState<List<SeriesCategory>> }
         .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_categories))) }
         .onStart { emit(UiState.Loading) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, UiState.Loading)
 
     private val _selectedCategoryId = MutableStateFlow<Int?>(null)
     val selectedCategoryId: StateFlow<Int?> = _selectedCategoryId.asStateFlow()
@@ -56,7 +56,7 @@ class SeriesViewModel @Inject constructor(
                 .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_series))) }
                 .onStart { emit(UiState.Loading) }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, UiState.Loading)
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -67,12 +67,12 @@ class SeriesViewModel @Inject constructor(
         if (s !is UiState.Success) return@combine s
         if (query.isBlank()) return@combine s
         UiState.Success(s.data.filter { it.name.contains(query, ignoreCase = true) })
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, UiState.Loading)
 
     val categoryCounts: StateFlow<Map<Int, Int>> = filteredSeriesList.map { s ->
         if (s !is UiState.Success) return@map emptyMap()
         s.data.groupBy { it.categoryId }.mapValues { it.value.size }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyMap())
 
     private val _favoriteIds = MutableStateFlow<Set<Int>>(emptySet())
     val favoriteIds: StateFlow<Set<Int>> = _favoriteIds.asStateFlow()
