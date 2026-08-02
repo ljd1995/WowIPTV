@@ -1,18 +1,14 @@
 package com.dream.wowiptv.presentation.epg
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveStream
 import com.dream.wowiptv.domain.repository.LiveTvRepository
 import com.dream.wowiptv.domain.usecase.GetLiveStreamsUseCase
-import com.dream.wowiptv.domain.usecase.RefreshAllEpgUseCase
 import com.dream.wowiptv.presentation.common.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +18,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,9 +26,7 @@ import javax.inject.Inject
 class EpgViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val liveTvRepository: LiveTvRepository,
-    private val refreshAllEpgUseCase: RefreshAllEpgUseCase,
-    private val getLiveStreamsUseCase: GetLiveStreamsUseCase,
-    @ApplicationContext private val context: Context
+    private val getLiveStreamsUseCase: GetLiveStreamsUseCase
 ) : ViewModel() {
 
     private val streamId: Int? = savedStateHandle.get<Int>("streamId")?.takeIf { it > 0 }
@@ -41,6 +36,8 @@ class EpgViewModel @Inject constructor(
 
     private val _epgData = MutableStateFlow<UiState<Map<Int, List<EpgEntry>>>>(UiState.Loading)
     val epgData: StateFlow<UiState<Map<Int, List<EpgEntry>>>> = _epgData.asStateFlow()
+
+    private val _epgRequestedIds = MutableStateFlow<Set<Int>>(emptySet())
 
     val channels: StateFlow<UiState<List<LiveStream>>>
 
@@ -78,15 +75,8 @@ class EpgViewModel @Inject constructor(
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
                 } catch (_: Exception) {
-                    // 选中频道增量刷新失败忽略
+                    // 选中频道增量刷新失败忽略，缓存兜底
                 }
-            }
-            try {
-                refreshAllEpgUseCase()
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _epgData.value = UiState.Error(e.message ?: context.getString(R.string.err_load_epg))
             }
         }
     }
@@ -108,5 +98,28 @@ class EpgViewModel @Inject constructor(
                 // 增量刷新失败忽略，缓存兜底
             }
         }
+    }
+
+    fun ensureEpg(streamId: Int) {
+        if (streamId in _epgRequestedIds.value) return
+        if (hasEpg(streamId)) {
+            _epgRequestedIds.update { it + streamId }
+            return
+        }
+        _epgRequestedIds.update { it + streamId }
+        viewModelScope.launch {
+            try {
+                liveTvRepository.refreshEpg(streamId)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // 单个频道 EPG 拉取失败忽略，缓存兜底
+            }
+        }
+    }
+
+    private fun hasEpg(streamId: Int): Boolean {
+        val map = (_epgData.value as? UiState.Success)?.data ?: return false
+        return map[streamId]?.isNotEmpty() == true
     }
 }

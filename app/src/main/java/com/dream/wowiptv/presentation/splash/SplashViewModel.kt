@@ -7,7 +7,6 @@ import com.dream.wowiptv.data.local.SourcePreferences
 import com.dream.wowiptv.data.local.dao.LiveStreamDao
 import com.dream.wowiptv.data.local.dao.SeriesDao
 import com.dream.wowiptv.data.local.dao.VodStreamDao
-import com.dream.wowiptv.domain.repository.LiveTvRepository
 import com.dream.wowiptv.domain.repository.SourceRepository
 import com.dream.wowiptv.domain.usecase.GetUserInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +30,6 @@ class SplashViewModel @Inject constructor(
     private val liveStreamDao: LiveStreamDao,
     private val vodStreamDao: VodStreamDao,
     private val seriesDao: SeriesDao,
-    private val liveTvRepository: LiveTvRepository,
     private val getUserInfoUseCase: GetUserInfoUseCase,
     private val sourcePreferences: SourcePreferences,
     private val appPreferences: AppPreferences
@@ -102,16 +100,6 @@ class SplashViewModel @Inject constructor(
                     _expiry.value = ""
                 } finally {
                     _ready.value = true
-                }
-            }
-
-            launch {
-                try {
-                    liveTvRepository.refreshAllEpg()
-                } catch (e: kotlinx.coroutines.CancellationException) {
-                    throw e
-                } catch (_: Exception) {
-                    // EPG 预热失败忽略
                 }
             }
         }
