@@ -4,7 +4,6 @@ import android.content.pm.ActivityInfo
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,8 +65,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -100,6 +97,7 @@ import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
 import com.dream.wowiptv.presentation.common.components.PlayerGestureOverlay
+import com.dream.wowiptv.presentation.common.components.SearchField
 import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
 import com.dream.wowiptv.presentation.common.enterPictureInPicture
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
@@ -123,6 +121,7 @@ fun LiveScreen(
     val categoriesState by viewModel.categories.collectAsState()
     val selectedCategoryId by viewModel.selectedCategoryId.collectAsState()
     val streamsState by viewModel.streams.collectAsState()
+    val filteredStreams by viewModel.filteredStreams.collectAsState()
     val currentStream by viewModel.currentStream.collectAsState()
     val streamUrl by viewModel.streamUrl.collectAsState()
     val isPlaying by viewModel.isPlaying.collectAsState()
@@ -308,7 +307,7 @@ fun LiveScreen(
             ContentSection(
                 categoriesState = categoriesState,
                 selectedCategoryId = selectedCategoryId,
-                streamsState = streamsState,
+                streamsState = filteredStreams,
                 favoriteIds = favoriteIds,
                 currentStream = currentStream,
                 searchQuery = searchQuery,
@@ -674,37 +673,38 @@ private fun CategorySidebar(
             is UiState.Success -> {
                 val cats = categoriesState.data
                 val totalCount = categoryCounts.values.sum()
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    item {
-                        CategoryItem(
-                            name = stringResource(R.string.live_category_all),
-                            count = totalCount,
-                            isSelected = selectedCategoryId == null,
-                            onClick = { onSelectCategory(null) }
-                        )
-                    }
-                    item {
-                        CategoryItem(
-                            name = stringResource(R.string.live_category_favorites),
-                            count = favoriteIds.size,
-                            isSelected = selectedCategoryId == LiveViewModel.FAVORITES_ID,
-                            onClick = { onSelectCategory(LiveViewModel.FAVORITES_ID) }
-                        )
-                    }
+                Column(modifier = Modifier.fillMaxSize()) {
+                    CategoryItem(
+                        name = stringResource(R.string.live_category_all),
+                        count = totalCount,
+                        isSelected = selectedCategoryId == null,
+                        onClick = { onSelectCategory(null) }
+                    )
+                    CategoryItem(
+                        name = stringResource(R.string.live_category_favorites),
+                        count = favoriteIds.size,
+                        isSelected = selectedCategoryId == LiveViewModel.FAVORITES_ID,
+                        onClick = { onSelectCategory(LiveViewModel.FAVORITES_ID) }
+                    )
+                    HorizontalDivider(
+                        color = Color.White.copy(alpha = 0.1f)
+                    )
                     if (cats.isNotEmpty()) {
-                        item {
-                            HorizontalDivider(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                color = Color.White.copy(alpha = 0.1f)
-                            )
-                        }
-                        items(cats, key = { it.id }) { category ->
-                            CategoryItem(
-                                name = category.name,
-                                count = categoryCounts[category.id],
-                                isSelected = selectedCategoryId == category.id,
-                                onClick = { onSelectCategory(category.id) }
-                            )
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentPadding = PaddingValues(vertical = 2.dp),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            items(cats, key = { it.id }) { category ->
+                                CategoryItem(
+                                    name = category.name,
+                                    count = categoryCounts[category.id],
+                                    isSelected = selectedCategoryId == category.id,
+                                    onClick = { onSelectCategory(category.id) }
+                                )
+                            }
                         }
                     }
                 }
@@ -721,15 +721,16 @@ private fun CategoryItem(
     onClick: () -> Unit
 ) {
     val accent = LocalAccentPalette.current
-    val bgColor = if (isSelected) accent.primary.copy(alpha = 0.22f) else Color.Transparent
+    val bgColor = if (isSelected) accent.primary.copy(alpha = 0.18f) else Color.Transparent
     val textColor = if (isSelected) Color.White else DarkText
+    val containerColor = if (isSelected) accent.primary.copy(alpha = 0.14f) else Color.White.copy(alpha = 0.05f)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
             .background(bgColor)
-            .padding(horizontal = 14.dp, vertical = 14.dp),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -738,19 +739,36 @@ private fun CategoryItem(
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             color = textColor,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f)
         )
         if (count != null) {
-            Text(
-                text = "($count)",
-                style = MaterialTheme.typography.bodySmall,
-                color = DarkTextSecondary,
-                maxLines = 1
-            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(containerColor)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = formatCount(count),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isSelected) accent.light else DarkTextSecondary,
+                    maxLines = 1
+                )
+            }
         }
     }
+}
+
+private fun formatCount(count: Int): String = when {
+    count >= 10000 -> {
+        val v = count / 10000.0
+        val s = if (v % 1.0 == 0.0) v.toInt().toString() else String.format("%.1f", v)
+        "${s}万"
+    }
+    else -> count.toString()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -773,32 +791,11 @@ private fun ChannelList(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxHeight()) {
-        Box(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 4.dp)
-        ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = onSearchQueryChange,
-                placeholder = { Text(stringResource(R.string.common_search), color = Color(0xFF999999), fontSize = 12.sp) },
-                leadingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(14.dp))
-                },
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodySmall.copy(color = Color.White, fontSize = 12.sp),
-                modifier = Modifier.fillMaxWidth().height(32.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = DarkText,
-                    unfocusedTextColor = DarkText,
-                    cursorColor = Color.White,
-                    focusedBorderColor = Color(0xFF444444),
-                    unfocusedBorderColor = Color(0xFF333333),
-                    focusedContainerColor = Color.White.copy(alpha = 0.06f),
-                    unfocusedContainerColor = Color.White.copy(alpha = 0.06f)
-                ),
-                shape = RoundedCornerShape(4.dp),
-                interactionSource = remember { MutableInteractionSource() }
-            )
-        }
+        SearchField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp)
+        )
         when (val state = streamsState) {
             is UiState.Loading -> {
                 if (!isRefreshing) {
@@ -891,7 +888,7 @@ private fun ChannelItem(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(6.dp)),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Fit
             )
         } else {
             Box(

@@ -35,8 +35,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -70,6 +68,7 @@ import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.LoadingIndicator
+import com.dream.wowiptv.presentation.common.components.SearchField
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.LiveRed
 
@@ -104,31 +103,11 @@ fun SeriesScreen(
                     titleContentColor = Color.White
                 )
             )
-            Box(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
-            ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { viewModel.setSearchQuery(it) },
-                    placeholder = { Text(stringResource(R.string.common_search), color = Color(0xFF999999), fontSize = 12.sp) },
-                    leadingIcon = {
-                        Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(14.dp))
-                    },
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodySmall.copy(color = Color.White, fontSize = 12.sp),
-                    modifier = Modifier.fillMaxWidth().height(32.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = Color.White,
-                        focusedBorderColor = Color(0xFF444444),
-                        unfocusedBorderColor = Color(0xFF333333),
-                    focusedContainerColor = Color.White.copy(alpha = 0.06f),
-                    unfocusedContainerColor = Color.White.copy(alpha = 0.06f)
-                    ),
-                    shape = RoundedCornerShape(4.dp)
-                )
-            }
+            SearchField(
+                value = searchQuery,
+                onValueChange = { viewModel.setSearchQuery(it) },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
+            )
 
             if (categoriesState is UiState.Success) {
                 val cats = (categoriesState as UiState.Success<List<SeriesCategory>>).data

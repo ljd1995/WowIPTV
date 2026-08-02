@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -55,16 +56,28 @@ class LiveViewModel @Inject constructor(
         const val FAVORITES_ID = -1
     }
 
+    private data class CategoryAndFavorites(
+        val categoryId: Int?,
+        val favoriteIds: Set<Int>
+    )
+
     val defaultPlaybackSpeed: StateFlow<Float> = appPreferences.defaultPlaybackSpeed
         .stateIn(viewModelScope, SharingStarted.Eagerly, 1f)
 
     val showPlayerStatus: StateFlow<Boolean> = appPreferences.showPlayerStatus
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
-    val categories: StateFlow<UiState<List<LiveCategory>>> = getLiveCategoriesUseCase()
-        .map { UiState.Success(it) as UiState<List<LiveCategory>> }
-        .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_categories))) }
-        .onStart { emit(UiState.Loading) }
+    val categories: StateFlow<UiState<List<LiveCategory>>> = sourceRepository.getActiveSource()
+        .flatMapLatest { source ->
+            if (source == null) {
+                flowOf(UiState.Empty as UiState<List<LiveCategory>>)
+            } else {
+                getLiveCategoriesUseCase()
+                    .map { UiState.Success(it) as UiState<List<LiveCategory>> }
+                    .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_categories))) }
+                    .onStart { emit(UiState.Loading) }
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
     private val _selectedCategoryId = MutableStateFlow<Int?>(null)
@@ -72,30 +85,30 @@ class LiveViewModel @Inject constructor(
 
     private val _refreshTrigger = MutableStateFlow(0L)
 
+    private val _favoriteIds = MutableStateFlow<Set<Int>>(emptySet())
+    val favoriteIds: StateFlow<Set<Int>> = _favoriteIds.asStateFlow()
+
     val streams: StateFlow<UiState<List<LiveStream>>> = combine(
         _selectedCategoryId,
-        _refreshTrigger
-    ) { categoryId, _ -> categoryId }
-        .flatMapLatest { categoryId ->
-            if (categoryId == FAVORITES_ID) {
+        _refreshTrigger,
+        _favoriteIds
+    ) { categoryId, _, favIds -> CategoryAndFavorites(categoryId, favIds) }
+        .flatMapLatest { selection ->
+            if (selection.categoryId == FAVORITES_ID) {
                 getLiveStreamsUseCase(null)
                     .map { allStreams ->
-                        val favIds = _favoriteIds.value
-                        UiState.Success(allStreams.filter { it.id in favIds }) as UiState<List<LiveStream>>
+                        UiState.Success(allStreams.filter { it.id in selection.favoriteIds }) as UiState<List<LiveStream>>
                     }
                     .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_favorites))) }
                     .onStart { emit(UiState.Loading) }
             } else {
-                getLiveStreamsUseCase(categoryId)
+                getLiveStreamsUseCase(selection.categoryId)
                     .map { UiState.Success(it) as UiState<List<LiveStream>> }
                     .catch { emit(UiState.Error(it.message ?: context.getString(R.string.err_load_channels))) }
                     .onStart { emit(UiState.Loading) }
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
-
-    private val _favoriteIds = MutableStateFlow<Set<Int>>(emptySet())
-    val favoriteIds: StateFlow<Set<Int>> = _favoriteIds.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -108,8 +121,15 @@ class LiveViewModel @Inject constructor(
         UiState.Success(s.data.filter { it.name.contains(query, ignoreCase = true) })
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
-    val categoryCounts: StateFlow<Map<Int, Int>> = getLiveStreamsUseCase(null)
-        .map { streams -> streams.groupBy { it.categoryId }.mapValues { it.value.size } }
+    val categoryCounts: StateFlow<Map<Int, Int>> = sourceRepository.getActiveSource()
+        .flatMapLatest { source ->
+            if (source == null) {
+                flowOf(emptyMap())
+            } else {
+                getLiveStreamsUseCase(null)
+                    .map { streams -> streams.groupBy { it.categoryId }.mapValues { it.value.size } }
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     private val _currentStream = MutableStateFlow<LiveStream?>(null)
@@ -144,7 +164,7 @@ class LiveViewModel @Inject constructor(
             var lastSourceId: Long? = null
             sourceRepository.getActiveSource().collect { source ->
                 val newId = source?.id
-                if (lastSourceId != null && newId != null && lastSourceId != newId) {
+                if (lastSourceId != null && newId != lastSourceId) {
                     _currentStream.value = null
                     _streamUrl.value = ""
                     _isPlaying.value = false
@@ -153,6 +173,8 @@ class LiveViewModel @Inject constructor(
                     _channelEpg.value = emptyMap()
                     _epgLoadedIds.value = emptySet()
                     _selectedCategoryId.value = null
+                    _favoriteIds.value = emptySet()
+                    loadFavoriteIds()
                 }
                 lastSourceId = newId
             }

@@ -487,7 +487,7 @@ private fun MediaCard(name: String, icon: String? = null, badge: String? = null,
                 model = icon,
                 contentDescription = name,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Fit
             )
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -609,7 +609,7 @@ private fun ContinueCard(name: String, icon: String? = null, badge: String? = nu
                 model = icon,
                 contentDescription = name,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Fit
             )
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

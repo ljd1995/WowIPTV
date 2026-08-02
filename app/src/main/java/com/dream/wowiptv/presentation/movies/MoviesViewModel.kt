@@ -69,7 +69,7 @@ class MoviesViewModel @Inject constructor(
         UiState.Success(s.data.filter { it.name.contains(query, ignoreCase = true) })
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState.Loading)
 
-    val categoryCounts: StateFlow<Map<Int, Int>> = streams.map { s ->
+    val categoryCounts: StateFlow<Map<Int, Int>> = filteredStreams.map { s ->
         if (s !is UiState.Success) return@map emptyMap()
         s.data.groupBy { it.categoryId }.mapValues { it.value.size }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())

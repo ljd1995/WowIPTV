@@ -18,13 +18,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -52,6 +49,7 @@ import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.presentation.common.LiveDot
 import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.components.GradientBackground
+import com.dream.wowiptv.presentation.common.components.SearchField
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
@@ -66,7 +64,6 @@ fun GlobalSearchScreen(
 ) {
     val query by viewModel.query.collectAsState()
     val results by viewModel.results.collectAsState()
-    val accent = LocalAccentPalette.current
 
     LaunchedEffect(Unit) { viewModel.load() }
 
@@ -76,32 +73,10 @@ fun GlobalSearchScreen(
                 topBar = {
                     TopAppBar(
                         title = {
-                            OutlinedTextField(
+                            SearchField(
                                 value = query,
                                 onValueChange = viewModel::setQuery,
-                                singleLine = true,
-                                placeholder = {
-                                    Text(
-                                        text = stringResource(R.string.common_search),
-                                        color = Color(0xFF999999),
-                                        fontSize = 13.sp
-                                    )
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF666666), modifier = Modifier.size(16.dp))
-                                },
-                                textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White,
-                                    cursorColor = accent.vibrant,
-                                    focusedBorderColor = accent.vibrant,
-                                    unfocusedBorderColor = Color(0xFF3A3A4A),
-                                    focusedContainerColor = Color.White.copy(alpha = 0.06f),
-                                    unfocusedContainerColor = Color.White.copy(alpha = 0.06f)
-                                ),
-                                shape = RoundedCornerShape(8.dp)
+                                modifier = Modifier.fillMaxWidth()
                             )
                         },
                         navigationIcon = {
