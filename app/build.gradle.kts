@@ -21,7 +21,7 @@ android {
         minSdk = 31
         targetSdk = 36
         versionCode = 1
-        versionName = providers.gradleProperty("versionName").orNull ?: "1.4"
+        versionName = providers.gradleProperty("versionName").orNull ?: "1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
