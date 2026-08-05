@@ -242,7 +242,9 @@
     <string name="toolbar_category">分类</string>
     <string name="toolbar_sort">排序</string>
     <string name="sort_az">A-Z</string>
+    <string name="sort_za">Z-A</string>
     <string name="sort_recent">最近添加</string>
+    <string name="sort_oldest">最早</string>
     <string name="poster_small">小</string>
     <string name="poster_medium">中</string>
     <string name="poster_large">大</string>

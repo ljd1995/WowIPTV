@@ -230,7 +230,9 @@
     <string name="toolbar_category">Category</string>
     <string name="toolbar_sort">Sort</string>
     <string name="sort_az">A-Z</string>
+    <string name="sort_za">Z-A</string>
     <string name="sort_recent">Recently Added</string>
+    <string name="sort_oldest">Oldest</string>
     <string name="poster_small">S</string>
     <string name="poster_medium">M</string>
     <string name="poster_large">L</string>
