@@ -28,6 +28,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -638,6 +640,25 @@ private fun SeriesDetailTablet(
                         }
                     }
                 }
+                val firstEpisode = seriesEpisodeIds.firstOrNull()?.let { id ->
+                    allEpisodes.firstOrNull { it.id == id }
+                }
+                firstEpisode?.let { ep ->
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Button(
+                        onClick = {
+                            val title = "$series.name - E${ep.episodeNum}"
+                            onPlayEpisode(ep.id, title, 0L, seriesEpisodeIds)
+                        },
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = accent.vibrant),
+                        modifier = Modifier.align(Alignment.CenterHorizontally).height(48.dp)
+                    ) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.common_play), fontWeight = FontWeight.Bold)
+                    }
+                }
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
@@ -662,6 +683,20 @@ private fun SeriesDetailTablet(
                     .padding(start = 16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
+                series.plot?.let { plot ->
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.series_overview),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = plot,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 series.cast?.let { cast ->
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
