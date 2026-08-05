@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,11 +24,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Surface
@@ -53,14 +56,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dream.wowiptv.R
+import coil.compose.AsyncImage
 import com.dream.wowiptv.domain.model.Episode
 import com.dream.wowiptv.domain.model.Season
 import com.dream.wowiptv.domain.model.SeriesInfo
+import com.dream.wowiptv.domain.model.SeriesItem
 import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.domain.repository.TmdbRepository
 import com.dream.wowiptv.domain.usecase.GetSeriesInfoUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.common.rememberIsTablet
 import com.dream.wowiptv.presentation.common.components.DetailPosterHeader
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.CastAvatarRow
@@ -198,7 +204,6 @@ private fun SeriesDetailContent(
     onBack: () -> Unit,
     onPlayEpisode: (episodeId: String, episodeTitle: String, position: Long, episodeIds: List<String>) -> Unit
 ) {
-    val accent = LocalAccentPalette.current
     val series = info.info
     val allEpisodes = info.episodes.values.flatten()
     val seriesEpisodeIds = info.episodes.entries
@@ -209,6 +214,20 @@ private fun SeriesDetailContent(
     MaterialTheme(colorScheme = DarkColorScheme) {
     GradientBackground {
     Box(modifier = Modifier.fillMaxSize()) {
+        val isTablet = rememberIsTablet()
+        if (isTablet) {
+            SeriesDetailTablet(
+                series = series,
+                info = info,
+                allEpisodes = allEpisodes,
+                seriesEpisodeIds = seriesEpisodeIds,
+                episodePositions = episodePositions,
+                avatarsEnabled = avatarsEnabled,
+                castImages = castImages,
+                onBack = onBack,
+                onPlayEpisode = onPlayEpisode
+            )
+        } else {
         Column(modifier = Modifier.fillMaxSize()) {
             DetailPosterHeader(
                 model = series.cover,
@@ -334,83 +353,16 @@ private fun SeriesDetailContent(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = stringResource(R.string.series_episodes),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White
+                SeriesEpisodesBlock(
+                    seriesName = series.name,
+                    info = info,
+                    allEpisodes = allEpisodes,
+                    seriesEpisodeIds = seriesEpisodeIds,
+                    episodePositions = episodePositions,
+                    onPlayEpisode = onPlayEpisode
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                val seasons = info.seasons
-                var selectedSeasonIdx by remember { mutableStateOf(0) }
-
-                if (seasons.isNotEmpty()) {
-                    val selectedSeason = seasons.getOrElse(selectedSeasonIdx) { seasons.first() }
-                    var seasonEpisodes = allEpisodes.filter { it.seasonNum == selectedSeason.seasonNumber }
-                    if (seasonEpisodes.isEmpty()) {
-                        seasonEpisodes = allEpisodes.take(selectedSeason.episodeCount)
-                    }
-
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        itemsIndexed(seasons) { idx, season ->
-                            val isSelected = idx == selectedSeasonIdx
-                            Surface(
-                                onClick = { selectedSeasonIdx = idx },
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (isSelected) accent.vibrant else Color(0xFF2C2C2C)
-                            ) {
-                                Text(
-                                    text = season.name,
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    fontSize = 13.sp
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    if (seasonEpisodes.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.series_no_episodes),
-                            color = Color(0xFF999999),
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    } else {
-                        Column(
-                            modifier = Modifier.background(Color(0xFF2C2C2C), RoundedCornerShape(12.dp)).padding(8.dp)
-                        ) {
-                            seasonEpisodes.forEachIndexed { index, episode ->
-                                val savedPos = episodePositions[episode.id] ?: 0L
-                                EpisodeItem(
-                                    episode = episode,
-                                    savedPosition = savedPos,
-                                    onPlay = {
-                                        val episodeTitle = "${series.name} - ${selectedSeason.name} E${episode.episodeNum}"
-                                        onPlayEpisode(episode.id, episodeTitle, 0L, seriesEpisodeIds)
-                                    },
-                                    onContinue = if (savedPos > 0) {
-                                        {
-                                            val episodeTitle = "${series.name} - ${selectedSeason.name} E${episode.episodeNum}"
-                                            onPlayEpisode(episode.id, episodeTitle, savedPos, seriesEpisodeIds)
-                                        }
-                                    } else {
-                                        null
-                                    }
-                                )
-                                if (index < seasonEpisodes.lastIndex) {
-                                    HorizontalDivider(color = Color(0xFF444444), thickness = 0.5.dp)
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
             }
+        }
         }
     }
     }
@@ -505,6 +457,234 @@ private fun EpisodeItem(
                 modifier = Modifier
                     .size(20.dp)
                     .clickable(onClick = onPlay)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SeriesEpisodesBlock(
+    seriesName: String,
+    info: SeriesInfo,
+    allEpisodes: List<Episode>,
+    seriesEpisodeIds: List<String>,
+    episodePositions: Map<String, Long>,
+    onPlayEpisode: (String, String, Long, List<String>) -> Unit
+) {
+    val accent = LocalAccentPalette.current
+    Text(
+        text = stringResource(R.string.series_episodes),
+        style = MaterialTheme.typography.titleMedium,
+        color = Color.White
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+
+    val seasons = info.seasons
+    var selectedSeasonIdx by remember { mutableStateOf(0) }
+
+    if (seasons.isNotEmpty()) {
+        val selectedSeason = seasons.getOrElse(selectedSeasonIdx) { seasons.first() }
+        var seasonEpisodes = allEpisodes.filter { it.seasonNum == selectedSeason.seasonNumber }
+        if (seasonEpisodes.isEmpty()) {
+            seasonEpisodes = allEpisodes.take(selectedSeason.episodeCount)
+        }
+
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            itemsIndexed(seasons) { idx, season ->
+                val isSelected = idx == selectedSeasonIdx
+                Surface(
+                    onClick = { selectedSeasonIdx = idx },
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isSelected) accent.vibrant else Color(0xFF2C2C2C)
+                ) {
+                    Text(
+                        text = season.name,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        fontSize = 13.sp
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (seasonEpisodes.isEmpty()) {
+            Text(
+                text = stringResource(R.string.series_no_episodes),
+                color = Color(0xFF999999),
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        } else {
+            Column(
+                modifier = Modifier.background(Color(0xFF2C2C2C), RoundedCornerShape(12.dp)).padding(8.dp)
+            ) {
+                seasonEpisodes.forEachIndexed { index, episode ->
+                    val savedPos = episodePositions[episode.id] ?: 0L
+                    EpisodeItem(
+                        episode = episode,
+                        savedPosition = savedPos,
+                        onPlay = {
+                            val episodeTitle = "$seriesName - ${selectedSeason.name} E${episode.episodeNum}"
+                            onPlayEpisode(episode.id, episodeTitle, 0L, seriesEpisodeIds)
+                        },
+                        onContinue = if (savedPos > 0) {
+                            {
+                                val episodeTitle = "$seriesName - ${selectedSeason.name} E${episode.episodeNum}"
+                                onPlayEpisode(episode.id, episodeTitle, savedPos, seriesEpisodeIds)
+                            }
+                        } else {
+                            null
+                        }
+                    )
+                    if (index < seasonEpisodes.lastIndex) {
+                        HorizontalDivider(color = Color(0xFF444444), thickness = 0.5.dp)
+                    }
+                }
+            }
+        }
+    }
+    Spacer(modifier = Modifier.height(16.dp))
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun SeriesDetailTablet(
+    series: SeriesItem,
+    info: SeriesInfo,
+    allEpisodes: List<Episode>,
+    seriesEpisodeIds: List<String>,
+    episodePositions: Map<String, Long>,
+    avatarsEnabled: Boolean,
+    castImages: Map<String, String>,
+    onBack: () -> Unit,
+    onPlayEpisode: (String, String, Long, List<String>) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 320.dp)
+                .padding(16.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            AsyncImage(
+                model = series.cover,
+                contentDescription = series.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .width(200.dp)
+                    .height(280.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp)
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
+                }
+                Text(
+                    text = series.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    series.releaseDate?.let { date ->
+                        Text(date.take(10), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
+                    series.rating?.let { rating ->
+                        Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(rating, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                series.genre?.let { genreStr ->
+                    Spacer(modifier = Modifier.height(10.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        genreStr.split(",").forEach { tag ->
+                            SuggestionChip(
+                                onClick = { },
+                                label = { Text(tag.trim(), style = MaterialTheme.typography.labelSmall) }
+                            )
+                        }
+                    }
+                }
+                series.plot?.let { plot ->
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = plot,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 5,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+        ) {
+            series.cast?.let { cast ->
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.series_cast),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                val castNames = cast.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                if (avatarsEnabled && castNames.isNotEmpty()) {
+                    CastAvatarRow(names = castNames, images = castImages)
+                } else {
+                    Text(
+                        text = cast,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            series.director?.let { director ->
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.series_director),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                val directorName = director.trim()
+                if (avatarsEnabled && directorName.isNotEmpty()) {
+                    PersonAvatar(name = directorName, imageUrl = castImages[directorName])
+                } else {
+                    Text(
+                        text = director,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            SeriesEpisodesBlock(
+                seriesName = series.name,
+                info = info,
+                allEpisodes = allEpisodes,
+                seriesEpisodeIds = seriesEpisodeIds,
+                episodePositions = episodePositions,
+                onPlayEpisode = onPlayEpisode
             )
         }
     }
