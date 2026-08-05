@@ -67,7 +67,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -299,6 +298,7 @@ fun LiveScreen(
                             isRefreshing = true
                             viewModel.refresh()
                         },
+                        showSearch = false,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -891,14 +891,17 @@ private fun ChannelList(
     onLoadChannelEpg: (Int) -> Unit,
     isRefreshing: Boolean,
     onRefresh: () -> Unit,
+    showSearch: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxHeight()) {
-        SearchField(
-            value = searchQuery,
-            onValueChange = onSearchQueryChange,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp)
-        )
+        if (showSearch) {
+            SearchField(
+                value = searchQuery,
+                onValueChange = onSearchQueryChange,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp)
+            )
+        }
         when (val state = streamsState) {
             is UiState.Loading -> {
                 if (!isRefreshing) {
