@@ -25,6 +25,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
@@ -44,7 +46,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -59,6 +64,7 @@ import coil.compose.AsyncImage
 import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.domain.model.VodInfo
 import com.dream.wowiptv.domain.repository.TmdbRepository
+import com.dream.wowiptv.domain.usecase.CreateFavoriteUseCase
 import com.dream.wowiptv.domain.usecase.GetVodInfoUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.presentation.common.UiState
@@ -95,6 +101,7 @@ import android.content.Context
 class MovieDetailViewModel @Inject constructor(
     private val getVodInfoUseCase: GetVodInfoUseCase,
     private val watchProgressUseCase: WatchProgressUseCase,
+    private val createFavoriteUseCase: CreateFavoriteUseCase,
     private val appPreferences: AppPreferences,
     private val tmdbRepository: TmdbRepository,
     savedStateHandle: SavedStateHandle,
@@ -102,6 +109,18 @@ class MovieDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val vodId: Int = savedStateHandle.get<Int>("vodId") ?: 0
+
+    val isFavorite: StateFlow<Boolean> = favoriteFlow()
+
+    private fun favoriteFlow(): StateFlow<Boolean> = flow {
+        createFavoriteUseCase.getMovieFavoriteIds().collect { ids ->
+            emit(ids.contains(vodId))
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun toggleFavorite(name: String, icon: String?, categoryId: Int) {
+        viewModelScope.launch { createFavoriteUseCase.toggleMovie(vodId, name, icon, categoryId) }
+    }
 
     val vodInfo: StateFlow<UiState<VodInfo>> = flow {
         emit(UiState.Loading)
@@ -194,6 +213,7 @@ fun MovieDetailScreen(
                 val savedDuration by viewModel.savedDuration.collectAsState()
                 val isTablet = rememberIsTablet()
                 if (isTablet) {
+                    val isFav by viewModel.isFavorite.collectAsState()
                     MovieDetailTablet(
                         info = info,
                         savedPos = savedPos,
@@ -201,6 +221,10 @@ fun MovieDetailScreen(
                         avatarsEnabled = avatarsEnabled,
                         castImages = castImages,
                         posterContentScale = posterContentScale,
+                        isFavorite = isFav,
+                        onToggleFavorite = {
+                            viewModel.toggleFavorite(info.name, info.cover, info.categoryId)
+                        },
                         onBack = onBack,
                         onPlay = onPlay
                     )
@@ -469,65 +493,89 @@ private fun MovieDetailTablet(
     avatarsEnabled: Boolean,
     castImages: Map<String, String>,
     posterContentScale: ContentScale,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
     onBack: () -> Unit,
     onPlay: (Int, String, Long) -> Unit
 ) {
+    val accent = LocalAccentPalette.current
+
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 340.dp)
-                .statusBarsPadding()
-                .padding(16.dp),
-            verticalAlignment = Alignment.Top
+                .weight(1.2f)
+                .background(Color.Black)
         ) {
             AsyncImage(
                 model = info.cover,
-                contentDescription = info.name,
-                contentScale = posterContentScale,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .width(200.dp)
-                    .height(280.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .fillMaxSize()
+                    .blur(18.dp)
+                    .scale(1.08f)
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.55f), Color(0xFF1A1A1A))))
             )
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 16.dp)
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(16.dp)
             ) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = Color.White)
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    IconButton(onClick = onToggleFavorite) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = stringResource(R.string.common_favorite),
+                            tint = if (isFavorite) Color(0xFFFFD700) else Color.White
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.weight(1f))
                 Text(
                     text = info.name,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     info.releasedate?.take(4)?.let { year ->
-                        Text(year, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(year, style = MaterialTheme.typography.bodyMedium, color = Color(0xFFCCCCCC))
                         Spacer(modifier = Modifier.width(12.dp))
                     }
                     info.rating?.let { rating ->
                         Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.height(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("%.1f".format(rating), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("%.1f".format(rating), style = MaterialTheme.typography.bodyMedium, color = Color(0xFFCCCCCC))
                     }
                     info.durationSecs?.let { secs ->
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(formatDuration(secs, LocalContext.current), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(formatDuration(secs, LocalContext.current), style = MaterialTheme.typography.bodyMedium, color = Color(0xFFCCCCCC))
                     }
                 }
                 info.genre?.let { genreStr ->
                     Spacer(modifier = Modifier.height(10.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        genreStr.split(",").forEach { tag ->
+                        genreStr.split(",").take(6).forEach { tag ->
                             SuggestionChip(
                                 onClick = { },
                                 label = { Text(tag.trim(), style = MaterialTheme.typography.labelSmall) }
@@ -535,85 +583,115 @@ private fun MovieDetailTablet(
                         }
                     }
                 }
+                Spacer(modifier = Modifier.height(20.dp))
+                Row(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Button(
+                        onClick = { onPlay(info.id, info.name, savedPos) },
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = accent.vibrant),
+                        modifier = Modifier.height(48.dp)
+                    ) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = null)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            if (savedPos > 0) stringResource(R.string.common_continue) else stringResource(R.string.common_play),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    if (savedPos > 0) {
+                        OutlinedButton(
+                            onClick = { onPlay(info.id, info.name, 0L) },
+                            shape = RoundedCornerShape(24.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = accent.vibrant),
+                            border = BorderStroke(1.dp, accent.vibrant),
+                            modifier = Modifier.height(48.dp)
+                        ) {
+                            Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(stringResource(R.string.common_restart))
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .padding(16.dp)
+        ) {
+            AsyncImage(
+                model = info.cover,
+                contentDescription = info.name,
+                contentScale = posterContentScale,
+                modifier = Modifier
+                    .width(180.dp)
+                    .height(260.dp)
+                    .clip(RoundedCornerShape(12.dp))
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
                 info.plot?.let { plot ->
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = stringResource(R.string.movies_overview),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = plot,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 5,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-        }
-        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-        ) {
-            info.plot?.let { plot ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.movies_overview),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = plot,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            info.cast?.let { cast ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.movies_cast),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                val castNames = cast.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-                if (avatarsEnabled && castNames.isNotEmpty()) {
-                    CastAvatarRow(names = castNames, images = castImages)
-                } else {
-                    Text(
-                        text = cast,
-                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
-            info.director?.let { director ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.movies_director),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                val directorName = director.trim()
-                if (avatarsEnabled && directorName.isNotEmpty()) {
-                    PersonAvatar(name = directorName, imageUrl = castImages[directorName])
-                } else {
+                info.cast?.let { cast ->
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = director,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = stringResource(R.string.movies_cast),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val castNames = cast.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    if (avatarsEnabled && castNames.isNotEmpty()) {
+                        CastAvatarRow(names = castNames, images = castImages)
+                    } else {
+                        Text(
+                            text = cast,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
+                info.director?.let { director ->
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.movies_director),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val directorName = director.trim()
+                    if (avatarsEnabled && directorName.isNotEmpty()) {
+                        PersonAvatar(name = directorName, imageUrl = castImages[directorName])
+                    } else {
+                        Text(
+                            text = director,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            Spacer(modifier = Modifier.height(16.dp))
         }
-        BottomPlayBar(
-            info = info,
-            savedPos = savedPos,
-            savedDuration = savedDuration,
-            onPlay = onPlay,
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 }
