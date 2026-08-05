@@ -111,6 +111,10 @@
 
     <!-- EPG -->
     <string name="epg_rotate">横竖屏切换</string>
+    <string name="epg_title">EPG</string>
+
+    <!-- 通用 -->
+    <string name="common_close">关闭</string>
 
     <!-- 设置 -->
     <string name="settings_title">设置</string>

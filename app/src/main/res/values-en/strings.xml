@@ -103,6 +103,9 @@
     <string name="series_no_episodes">No episodes</string>
 
     <string name="epg_rotate">Toggle orientation</string>
+    <string name="epg_title">EPG</string>
+
+    <string name="common_close">Close</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_general_section">General</string>

@@ -1364,7 +1364,7 @@ private fun EpgStrip(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "EPG",
+                text = stringResource(R.string.epg_title),
                 style = MaterialTheme.typography.titleSmall,
                 color = Color.White,
                 modifier = Modifier.weight(1f)
@@ -1372,7 +1372,7 @@ private fun EpgStrip(
             IconButton(onClick = onClose) {
                 Icon(
                     Icons.Filled.Close,
-                    contentDescription = stringResource(R.string.common_disable),
+                    contentDescription = stringResource(R.string.common_close),
                     tint = Color(0xFF8A8A93),
                     modifier = Modifier.size(18.dp)
                 )
