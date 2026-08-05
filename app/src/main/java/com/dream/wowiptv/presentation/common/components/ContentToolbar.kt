@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.DropdownMenu
@@ -78,6 +79,11 @@ fun <T> ContentToolbar(
             DropdownMenu(expanded = categoryMenuOpen, onDismissRequest = { categoryMenuOpen = false }) {
                 DropdownMenuItem(
                     text = { Text(allLabel) },
+                    leadingIcon = {
+                        if (selectedCategoryId == null) {
+                            Icon(Icons.Filled.Check, contentDescription = null)
+                        }
+                    },
                     onClick = {
                         onCategorySelected(null)
                         categoryMenuOpen = false
@@ -109,6 +115,11 @@ fun <T> ContentToolbar(
                                 Text("${categoryName(cat)} (${categoryCounts[id] ?: 0})")
                             }
                         },
+                        leadingIcon = {
+                            if (selectedCategoryId == id) {
+                                Icon(Icons.Filled.Check, contentDescription = null)
+                            }
+                        },
                         onClick = {
                             onCategorySelected(id)
                             categoryMenuOpen = false
@@ -132,6 +143,11 @@ fun <T> ContentToolbar(
                 SortMode.entries.forEach { mode ->
                     DropdownMenuItem(
                         text = { Text(stringResource(mode.labelRes)) },
+                        leadingIcon = {
+                            if (sortMode == mode) {
+                                Icon(Icons.Filled.Check, contentDescription = null)
+                            }
+                        },
                         onClick = {
                             onSortModeChange(mode)
                             sortMenuOpen = false
