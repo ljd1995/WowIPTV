@@ -174,6 +174,10 @@ class MoviesViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
+    fun setContentGridColumns(columns: Int) {
+        viewModelScope.launch { appPreferences.setContentGridColumns(columns) }
+    }
+
     fun refresh() {
         _refreshTrigger.value = System.currentTimeMillis()
     }
