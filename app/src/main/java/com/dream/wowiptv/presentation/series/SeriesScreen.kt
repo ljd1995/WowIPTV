@@ -69,6 +69,7 @@ import com.dream.wowiptv.presentation.common.SortMode
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.applySort
 import com.dream.wowiptv.presentation.common.rememberIsTablet
+import com.dream.wowiptv.presentation.common.effectiveGridColumns
 import com.dream.wowiptv.presentation.common.components.ContentToolbar
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.CategoryLockDialog
@@ -247,7 +248,7 @@ fun SeriesScreen(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 LazyVerticalGrid(
-                                    columns = GridCells.Fixed(if (isTablet) 8 else gridColumns),
+                                    columns = GridCells.Fixed(effectiveGridColumns(gridColumns, isTablet)),
                                     modifier = Modifier.fillMaxSize(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp),

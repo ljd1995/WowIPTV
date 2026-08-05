@@ -99,6 +99,7 @@ import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
 import com.dream.wowiptv.presentation.common.rememberIsTablet
+import com.dream.wowiptv.presentation.common.effectiveGridColumns
 import com.dream.wowiptv.presentation.update.UpdateCheckDialog
 import com.dream.wowiptv.presentation.update.UpdateState
 import com.dream.wowiptv.presentation.update.UpdateViewModel
@@ -207,8 +208,9 @@ fun SettingsScreen(
             )
             HorizontalDividerItem()
             GridColumnsRow(
-                selected = gridColumns,
-                onSelect = viewModel::setContentGridColumns
+                selected = effectiveGridColumns(gridColumns, isTablet),
+                onSelect = viewModel::setContentGridColumns,
+                isTablet = isTablet
             )
             HorizontalDividerItem()
             PosterScaleRow(
@@ -796,9 +798,10 @@ private fun PlaybackSpeedRow(
 @Composable
 private fun GridColumnsRow(
     selected: Int,
-    onSelect: (Int) -> Unit
+    onSelect: (Int) -> Unit,
+    isTablet: Boolean
 ) {
-    val options = listOf(2, 3)
+    val options = if (isTablet) listOf(6, 8) else listOf(2, 3)
     var expanded by remember { mutableStateOf(false) }
     val accent = LocalAccentPalette.current
     Row(

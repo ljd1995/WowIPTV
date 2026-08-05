@@ -8,3 +8,10 @@ fun rememberIsTablet(): Boolean {
     val config = LocalConfiguration.current
     return config.screenWidthDp >= 840
 }
+
+fun effectiveGridColumns(gridColumns: Int, isTablet: Boolean): Int =
+    if (isTablet) {
+        if (gridColumns in 6..8) gridColumns else 8
+    } else {
+        gridColumns
+    }
