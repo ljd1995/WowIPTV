@@ -80,6 +80,7 @@ import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
+import com.dream.wowiptv.presentation.common.rememberIsTablet
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -110,6 +111,7 @@ fun HomeScreen(
     MaterialTheme(colorScheme = DarkColorScheme) {
         GradientBackground {
             Column(modifier = Modifier.fillMaxSize()) {
+                if (!rememberIsTablet()) {
                 TopAppBar(
                     title = {
                         Text(
@@ -161,11 +163,18 @@ fun HomeScreen(
                         titleContentColor = Color.White
                     )
                 )
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = { viewModel.refresh() },
-                modifier = Modifier.fillMaxSize()
+                }
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopCenter
             ) {
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = { viewModel.refresh() },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .widthIn(max = 1000.dp)
+                ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -304,6 +313,7 @@ fun HomeScreen(
 
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
+                }
         }
         }
     }

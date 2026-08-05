@@ -375,14 +375,16 @@ fun SettingsScreen(
         GradientBackground {
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.settings_title)) },
-                    windowInsets = WindowInsets.statusBars,
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        titleContentColor = Color.White
+                if (!isTablet) {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.settings_title)) },
+                        windowInsets = WindowInsets.statusBars,
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = Color.White
+                        )
                     )
-                )
+                }
             },
             containerColor = Color.Transparent
         ) { innerPadding ->
