@@ -65,7 +65,11 @@ import coil.compose.AsyncImage
 import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.SeriesCategory
 import com.dream.wowiptv.domain.model.SeriesItem
+import com.dream.wowiptv.presentation.common.SortMode
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.common.applySort
+import com.dream.wowiptv.presentation.common.rememberIsTablet
+import com.dream.wowiptv.presentation.common.components.ContentToolbar
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.CategoryLockDialog
 import com.dream.wowiptv.presentation.common.components.EmptyState
@@ -92,6 +96,8 @@ fun SeriesScreen(
     val unlockedCategories by viewModel.unlockedCategories.collectAsState()
     val pendingLockedCategory by viewModel.pendingLockedCategory.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
+    val isTablet = rememberIsTablet()
+    var sortMode by remember { mutableStateOf(SortMode.AZ) }
 
     fun onCategorySelected(id: Int?) {
         viewModel.selectCategory(id)
@@ -109,6 +115,26 @@ fun SeriesScreen(
     MaterialTheme(colorScheme = DarkColorScheme) {
         GradientBackground {
         Column(modifier = Modifier.fillMaxSize()) {
+            if (isTablet) {
+                ContentToolbar(
+                    categories = (categoriesState as? UiState.Success)?.data.orEmpty(),
+                    categoryId = { it.id },
+                    categoryName = { it.name },
+                    selectedCategoryId = selectedCategoryId,
+                    categoryCounts = categoryCounts,
+                    lockedCategoryIds = lockedCategories,
+                    unlockedCategoryIds = unlockedCategories,
+                    allLabel = stringResource(R.string.series_all, categoryCounts.values.sum()),
+                    onCategorySelected = { id -> onCategorySelected(id) },
+                    sortMode = sortMode,
+                    onSortModeChange = { sortMode = it },
+                    gridColumns = gridColumns,
+                    onGridColumnsChange = { viewModel.setContentGridColumns(it) },
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { viewModel.setSearchQuery(it) },
+                    modifier = Modifier.fillMaxWidth().height(64.dp)
+                )
+            } else {
             TopAppBar(
                 title = { Text(stringResource(R.string.series_title), color = Color.White) },
                 windowInsets = WindowInsets.statusBars,
@@ -169,18 +195,19 @@ fun SeriesScreen(
                     }
                 }
             }
+            }
 
             Box(modifier = Modifier.weight(1f)) {
-                val displayData = if (searchQuery.isNotBlank()) {
-                    val s = seriesListState
-                    if (s is UiState.Success) {
-                        UiState.Success(s.data.filter { it.name.contains(searchQuery, ignoreCase = true) }) as UiState<List<SeriesItem>>
-                    } else {
-                        s
+                val displayData = when (val s = seriesListState) {
+                is UiState.Success -> {
+                    var data = s.data
+                    if (searchQuery.isNotBlank()) {
+                        data = data.filter { it.name.contains(searchQuery, ignoreCase = true) }
                     }
-                } else {
-                    seriesListState
+                    UiState.Success(if (isTablet) applySort(data, sortMode, { it.name }, { it.releaseDate }) else data)
                 }
+                else -> s
+            }
                 when (val series = displayData) {
                     is UiState.Loading -> {
                         if (!isRefreshing) {
@@ -215,7 +242,7 @@ fun SeriesScreen(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 LazyVerticalGrid(
-                                    columns = GridCells.Fixed(gridColumns),
+                                    columns = GridCells.Fixed(if (isTablet) gridColumns.coerceAtLeast(4) else gridColumns),
                                     modifier = Modifier.fillMaxSize(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp),
