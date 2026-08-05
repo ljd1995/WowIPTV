@@ -31,34 +31,51 @@
 
 ## 各页面适配
 
+设计基准：参考桌面端 `D:\study\WowIPTVDesktop\frontend\src\views\`（LiveView / MoviesView / SeriesView / MovieDetailView / SeriesDetailView），平板对齐桌面布局结构。
+
 ### 直播页（LiveScreen）
 
-tablet：三栏 `分类 | 频道列表 | 播放器`
+tablet：桌面式两栏 `左侧边栏 | 右侧播放区`
 
-- 分类栏约 200dp，频道列表占剩余中间宽度，播放器固定约 1/3 宽度
-- 播放器复用现有内嵌 `PlayerView`（`LiveScreen.kt:312` 的 AndroidView 块，同一 `viewModel.player` ExoPlayer 实例）
-- 现有播放控制条、EPG 浮层、`onFullscreenChanged`（隐藏导航）逻辑保留
+- **左侧边栏**（约 360dp 固定宽）：
+  - 顶行工具栏：分类 Select（单选，含"全部"）+ 排序 Select（4 档：A-Z / Z-A / 最近 / 最早）并排
+  - 下一行：搜索框
+  - 下方：频道列表（复用 `ChannelList`，应用排序后数据）
+- **右侧播放区**：
+  - 上：播放器（16:9 比例，高度约 62%），复用现有内嵌 `PlayerView`（同一 `viewModel.player` 实例）
+  - 下：EPG 条（当前频道今日节目横向滚动，当前节目高亮；toggle 显示/隐藏）
+- 保留：播放控制条、`onFullscreenChanged`（隐藏导航）、频道点击播放、收藏、EPG 跳转
 - 手机布局现状不动
 
 ### 电影 / 剧集页（MoviesScreen / SeriesScreen）
 
-tablet 布局改为上下两行 + 网格：
+tablet 布局改为 `标题行 + 工具栏 + 网格`（对齐桌面）：
 
-- **第一行**（工具栏）：
-  1. 分类 Select：单选，选择分类（含"全部"）
-  2. 排序 Select：A-Z、最近添加等（新增功能，当前代码无排序）
-  3. 海报大小按钮组：小 / 中 / 大三档，直接映射网格列数：小=6 列、中=5 列、大=4 列（写回现有 `contentGridColumns` 偏好，与设置页联动）
-  4. 搜索框（现有按名称过滤逻辑复用）
-- **第二行**：`LazyVerticalGrid`，tablet 默认列数按海报大小档位（5–6 列）
-- 手机布局现状不动（纵向分类侧栏 + 网格）
+- **标题行**：页面标题（如"电影"/"剧集"）
+- **工具栏**（一行）：
+  1. 分类 Select：单选（含"全部"）
+  2. 排序 Select：4 档（A-Z / Z-A / 最近 / 最早）——桌面 `nameAsc/nameDesc/newest/oldest`
+  3. 密度单选 3 档（小 / 中 / 大），映射网格列数：小=8、中=6、大=4（写回现有 `contentGridColumns` 偏好）
+  4. 搜索框
+- **网格**：`LazyVerticalGrid`，列数按密度档位
+- `SortMode` 扩展为 4 档枚举（AZ / ZA / NEWEST / OLDEST），`applySort` 扩展对应排序；排序仅 tablet 生效
+- 手机布局现状不动
 
 ### 详情页（MovieDetailScreen / SeriesDetailScreen）
 
-tablet：**上下分栏**
+tablet：桌面式 `hero 背景 + 下窗左右布局`
 
-- 上方区域：海报 + 元信息 + 简介（横排展示，信息与海报并排）
-- 下方区域：剧集列表（系列）/ 相关内容（电影）
+- **上部 hero**（55% 高度）：
+  - 背景：海报图模糊放大（`Modifier.blur` + Crop + 暗化 50%）铺满
+  - 顶部覆盖条：返回钮 + 标题 + 收藏钮（居中标题）
+  - 中央：大播放按钮（点击播放/继续观看）
+- **下窗**（45% 高度）：
+  - 左：竖版海报（约 240dp 宽，2:3）
+  - 右：滚动内容：
+    - 电影：简介 + 导演/演员头像圈（TMDB 头像复用）+ 播放 / 再看一次按钮 + 同类影片横向滚动（桌面 `related`）
+    - 剧集：简介 + 演员/导演 + 季数 chips + 集数列表行（E# 图标 + 标题 + 进度条 + 继续/播放钮，复用 `SeriesEpisodesBlock`）+ 同类横向滚动
 - 手机现状（纵向滚动）不动
+- 不含桌面端"复制链接"按钮（移动端不适用）
 
 ### 设置页（SettingsScreen）
 
@@ -84,11 +101,11 @@ tablet：**两列布局**
 
 - 每个屏的 tablet 分支抽独立私有 composable，与手机分支互不干扰：
   - `TabletScaffold`（NavigationRail + 顶部 logo/搜索行）
-  - `LiveTabletPane`（三栏）
-  - `ContentToolbar`（分类 Select + 排序 Select + 海报大小 + 搜索，电影/剧集共用）
+  - `LiveTabletPane`（侧边栏 + 播放区，含 EPG 条 toggle）
+  - `ContentToolbar`（分类 Select + 排序 Select + 密度单选 + 搜索，电影/剧集共用）
   - `SettingsTwoPane`（分组导航 + 设置项）
-  - 详情页 `DetailTabletLayout`
-- 新增 `MovieSortMode`/`SeriesSortMode` 枚举与排序逻辑（UI 层对现有列表 flow 排序，不进数据层）
+  - 详情页 `DetailHero` + 下窗布局（电影/剧集各一个私有 composable）
+- `SortMode` 4 档枚举（AZ/ZA/NEWEST/OLDEST）与 `applySort` 扩展（UI 层排序，不进数据层）；排序仅 tablet 生效
 
 ## 不动部分
 
@@ -107,4 +124,9 @@ tablet：**两列布局**
 
 1. `./gradlew :app:assembleDebug` 构建通过
 2. 回归清单（手机模拟器 390x844）：5 个 tab、直播播放/切换、PiP、分类锁定、语言切换、设置页全部功能
-3. PAD 验证（平板模拟器 1280x800 横屏）：NavigationRail 5 图标且设置在底部、顶部 logo+搜索、直播三栏播放、电影/剧集工具栏各控件、详情页上下分栏、设置页两列、EPG 全宽
+3. PAD 验证（平板模拟器 1280x800 横屏，对照桌面端布局）：
+   - NavigationRail 5 图标且设置在底部、顶部 logo+搜索
+   - 直播：左侧边栏（分类+排序+搜索+频道）\| 右侧播放器+EPG 条；4 档排序生效
+   - 电影/剧集：标题行+工具栏（分类/4档排序/密度/搜索）+ 网格，密度列数 8/6/4
+   - 详情页：上部 hero 模糊背景+标题+大播放钮；下部海报左+内容右；剧集集数列表正常
+   - 设置页两列、首页限宽、EPG 全宽
