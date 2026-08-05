@@ -158,7 +158,7 @@ fun <T> ContentToolbar(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            val options = listOf(6 to R.string.poster_small, 5 to R.string.poster_medium, 4 to R.string.poster_large)
+            val options = listOf(8 to R.string.poster_small, 6 to R.string.poster_medium, 4 to R.string.poster_large)
             options.forEach { (columns, labelRes) ->
                 val selected = gridColumns == columns
                 IconButton(
