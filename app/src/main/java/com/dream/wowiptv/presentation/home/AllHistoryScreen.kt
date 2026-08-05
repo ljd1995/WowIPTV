@@ -49,6 +49,7 @@ import com.dream.wowiptv.R
 import com.dream.wowiptv.data.local.entity.WatchProgressEntity
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.EmptyState
+import com.dream.wowiptv.presentation.common.rememberIsTablet
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
@@ -87,7 +88,7 @@ fun AllHistoryScreen(
                 EmptyState(text = stringResource(R.string.home_no_history), modifier = Modifier.fillMaxSize().padding(innerPadding))
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
+                    columns = GridCells.Fixed(if (rememberIsTablet()) 8 else 3),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                     contentPadding = PaddingValues(12.dp),

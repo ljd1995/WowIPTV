@@ -180,6 +180,9 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    item {
                         if (sourceType == "m3u") {
                             StatCard(icon = Icons.Filled.LiveTv, count = data.liveCount, label = stringResource(R.string.home_channels), color = Color(0xFFEF4444), modifier = Modifier.fillMaxWidth(), onClick = onOpenLive)
                         } else {

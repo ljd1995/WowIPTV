@@ -274,6 +274,8 @@ fun LiveScreen(
                         onValueChange = { viewModel.setSearchQuery(it) },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
                     val sortedStreams = when (val s = filteredStreams) {
                         is UiState.Success -> UiState.Success(
                             applySort(s.data, liveSortMode, { it.name }, { null })

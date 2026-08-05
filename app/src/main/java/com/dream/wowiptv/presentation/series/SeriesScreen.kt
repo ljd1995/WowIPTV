@@ -135,8 +135,6 @@ fun SeriesScreen(
                     onCategorySelected = { id -> onCategorySelected(id) },
                     sortMode = sortMode,
                     onSortModeChange = { sortMode = it },
-                    gridColumns = gridColumns,
-                    onGridColumnsChange = { viewModel.setContentGridColumns(it) },
                     searchQuery = searchQuery,
                     onSearchQueryChange = { viewModel.setSearchQuery(it) },
                     modifier = Modifier.fillMaxWidth().height(64.dp)
@@ -249,7 +247,7 @@ fun SeriesScreen(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 LazyVerticalGrid(
-                                    columns = GridCells.Fixed(if (isTablet) gridColumns.coerceAtLeast(4) else gridColumns),
+                                    columns = GridCells.Fixed(if (isTablet) 8 else gridColumns),
                                     modifier = Modifier.fillMaxSize(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp),
