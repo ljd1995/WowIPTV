@@ -127,7 +127,6 @@ fun LiveScreen(
     onStreamPlayed: () -> Unit = {},
     onFullscreenChanged: (Boolean) -> Unit = {},
     onOpenEpg: (Int) -> Unit = {},
-    onOpenProgramGuide: () -> Unit = {},
     viewModel: LiveViewModel = hiltViewModel(),
     sourceTypeViewModel: SourceTypeViewModel = hiltViewModel()
 ) {
@@ -267,25 +266,6 @@ fun LiveScreen(
                             onSelected = { liveSortMode = it },
                             modifier = Modifier.weight(1f)
                         )
-                        Surface(
-                            onClick = onOpenProgramGuide,
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color(0xFF2D2D3A),
-                            modifier = Modifier.width(64.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    Icons.Filled.DateRange,
-                                    contentDescription = stringResource(R.string.program_guide),
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        }
                     }
                     SearchField(
                         value = searchQuery,

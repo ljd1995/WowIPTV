@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -206,6 +207,9 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                             launchSingleTop = true
                             restoreState = true
                         }
+                    },
+                    onOpenProgramGuide = {
+                        outerNavController.navigate(Routes.epgRoute(0))
                     }
                 )
             }
@@ -282,9 +286,6 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                     },
                     onOpenEpg = { streamId ->
                         outerNavController.navigate(Routes.epgRoute(streamId))
-                    },
-                    onOpenProgramGuide = {
-                        outerNavController.navigate(Routes.epgRoute(0))
                     }
                 )
             }
@@ -397,7 +398,8 @@ private fun TabletTopBar(onOpenSearch: () -> Unit) {
 private fun TabletNavigationRail(
     items: List<BottomNavItem>,
     currentRoute: String?,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onOpenProgramGuide: () -> Unit
 ) {
     val accent = LocalAccentPalette.current
     NavigationRail(
@@ -420,6 +422,24 @@ private fun TabletNavigationRail(
                 )
             )
         }
+        NavigationRailItem(
+            selected = false,
+            onClick = onOpenProgramGuide,
+            icon = {
+                Icon(
+                    Icons.Filled.DateRange,
+                    contentDescription = stringResource(R.string.program_guide)
+                )
+            },
+            label = { Text(stringResource(R.string.program_guide)) },
+            colors = NavigationRailItemDefaults.colors(
+                selectedIconColor = accent.vibrant,
+                selectedTextColor = accent.vibrant,
+                indicatorColor = accent.primary.copy(alpha = 0.25f),
+                unselectedIconColor = Color(0xFF8A8A93),
+                unselectedTextColor = Color(0xFF8A8A93)
+            )
+        )
         Spacer(modifier = Modifier.weight(1f))
         val settingsSelected = currentRoute == BottomNavItem.Settings.route
         NavigationRailItem(
