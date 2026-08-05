@@ -207,7 +207,7 @@ fun MoviesScreen(
                     if (searchQuery.isNotBlank()) {
                         data = data.filter { it.name.contains(searchQuery, ignoreCase = true) }
                     }
-                    UiState.Success(applySort(data, sortMode, { it.name }, { it.added }))
+                    UiState.Success(if (isTablet) applySort(data, sortMode, { it.name }, { it.added }) else data)
                 }
                 else -> s
             }
