@@ -112,6 +112,7 @@
     <!-- EPG -->
     <string name="epg_rotate">横竖屏切换</string>
     <string name="epg_title">EPG</string>
+    <string name="program_guide">节目单</string>
 
     <!-- 通用 -->
     <string name="common_close">关闭</string>

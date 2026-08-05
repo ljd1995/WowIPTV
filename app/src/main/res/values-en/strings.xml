@@ -104,6 +104,7 @@
 
     <string name="epg_rotate">Toggle orientation</string>
     <string name="epg_title">EPG</string>
+    <string name="program_guide">Program Guide</string>
 
     <string name="common_close">Close</string>
 

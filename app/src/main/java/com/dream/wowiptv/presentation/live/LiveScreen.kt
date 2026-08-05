@@ -31,7 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.DateRange
@@ -128,6 +127,7 @@ fun LiveScreen(
     onStreamPlayed: () -> Unit = {},
     onFullscreenChanged: (Boolean) -> Unit = {},
     onOpenEpg: (Int) -> Unit = {},
+    onOpenProgramGuide: () -> Unit = {},
     viewModel: LiveViewModel = hiltViewModel(),
     sourceTypeViewModel: SourceTypeViewModel = hiltViewModel()
 ) {
@@ -197,7 +197,6 @@ fun LiveScreen(
 
     val isTablet = rememberIsTablet()
     var liveSortMode by remember { mutableStateOf(SortMode.AZ) }
-    var epgStripVisible by remember { mutableStateOf(true) }
     val exoPlayer = viewModel.player
     val isBuffering by viewModel.isBuffering.collectAsState()
     val networkSpeed by viewModel.networkSpeed.collectAsState()
@@ -268,6 +267,25 @@ fun LiveScreen(
                             onSelected = { liveSortMode = it },
                             modifier = Modifier.weight(1f)
                         )
+                        Surface(
+                            onClick = onOpenProgramGuide,
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFF2D2D3A),
+                            modifier = Modifier.width(64.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    Icons.Filled.DateRange,
+                                    contentDescription = stringResource(R.string.program_guide),
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
                     }
                     SearchField(
                         value = searchQuery,
@@ -327,15 +345,12 @@ fun LiveScreen(
                         onOpenEpg = { currentStream?.let { onOpenEpg(it.id) } },
                         modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)
                     )
-                    if (epgStripVisible) {
-                        EpgStrip(
-                            entries = epgEntries,
-                            onClose = { epgStripVisible = false },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        )
-                    }
+                    EpgStrip(
+                        entries = epgEntries,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
                 }
             }
         } else {
@@ -1355,7 +1370,6 @@ private fun <T> LiveSelect(
 @Composable
 private fun EpgStrip(
     entries: List<EpgEntry>,
-    onClose: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val accent = LocalAccentPalette.current
@@ -1371,14 +1385,6 @@ private fun EpgStrip(
                 color = Color.White,
                 modifier = Modifier.weight(1f)
             )
-            IconButton(onClick = onClose) {
-                Icon(
-                    Icons.Filled.Close,
-                    contentDescription = stringResource(R.string.common_close),
-                    tint = Color(0xFF8A8A93),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
         }
         if (entries.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

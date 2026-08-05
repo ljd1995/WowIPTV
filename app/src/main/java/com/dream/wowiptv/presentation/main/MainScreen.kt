@@ -282,6 +282,9 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                     },
                     onOpenEpg = { streamId ->
                         outerNavController.navigate(Routes.epgRoute(streamId))
+                    },
+                    onOpenProgramGuide = {
+                        outerNavController.navigate(Routes.epgRoute(0))
                     }
                 )
             }
