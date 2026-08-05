@@ -222,6 +222,7 @@ private fun SeriesDetailContent(
                 allEpisodes = allEpisodes,
                 seriesEpisodeIds = seriesEpisodeIds,
                 episodePositions = episodePositions,
+                posterContentScale = posterContentScale,
                 avatarsEnabled = avatarsEnabled,
                 castImages = castImages,
                 onBack = onBack,
@@ -557,6 +558,7 @@ private fun SeriesDetailTablet(
     allEpisodes: List<Episode>,
     seriesEpisodeIds: List<String>,
     episodePositions: Map<String, Long>,
+    posterContentScale: ContentScale,
     avatarsEnabled: Boolean,
     castImages: Map<String, String>,
     onBack: () -> Unit,
@@ -566,14 +568,14 @@ private fun SeriesDetailTablet(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 320.dp)
+                .heightIn(max = 340.dp)
                 .padding(16.dp),
             verticalAlignment = Alignment.Top
         ) {
             AsyncImage(
                 model = series.cover,
                 contentDescription = series.name,
-                contentScale = ContentScale.Crop,
+                contentScale = posterContentScale,
                 modifier = Modifier
                     .width(200.dp)
                     .height(280.dp)
