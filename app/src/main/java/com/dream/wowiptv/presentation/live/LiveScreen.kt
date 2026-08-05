@@ -254,6 +254,8 @@ fun LiveScreen(
                             options = catOptions,
                             selected = selectedCategoryId,
                             onSelected = { viewModel.selectCategory(it) },
+                            lockedCategoryIds = lockedCategories,
+                            unlockedCategoryIds = unlockedCategories,
                             modifier = Modifier.weight(1f)
                         )
                         LiveSelect(
@@ -1292,6 +1294,8 @@ private fun <T> LiveSelect(
     options: List<Pair<String, T>>,
     selected: T,
     onSelected: (T) -> Unit,
+    lockedCategoryIds: Set<Int> = emptySet(),
+    unlockedCategoryIds: Set<Int> = emptySet(),
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -1323,14 +1327,28 @@ private fun <T> LiveSelect(
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { (optionLabel, value) ->
+                val isLocked = value is Int && value in lockedCategoryIds
                 DropdownMenuItem(
                     text = {
-                        Text(
-                            text = optionLabel,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.widthIn(max = 300.dp)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (isLocked) {
+                                Icon(
+                                    imageVector = if (value in unlockedCategoryIds) Icons.Filled.LockOpen else Icons.Filled.Lock,
+                                    contentDescription = stringResource(
+                                        if (value in unlockedCategoryIds) R.string.common_unlocked else R.string.common_locked
+                                    ),
+                                    tint = if (value in unlockedCategoryIds) Color(0xFF4CAF50) else Color(0xFFE6B34C),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                            }
+                            Text(
+                                text = optionLabel,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.widthIn(max = 300.dp)
+                            )
+                        }
                     },
                     leadingIcon = {
                         if (value == selected) {
