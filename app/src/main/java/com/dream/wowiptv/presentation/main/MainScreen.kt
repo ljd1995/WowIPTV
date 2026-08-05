@@ -123,7 +123,7 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
         containerColor = Color(0xFF1A1A1A),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
-            if (isTablet) {
+            if (isTablet && !hideBottomBar) {
                 TabletTopBar(onOpenSearch = { outerNavController.navigate(Routes.GLOBAL_SEARCH) })
             }
         },

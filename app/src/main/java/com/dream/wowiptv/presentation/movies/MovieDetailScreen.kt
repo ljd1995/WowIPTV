@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -476,6 +477,7 @@ private fun MovieDetailTablet(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = 340.dp)
+                .statusBarsPadding()
                 .padding(16.dp),
             verticalAlignment = Alignment.Top
         ) {
