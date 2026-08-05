@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -64,10 +65,12 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -94,6 +97,7 @@ import com.dream.wowiptv.BuildConfig
 import com.dream.wowiptv.domain.model.XtreamSource
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.common.rememberIsTablet
 import com.dream.wowiptv.presentation.update.UpdateCheckDialog
 import com.dream.wowiptv.presentation.update.UpdateState
 import com.dream.wowiptv.presentation.update.UpdateViewModel
@@ -145,6 +149,19 @@ fun SettingsScreen(
 
     val accent = LocalAccentPalette.current
 
+    val isTablet = rememberIsTablet()
+    var selectedGroup by remember { mutableIntStateOf(0) }
+    val groups = listOf(
+        R.string.settings_general_section,
+        R.string.settings_player_section,
+        R.string.settings_home_section,
+        R.string.settings_startup_section,
+        R.string.settings_data_section,
+        R.string.settings_lock_section,
+        R.string.settings_sources,
+        R.string.settings_about
+    )
+
     val prevSyncingIdsState = remember { mutableStateOf<Set<Long>>(emptySet()) }
     val currentSyncingIds by rememberUpdatedState(syncingIds)
 
@@ -179,6 +196,180 @@ fun SettingsScreen(
 
     LaunchedEffect(Unit) { refreshCacheSize() }
 
+    val generalSection: @Composable () -> Unit = {
+        SectionCard(title = stringResource(R.string.settings_general_section), icon = Icons.Default.Settings) {
+            LanguageRow()
+            HorizontalDividerItem()
+            ThemeColorRow(
+                selected = themeColor,
+                onSelect = viewModel::setThemeColor
+            )
+            HorizontalDividerItem()
+            GridColumnsRow(
+                selected = gridColumns,
+                onSelect = viewModel::setContentGridColumns
+            )
+            HorizontalDividerItem()
+            PosterScaleRow(
+                selected = posterContentScale,
+                onSelect = viewModel::setPosterContentScale
+            )
+            HorizontalDividerItem()
+            SettingSwitchRow(
+                title = stringResource(R.string.settings_show_avatars),
+                subtitle = stringResource(R.string.settings_show_avatars_desc),
+                checked = showCastAvatars,
+                onCheckedChange = viewModel::setShowCastAvatars
+            )
+            if (showCastAvatars) {
+                TmdbKeyRow(
+                    key = tmdbApiKey,
+                    onEdit = {
+                        tmdbKeyInput = tmdbApiKey
+                        showTmdbKeyDialog = true
+                    }
+                )
+            }
+        }
+    }
+    val playerSection: @Composable () -> Unit = {
+        SectionCard(title = stringResource(R.string.settings_player_section), icon = Icons.Default.Speed) {
+            PlaybackSpeedRow(
+                selected = defaultSpeed,
+                onSelect = viewModel::setDefaultPlaybackSpeed
+            )
+            SettingSwitchRow(
+                title = stringResource(R.string.settings_player_status),
+                subtitle = stringResource(R.string.settings_player_status_desc),
+                checked = showPlayerStatus,
+                onCheckedChange = viewModel::setShowPlayerStatus
+            )
+            SettingSwitchRow(
+                title = stringResource(R.string.settings_autoplay),
+                subtitle = stringResource(R.string.settings_autoplay_desc),
+                checked = autoplayNext,
+                onCheckedChange = viewModel::setAutoplayNextEpisode
+            )
+        }
+    }
+    val homeSection: @Composable () -> Unit = {
+        SectionCard(title = stringResource(R.string.settings_home_section), icon = Icons.Default.Home) {
+            SettingSwitchRow(
+                title = stringResource(R.string.settings_show_continue),
+                subtitle = stringResource(R.string.settings_show_continue_desc),
+                checked = showContinue,
+                onCheckedChange = viewModel::setShowContinueWatching
+            )
+            SettingSwitchRow(
+                title = stringResource(R.string.settings_show_favorites),
+                subtitle = stringResource(R.string.settings_show_favorites_desc),
+                checked = showFavorites,
+                onCheckedChange = viewModel::setShowFavorites
+            )
+            SettingSwitchRow(
+                title = stringResource(R.string.settings_show_recent),
+                subtitle = stringResource(R.string.settings_show_recent_desc),
+                checked = showRecent,
+                onCheckedChange = viewModel::setShowRecent
+            )
+        }
+    }
+    val startupSection: @Composable () -> Unit = {
+        SectionCard(title = stringResource(R.string.settings_startup_section), icon = Icons.Default.Info) {
+            SettingSwitchRow(
+                title = stringResource(R.string.settings_splash_preload),
+                subtitle = stringResource(R.string.settings_splash_preload_desc),
+                checked = splashPreload,
+                onCheckedChange = viewModel::setSplashPreload
+            )
+        }
+    }
+    val dataSection: @Composable () -> Unit = {
+        SectionCard(title = stringResource(R.string.settings_data_section), icon = Icons.Default.DeleteSweep) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.settings_image_cache), style = MaterialTheme.typography.bodyLarge, color = Color.White)
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(stringResource(R.string.settings_image_cache_usage, formatCacheSize(cacheSize)), style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
+                }
+                Text(
+                    text = stringResource(R.string.settings_clear),
+                    color = accent.primary,
+                    modifier = Modifier
+                        .clickable {
+                            clearImageCache()
+                            Toast.makeText(context, context.getString(R.string.settings_image_cache_cleared), Toast.LENGTH_SHORT).show()
+                        }
+                        .padding(8.dp)
+                )
+            }
+            HorizontalDividerItem()
+            ActionRow(
+                title = stringResource(R.string.settings_clear_history),
+                subtitle = stringResource(R.string.settings_clear_history_desc),
+                enabled = true,
+                onClick = {
+                    viewModel.clearHistory()
+                    Toast.makeText(context, context.getString(R.string.settings_history_cleared), Toast.LENGTH_SHORT).show()
+                }
+            )
+            HorizontalDividerItem()
+            ActionRow(
+                title = stringResource(R.string.settings_clear_favorites),
+                subtitle = stringResource(R.string.settings_clear_favorites_desc),
+                enabled = true,
+                onClick = {
+                    viewModel.clearFavorites()
+                    Toast.makeText(context, context.getString(R.string.settings_favorites_cleared), Toast.LENGTH_SHORT).show()
+                }
+            )
+            HorizontalDividerItem()
+            ActionRow(
+                title = stringResource(R.string.settings_clear_cache_resync),
+                subtitle = stringResource(R.string.settings_clear_cache_resync_desc),
+                enabled = !clearingCache,
+                loading = clearingCache,
+                onClick = {
+                    viewModel.clearCacheAndResync()
+                    Toast.makeText(context, context.getString(R.string.settings_cache_cleared_syncing), Toast.LENGTH_LONG).show()
+                }
+            )
+        }
+    }
+    val lockSection: @Composable () -> Unit = {
+        SectionCard(title = stringResource(R.string.settings_lock_section), icon = Icons.Default.Lock) {
+            ActionRow(
+                title = stringResource(R.string.settings_lock_password),
+                subtitle = if (lockPassword.isNotEmpty()) stringResource(R.string.settings_lock_password_set) else stringResource(R.string.settings_lock_password_not_set),
+                enabled = true,
+                onClick = {
+                    lockPasswordInput = lockPassword
+                    showLockPasswordDialog = true
+                }
+            )
+            HorizontalDividerItem()
+            ActionRow(
+                title = stringResource(R.string.settings_lock_manage),
+                subtitle = stringResource(R.string.settings_lock_manage_desc),
+                enabled = true,
+                onClick = {
+                    if (lockPassword.isEmpty()) {
+                        lockPasswordInput = ""
+                        showLockPasswordDialog = true
+                    } else {
+                        onManageLocks()
+                    }
+                }
+            )
+        }
+    }
+
     MaterialTheme(colorScheme = DarkColorScheme) {
         GradientBackground {
         Scaffold(
@@ -194,227 +385,161 @@ fun SettingsScreen(
             },
             containerColor = Color.Transparent
         ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
-            ) {
-                if (sourceType == "xtream") {
-                    UserInfoCard(
-                        userInfo = userInfo,
-                        refreshing = refreshingUser,
-                        onRefresh = {
-                            viewModel.refreshUserInfo()
-                            Toast.makeText(context, context.getString(R.string.settings_member_refreshed), Toast.LENGTH_SHORT).show()
+            if (isTablet) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .width(200.dp)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = 16.dp)
+                    ) {
+                        groups.forEachIndexed { index, titleRes ->
+                            val selected = index == selectedGroup
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        if (selected) accent.primary.copy(alpha = 0.22f) else Color.Transparent
+                                    )
+                                    .clickable { selectedGroup = index }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(titleRes),
+                                    color = if (selected) accent.vibrant else Color(0xFFCCCCCC),
+                                    fontSize = 14.sp
+                                )
+                            }
                         }
+                    }
+                    VerticalDivider(color = Color.White.copy(alpha = 0.1f))
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp)
+                    ) {
+                        when (selectedGroup) {
+                            0 -> {
+                                if (sourceType == "xtream") {
+                                    UserInfoCard(
+                                        userInfo = userInfo,
+                                        refreshing = refreshingUser,
+                                        onRefresh = {
+                                            viewModel.refreshUserInfo()
+                                            Toast.makeText(context, context.getString(R.string.settings_member_refreshed), Toast.LENGTH_SHORT).show()
+                                        }
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                }
+                                generalSection()
+                            }
+                            1 -> playerSection()
+                            2 -> homeSection()
+                            3 -> startupSection()
+                            4 -> dataSection()
+                            5 -> lockSection()
+                            6 -> SourceListCard(
+                                sources = sourcesState,
+                                activeSourceId = activeSourceId,
+                                syncingIds = syncingIds,
+                                syncingAll = syncingAll,
+                                onSyncAll = {
+                                    viewModel.syncAllSources()
+                                    Toast.makeText(context, context.getString(R.string.settings_syncing_all), Toast.LENGTH_LONG).show()
+                                },
+                                onEdit = onEditSource,
+                                onSync = { viewModel.syncSource(it) },
+                                onDelete = { viewModel.deleteSource(it) },
+                                onSwitch = { viewModel.switchSource(it) },
+                                onAddSource = onAddSource
+                            )
+                            7 -> AboutCard(
+                                versionName = viewModel.versionName,
+                                updateState = updateState,
+                                autoCheckUpdate = autoCheckUpdate,
+                                onAutoCheckUpdateChange = updateViewModel::setAutoCheckUpdate,
+                                onCheckUpdate = { updateViewModel.check() }
+                            )
+                        }
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp)
+                ) {
+                    if (sourceType == "xtream") {
+                        UserInfoCard(
+                            userInfo = userInfo,
+                            refreshing = refreshingUser,
+                            onRefresh = {
+                                viewModel.refreshUserInfo()
+                                Toast.makeText(context, context.getString(R.string.settings_member_refreshed), Toast.LENGTH_SHORT).show()
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+
+                    generalSection()
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    playerSection()
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    homeSection()
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    startupSection()
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    dataSection()
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    lockSection()
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    SourceListCard(
+                        sources = sourcesState,
+                        activeSourceId = activeSourceId,
+                        syncingIds = syncingIds,
+                        syncingAll = syncingAll,
+                        onSyncAll = {
+                            viewModel.syncAllSources()
+                            Toast.makeText(context, context.getString(R.string.settings_syncing_all), Toast.LENGTH_LONG).show()
+                        },
+                        onEdit = onEditSource,
+                        onSync = { viewModel.syncSource(it) },
+                        onDelete = { viewModel.deleteSource(it) },
+                        onSwitch = { viewModel.switchSource(it) },
+                        onAddSource = onAddSource
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                SectionCard(title = stringResource(R.string.settings_general_section), icon = Icons.Default.Settings) {
-                    LanguageRow()
-                    HorizontalDividerItem()
-                    ThemeColorRow(
-                        selected = themeColor,
-                        onSelect = viewModel::setThemeColor
-                    )
-                    HorizontalDividerItem()
-                    GridColumnsRow(
-                        selected = gridColumns,
-                        onSelect = viewModel::setContentGridColumns
-                    )
-                    HorizontalDividerItem()
-                    PosterScaleRow(
-                        selected = posterContentScale,
-                        onSelect = viewModel::setPosterContentScale
-                    )
-                    HorizontalDividerItem()
-                    SettingSwitchRow(
-                        title = stringResource(R.string.settings_show_avatars),
-                        subtitle = stringResource(R.string.settings_show_avatars_desc),
-                        checked = showCastAvatars,
-                        onCheckedChange = viewModel::setShowCastAvatars
-                    )
-                    if (showCastAvatars) {
-                        TmdbKeyRow(
-                            key = tmdbApiKey,
-                            onEdit = {
-                                tmdbKeyInput = tmdbApiKey
-                                showTmdbKeyDialog = true
-                            }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SectionCard(title = stringResource(R.string.settings_player_section), icon = Icons.Default.Speed) {
-                    PlaybackSpeedRow(
-                        selected = defaultSpeed,
-                        onSelect = viewModel::setDefaultPlaybackSpeed
-                    )
-                    SettingSwitchRow(
-                        title = stringResource(R.string.settings_player_status),
-                        subtitle = stringResource(R.string.settings_player_status_desc),
-                        checked = showPlayerStatus,
-                        onCheckedChange = viewModel::setShowPlayerStatus
-                    )
-                    SettingSwitchRow(
-                        title = stringResource(R.string.settings_autoplay),
-                        subtitle = stringResource(R.string.settings_autoplay_desc),
-                        checked = autoplayNext,
-                        onCheckedChange = viewModel::setAutoplayNextEpisode
+                    AboutCard(
+                        versionName = viewModel.versionName,
+                        updateState = updateState,
+                        autoCheckUpdate = autoCheckUpdate,
+                        onAutoCheckUpdateChange = updateViewModel::setAutoCheckUpdate,
+                        onCheckUpdate = { updateViewModel.check() }
                     )
                 }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SectionCard(title = stringResource(R.string.settings_home_section), icon = Icons.Default.Home) {
-                    SettingSwitchRow(
-                        title = stringResource(R.string.settings_show_continue),
-                        subtitle = stringResource(R.string.settings_show_continue_desc),
-                        checked = showContinue,
-                        onCheckedChange = viewModel::setShowContinueWatching
-                    )
-                    SettingSwitchRow(
-                        title = stringResource(R.string.settings_show_favorites),
-                        subtitle = stringResource(R.string.settings_show_favorites_desc),
-                        checked = showFavorites,
-                        onCheckedChange = viewModel::setShowFavorites
-                    )
-                    SettingSwitchRow(
-                        title = stringResource(R.string.settings_show_recent),
-                        subtitle = stringResource(R.string.settings_show_recent_desc),
-                        checked = showRecent,
-                        onCheckedChange = viewModel::setShowRecent
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SectionCard(title = stringResource(R.string.settings_startup_section), icon = Icons.Default.Info) {
-                    SettingSwitchRow(
-                        title = stringResource(R.string.settings_splash_preload),
-                        subtitle = stringResource(R.string.settings_splash_preload_desc),
-                        checked = splashPreload,
-                        onCheckedChange = viewModel::setSplashPreload
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SectionCard(title = stringResource(R.string.settings_data_section), icon = Icons.Default.DeleteSweep) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.settings_image_cache), style = MaterialTheme.typography.bodyLarge, color = Color.White)
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(stringResource(R.string.settings_image_cache_usage, formatCacheSize(cacheSize)), style = MaterialTheme.typography.bodySmall, color = Color(0xFF888888))
-                        }
-                        Text(
-                            text = stringResource(R.string.settings_clear),
-                            color = accent.primary,
-                            modifier = Modifier
-                                .clickable {
-                                    clearImageCache()
-                                    Toast.makeText(context, context.getString(R.string.settings_image_cache_cleared), Toast.LENGTH_SHORT).show()
-                                }
-                                .padding(8.dp)
-                        )
-                    }
-                    HorizontalDividerItem()
-                    ActionRow(
-                        title = stringResource(R.string.settings_clear_history),
-                        subtitle = stringResource(R.string.settings_clear_history_desc),
-                        enabled = true,
-                        onClick = {
-                            viewModel.clearHistory()
-                            Toast.makeText(context, context.getString(R.string.settings_history_cleared), Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                    HorizontalDividerItem()
-                    ActionRow(
-                        title = stringResource(R.string.settings_clear_favorites),
-                        subtitle = stringResource(R.string.settings_clear_favorites_desc),
-                        enabled = true,
-                        onClick = {
-                            viewModel.clearFavorites()
-                            Toast.makeText(context, context.getString(R.string.settings_favorites_cleared), Toast.LENGTH_SHORT).show()
-                        }
-                    )
-                    HorizontalDividerItem()
-                    ActionRow(
-                        title = stringResource(R.string.settings_clear_cache_resync),
-                        subtitle = stringResource(R.string.settings_clear_cache_resync_desc),
-                        enabled = !clearingCache,
-                        loading = clearingCache,
-                        onClick = {
-                            viewModel.clearCacheAndResync()
-                            Toast.makeText(context, context.getString(R.string.settings_cache_cleared_syncing), Toast.LENGTH_LONG).show()
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SectionCard(title = stringResource(R.string.settings_lock_section), icon = Icons.Default.Lock) {
-                    ActionRow(
-                        title = stringResource(R.string.settings_lock_password),
-                        subtitle = if (lockPassword.isNotEmpty()) stringResource(R.string.settings_lock_password_set) else stringResource(R.string.settings_lock_password_not_set),
-                        enabled = true,
-                        onClick = {
-                            lockPasswordInput = lockPassword
-                            showLockPasswordDialog = true
-                        }
-                    )
-                    HorizontalDividerItem()
-                    ActionRow(
-                        title = stringResource(R.string.settings_lock_manage),
-                        subtitle = stringResource(R.string.settings_lock_manage_desc),
-                        enabled = true,
-                        onClick = {
-                            if (lockPassword.isEmpty()) {
-                                lockPasswordInput = ""
-                                showLockPasswordDialog = true
-                            } else {
-                                onManageLocks()
-                            }
-                        }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                SourceListCard(
-                    sources = sourcesState,
-                    activeSourceId = activeSourceId,
-                    syncingIds = syncingIds,
-                    syncingAll = syncingAll,
-                    onSyncAll = {
-                        viewModel.syncAllSources()
-                        Toast.makeText(context, context.getString(R.string.settings_syncing_all), Toast.LENGTH_LONG).show()
-                    },
-                    onEdit = onEditSource,
-                    onSync = { viewModel.syncSource(it) },
-                    onDelete = { viewModel.deleteSource(it) },
-                    onSwitch = { viewModel.switchSource(it) },
-                    onAddSource = onAddSource
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                AboutCard(
-                    versionName = viewModel.versionName,
-                    updateState = updateState,
-                    autoCheckUpdate = autoCheckUpdate,
-                    onAutoCheckUpdateChange = updateViewModel::setAutoCheckUpdate,
-                    onCheckUpdate = { updateViewModel.check() }
-                )
             }
         }
             if (showTmdbKeyDialog) {
