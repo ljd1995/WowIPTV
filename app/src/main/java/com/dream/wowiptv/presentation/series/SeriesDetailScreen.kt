@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -45,7 +44,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -559,64 +561,76 @@ private fun SeriesDetailTablet(
     allEpisodes: List<Episode>,
     seriesEpisodeIds: List<String>,
     episodePositions: Map<String, Long>,
-    posterContentScale: ContentScale,
     avatarsEnabled: Boolean,
     castImages: Map<String, String>,
+    posterContentScale: ContentScale,
     onBack: () -> Unit,
     onPlayEpisode: (String, String, Long, List<String>) -> Unit
 ) {
+    val accent = LocalAccentPalette.current
+
     Column(modifier = Modifier.fillMaxSize()) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = 340.dp)
-                .statusBarsPadding()
-                .padding(16.dp),
-            verticalAlignment = Alignment.Top
+                .weight(1.2f)
+                .background(Color.Black)
         ) {
             AsyncImage(
                 model = series.cover,
-                contentDescription = series.name,
-                contentScale = posterContentScale,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .width(200.dp)
-                    .height(280.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .fillMaxSize()
+                    .blur(18.dp)
+                    .scale(1.08f)
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.55f), Color(0xFF1A1A1A))))
             )
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 16.dp)
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(16.dp)
             ) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = Color.White)
                 }
+                Spacer(modifier = Modifier.weight(1f))
                 Text(
                     text = series.name,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     series.releaseDate?.let { date ->
-                        Text(date.take(10), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(date.take(10), style = MaterialTheme.typography.bodyMedium, color = Color(0xFFCCCCCC))
                         Spacer(modifier = Modifier.width(12.dp))
                     }
                     series.rating?.let { rating ->
                         Icon(Icons.Filled.Star, contentDescription = null, tint = Color(0xFFFFC107), modifier = Modifier.height(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(rating, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(rating, style = MaterialTheme.typography.bodyMedium, color = Color(0xFFCCCCCC))
                     }
                 }
                 series.genre?.let { genreStr ->
                     Spacer(modifier = Modifier.height(10.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        genreStr.split(",").forEach { tag ->
+                        genreStr.split(",").take(6).forEach { tag ->
                             SuggestionChip(
                                 onClick = { },
                                 label = { Text(tag.trim(), style = MaterialTheme.typography.labelSmall) }
@@ -624,72 +638,78 @@ private fun SeriesDetailTablet(
                         }
                     }
                 }
-                series.plot?.let { plot ->
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = plot,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 5,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
-        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-        Column(
+        Row(
             modifier = Modifier
+                .fillMaxWidth()
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
+                .padding(16.dp)
         ) {
-            series.cast?.let { cast ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.series_cast),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                val castNames = cast.split(",").map { it.trim() }.filter { it.isNotEmpty() }
-                if (avatarsEnabled && castNames.isNotEmpty()) {
-                    CastAvatarRow(names = castNames, images = castImages)
-                } else {
-                    Text(
-                        text = cast,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            series.director?.let { director ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.series_director),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                val directorName = director.trim()
-                if (avatarsEnabled && directorName.isNotEmpty()) {
-                    PersonAvatar(name = directorName, imageUrl = castImages[directorName])
-                } else {
-                    Text(
-                        text = director,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            SeriesEpisodesBlock(
-                seriesName = series.name,
-                info = info,
-                allEpisodes = allEpisodes,
-                seriesEpisodeIds = seriesEpisodeIds,
-                episodePositions = episodePositions,
-                onPlayEpisode = onPlayEpisode
+            AsyncImage(
+                model = series.cover,
+                contentDescription = series.name,
+                contentScale = posterContentScale,
+                modifier = Modifier
+                    .width(180.dp)
+                    .height(260.dp)
+                    .clip(RoundedCornerShape(12.dp))
             )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 16.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                series.cast?.let { cast ->
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.series_cast),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val castNames = cast.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    if (avatarsEnabled && castNames.isNotEmpty()) {
+                        CastAvatarRow(names = castNames, images = castImages)
+                    } else {
+                        Text(
+                            text = cast,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                series.director?.let { director ->
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = stringResource(R.string.series_director),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val directorName = director.trim()
+                    if (avatarsEnabled && directorName.isNotEmpty()) {
+                        PersonAvatar(name = directorName, imageUrl = castImages[directorName])
+                    } else {
+                        Text(
+                            text = director,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                SeriesEpisodesBlock(
+                    seriesName = series.name,
+                    info = info,
+                    allEpisodes = allEpisodes,
+                    seriesEpisodeIds = seriesEpisodeIds,
+                    episodePositions = episodePositions,
+                    onPlayEpisode = onPlayEpisode
+                )
+            }
         }
     }
 }
