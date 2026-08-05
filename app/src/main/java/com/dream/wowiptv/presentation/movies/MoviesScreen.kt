@@ -125,10 +125,7 @@ fun MoviesScreen(
                     lockedCategoryIds = lockedCategories,
                     unlockedCategoryIds = unlockedCategories,
                     allLabel = stringResource(R.string.movies_all, categoryCounts.values.sum()),
-                    onCategorySelected = { id ->
-                        onCategorySelected(id)
-                        viewModel.setSearchQuery("")
-                    },
+                    onCategorySelected = { id -> onCategorySelected(id) },
                     sortMode = sortMode,
                     onSortModeChange = { sortMode = it },
                     gridColumns = gridColumns,
