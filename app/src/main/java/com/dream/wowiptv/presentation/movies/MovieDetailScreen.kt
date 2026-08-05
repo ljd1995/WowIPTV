@@ -2,7 +2,6 @@ package com.dream.wowiptv.presentation.movies
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -165,7 +164,6 @@ fun MovieDetailScreen(
     val avatarsEnabled by viewModel.avatarsEnabled.collectAsState()
     val posterContentScale by viewModel.posterContentScale.collectAsState()
     val castImages by viewModel.castImages.collectAsState()
-    val accent = LocalAccentPalette.current
 
     LaunchedEffect(Unit) {
         viewModel.refreshPosition()
