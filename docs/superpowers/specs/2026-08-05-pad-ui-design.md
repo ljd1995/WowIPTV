@@ -9,11 +9,11 @@
 
 ## 断点策略
 
-- 使用 `androidx.compose.material3:material3-adaptive` 库的 `WindowSizeClass`（`currentWindowAdaptiveInfo()`）
+- 零新依赖：`LocalConfiguration.screenWidthDp >= 840` 判定 tablet（`rememberIsTablet()`，`common/AppLayout.kt`）
 - 两档处理：
-  - `compact`（<600dp）及 `medium`（600–840dp）：沿用手机布局，不做双栏
-  - `expanded`（≥840dp）：启用 PAD 布局
-- 新增依赖 `libs.androidx.compose.material3.adaptive`（在现有 Compose BOM 管理下）
+  - `<840dp`（手机、小平板、竖屏平板）：沿用手机布局，不做双栏
+  - `≥840dp`（横屏平板）：启用 PAD 布局
+- `LocalConfiguration` 是 CompositionLocal，屏幕方向/宽度变化自动触发重组，布局即时切换
 
 ## 全局布局（MainScreen）
 
@@ -99,7 +99,7 @@ tablet：**两列布局**
 
 ## 错误处理与边界
 
-- `WindowSizeClass` 在折叠屏动态变化时（展开/折叠）自动重组，布局即时切换
+- 折叠屏展开/折叠、横竖屏旋转时 `LocalConfiguration` 自动重组，布局即时切换
 - m3u 源模式隐藏电影/剧集 tab 的逻辑对 NavigationRail 同样生效（复用 `visibleItems` 过滤）
 - 排序对锁定分类隐藏规则无影响（排序在 UI 层过滤之后应用）
 
