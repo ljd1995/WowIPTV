@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,15 +18,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.DateRange
@@ -38,11 +44,14 @@ import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -58,6 +67,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -82,13 +92,18 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import com.dream.wowiptv.R
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.model.LiveCategory
 import com.dream.wowiptv.domain.model.LiveStream
 import com.dream.wowiptv.presentation.common.LiveDot
 import com.dream.wowiptv.presentation.common.PipState
+import com.dream.wowiptv.presentation.common.SortMode
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.common.applySort
 import com.dream.wowiptv.presentation.common.components.CategoryLockDialog
 import com.dream.wowiptv.presentation.common.components.ErrorView
 import com.dream.wowiptv.presentation.common.components.EmptyState
@@ -182,6 +197,8 @@ fun LiveScreen(
     }
 
     val isTablet = rememberIsTablet()
+    var liveSortMode by remember { mutableStateOf(SortMode.AZ) }
+    var epgStripVisible by remember { mutableStateOf(true) }
     val exoPlayer = viewModel.player
     val isBuffering by viewModel.isBuffering.collectAsState()
     val networkSpeed by viewModel.networkSpeed.collectAsState()
@@ -221,64 +238,103 @@ fun LiveScreen(
         GradientBackground {
         if (isTablet) {
             Row(modifier = Modifier.fillMaxSize()) {
-                CategorySidebar(
-                    categoriesState = categoriesState,
-                    selectedCategoryId = selectedCategoryId,
-                    categoryCounts = categoryCounts,
-                    lockedCategoryIds = lockedCategories,
-                    unlockedCategoryIds = unlockedCategories,
-                    visibleFavoriteCount = visibleFavoriteCount,
-                    onSelectCategory = { viewModel.selectCategory(it) },
-                    modifier = Modifier.width(200.dp)
-                )
+                Column(modifier = Modifier.width(360.dp).fillMaxHeight()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val catOptions = buildList {
+                            add(stringResource(R.string.live_category_all) to (null as Int?))
+                            (categoriesState as? UiState.Success)?.data?.forEach { c ->
+                                add("${c.name} (${categoryCounts[c.id] ?: 0})" to c.id)
+                            }
+                        }
+                        LiveSelect(
+                            label = selectedCategoryId?.let { id ->
+                                catOptions.firstOrNull { it.second == id }?.first
+                                    ?: stringResource(R.string.live_category_all)
+                            } ?: stringResource(R.string.live_category_all),
+                            options = catOptions,
+                            selected = selectedCategoryId,
+                            onSelected = { viewModel.selectCategory(it) },
+                            modifier = Modifier.weight(1f)
+                        )
+                        LiveSelect(
+                            label = stringResource(liveSortMode.labelRes),
+                            options = listOf(
+                                stringResource(SortMode.AZ.labelRes) to SortMode.AZ,
+                                stringResource(SortMode.ZA.labelRes) to SortMode.ZA
+                            ),
+                            selected = liveSortMode,
+                            onSelected = { liveSortMode = it },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    SearchField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.setSearchQuery(it) },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp)
+                    )
+                    val sortedStreams = when (val s = filteredStreams) {
+                        is UiState.Success -> UiState.Success(
+                            applySort(s.data, liveSortMode, { it.name }, { null })
+                        )
+                        else -> s
+                    }
+                    ChannelList(
+                        streamsState = sortedStreams,
+                        selectedCategoryId = selectedCategoryId,
+                        favoriteIds = favoriteIds,
+                        currentStream = currentStream,
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = { viewModel.setSearchQuery(it) },
+                        onPlayStream = { viewModel.playStream(it) },
+                        onToggleFavorite = { stream -> viewModel.toggleFavorite(stream) },
+                        onOpenEpg = onOpenEpg,
+                        isM3u = isM3u,
+                        channelEpgTitles = channelEpg,
+                        onLoadChannelEpg = { viewModel.loadChannelEpg(it) },
+                        isRefreshing = isRefreshing,
+                        onRefresh = {
+                            isRefreshing = true
+                            viewModel.refresh()
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 Box(
                     modifier = Modifier
                         .width(1.dp)
                         .fillMaxHeight()
                         .background(Color.White.copy(alpha = 0.1f))
                 )
-                ChannelList(
-                    streamsState = filteredStreams,
-                    selectedCategoryId = selectedCategoryId,
-                    favoriteIds = favoriteIds,
-                    currentStream = currentStream,
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = { viewModel.setSearchQuery(it) },
-                    onPlayStream = { viewModel.playStream(it) },
-                    onToggleFavorite = { stream -> viewModel.toggleFavorite(stream) },
-                    onOpenEpg = onOpenEpg,
-                    isM3u = isM3u,
-                    channelEpgTitles = channelEpg,
-                    onLoadChannelEpg = { viewModel.loadChannelEpg(it) },
-                    isRefreshing = isRefreshing,
-                    onRefresh = {
-                        isRefreshing = true
-                        viewModel.refresh()
-                    },
-                    modifier = Modifier.weight(1f)
-                )
-                Box(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .fillMaxHeight()
-                        .background(Color.White.copy(alpha = 0.1f))
-                )
-                PlayerSection(
-                    exoPlayer = exoPlayer,
-                    currentStream = currentStream,
-                    streamUrl = streamUrl,
-                    isPlaying = isPlaying,
-                    isBuffering = isBuffering,
-                    epgEntries = epgEntries,
-                    networkSpeed = networkSpeed,
-                    isM3u = isM3u,
-                    showStatus = showStatus,
-                    onTogglePlay = { viewModel.togglePlay() },
-                    onRestart = { currentStream?.let { viewModel.playStream(it) } },
-                    onFullscreen = { viewModel.toggleFullscreen() },
-                    onOpenEpg = { currentStream?.let { onOpenEpg(it.id) } },
-                    modifier = Modifier.width(340.dp)
-                )
+                Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    PlayerSection(
+                        exoPlayer = exoPlayer,
+                        currentStream = currentStream,
+                        streamUrl = streamUrl,
+                        isPlaying = isPlaying,
+                        isBuffering = isBuffering,
+                        epgEntries = epgEntries,
+                        networkSpeed = networkSpeed,
+                        isM3u = isM3u,
+                        showStatus = showStatus,
+                        onTogglePlay = { viewModel.togglePlay() },
+                        onRestart = { currentStream?.let { viewModel.playStream(it) } },
+                        onFullscreen = { viewModel.toggleFullscreen() },
+                        onOpenEpg = { currentStream?.let { onOpenEpg(it.id) } },
+                        modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)
+                    )
+                    if (epgStripVisible) {
+                        EpgStrip(
+                            entries = epgEntries,
+                            onClose = { epgStripVisible = false },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        )
+                    }
+                }
             }
         } else {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -1227,6 +1283,140 @@ private fun FullscreenPlayerView(
             }
         }
     }
+    }
+}
+
+@Composable
+private fun <T> LiveSelect(
+    label: String,
+    options: List<Pair<String, T>>,
+    selected: T,
+    onSelected: (T) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        Surface(
+            onClick = { expanded = true },
+            shape = RoundedCornerShape(8.dp),
+            color = Color(0xFF2D2D3A)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = label,
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    Icons.Filled.ArrowDropDown,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { (optionLabel, value) ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = optionLabel,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 300.dp)
+                        )
+                    },
+                    leadingIcon = {
+                        if (value == selected) {
+                            Icon(Icons.Filled.Check, contentDescription = null)
+                        }
+                    },
+                    onClick = {
+                        onSelected(value)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EpgStrip(
+    entries: List<EpgEntry>,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val accent = LocalAccentPalette.current
+    val timeFmt = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+    Column(modifier = modifier.background(Color(0xFF16161C))) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "EPG",
+                style = MaterialTheme.typography.titleSmall,
+                color = Color.White,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onClose) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.common_disable),
+                    tint = Color(0xFF8A8A93),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        if (entries.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = stringResource(R.string.err_load_epg),
+                    color = Color(0xFF888888),
+                    fontSize = 12.sp
+                )
+            }
+        } else {
+            LazyRow(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(entries, key = { "${it.streamId}-${it.startTime}" }) { entry ->
+                    val isNow = entry.isNowPlaying
+                    Column(
+                        modifier = Modifier
+                            .width(140.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(
+                                if (isNow) accent.primary.copy(alpha = 0.25f) else Color(0xFF2D2D3A)
+                            )
+                            .padding(10.dp)
+                    ) {
+                        Text(
+                            text = "${timeFmt.format(Date(entry.startTime))} - ${timeFmt.format(Date(entry.endTime))}",
+                            color = if (isNow) accent.vibrant else Color(0xFF8A8A93),
+                            fontSize = 11.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = entry.title,
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
