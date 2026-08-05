@@ -116,6 +116,13 @@ fun MoviesScreen(
         GradientBackground {
         Column(modifier = Modifier.fillMaxSize()) {
             if (isTablet) {
+                Text(
+                    text = stringResource(R.string.movies_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(start = 16.dp, top = 12.dp)
+                )
                 ContentToolbar(
                     categories = (categoriesState as? UiState.Success)?.data.orEmpty(),
                     categoryId = { it.id },
