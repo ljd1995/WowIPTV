@@ -2,6 +2,8 @@ package com.dream.wowiptv.presentation.main
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,10 +16,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,9 +37,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,6 +58,7 @@ import com.dream.wowiptv.presentation.navigation.BottomNavItem
 import com.dream.wowiptv.presentation.navigation.Routes
 import com.dream.wowiptv.presentation.series.SeriesScreen
 import com.dream.wowiptv.presentation.settings.SettingsScreen
+import com.dream.wowiptv.presentation.common.rememberIsTablet
 import com.dream.wowiptv.presentation.common.theme.DarkColorScheme
 import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 import com.dream.wowiptv.presentation.common.SourceTypeViewModel
@@ -55,6 +67,7 @@ import com.dream.wowiptv.presentation.update.UpdateState
 import com.dream.wowiptv.presentation.update.UpdateViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dream.wowiptv.BuildConfig
+import com.dream.wowiptv.R
 
 @Composable
 fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int? = null) {
@@ -70,6 +83,15 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
     val autoCheckUpdate by updateViewModel.autoCheckUpdate.collectAsState()
 
     val accent = LocalAccentPalette.current
+
+    val isTablet = rememberIsTablet()
+    val visibleItems = if (sourceType == "m3u") {
+        BottomNavItem.items.filter {
+            it.route != BottomNavItem.Movies.route && it.route != BottomNavItem.Series.route
+        }
+    } else {
+        BottomNavItem.items
+    }
 
     LaunchedEffect(Unit) {
         if (autoCheckUpdate) updateViewModel.check()
@@ -100,16 +122,14 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
     Scaffold(
         containerColor = Color(0xFF1A1A1A),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            if (isTablet) {
+                TabletTopBar(onOpenSearch = { outerNavController.navigate(Routes.GLOBAL_SEARCH) })
+            }
+        },
         bottomBar = {
-            if (!hideBottomBar) {
+            if (!hideBottomBar && !isTablet) {
                 MaterialTheme(colorScheme = DarkColorScheme) {
-                    val visibleItems = if (sourceType == "m3u") {
-                        BottomNavItem.items.filter {
-                            it.route != BottomNavItem.Movies.route && it.route != BottomNavItem.Series.route
-                        }
-                    } else {
-                        BottomNavItem.items
-                    }
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -175,11 +195,25 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
             }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = BottomNavItem.Home.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
+        Row(modifier = Modifier.padding(innerPadding)) {
+            if (isTablet && !hideBottomBar) {
+                TabletNavigationRail(
+                    items = visibleItems,
+                    currentRoute = currentRoute,
+                    onNavigate = { route ->
+                        navController.navigate(route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
+            NavHost(
+                navController = navController,
+                startDestination = BottomNavItem.Home.route,
+                modifier = Modifier.weight(1f)
+            ) {
             composable(
                 route = BottomNavItem.Home.route,
                 enterTransition = null,
@@ -284,6 +318,7 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                     onManageLocks = { outerNavController.navigate(Routes.MANAGE_LOCKS) }
                 )
             }
+            }
         }
     }
 
@@ -299,6 +334,103 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
             onDownload = { updateViewModel.download() },
             onInstall = { updateViewModel.install() },
             onRetry = { updateViewModel.check() }
+        )
+    }
+}
+
+@Composable
+private fun TabletTopBar(onOpenSearch: () -> Unit) {
+    val accent = LocalAccentPalette.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF1A1A1A))
+            .statusBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "WowIPTV",
+            style = TextStyle(
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                brush = Brush.linearGradient(listOf(accent.light, accent.dark))
+            )
+        )
+        Spacer(modifier = Modifier.width(24.dp))
+        Surface(
+            modifier = Modifier
+                .weight(1f)
+                .height(44.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .clickable(onClick = onOpenSearch),
+            color = Color(0xFF2D2D3A)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = Color(0xFF8A8A93),
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.common_search),
+                    color = Color(0xFF8A8A93),
+                    fontSize = 14.sp
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(24.dp))
+    }
+}
+
+@Composable
+private fun TabletNavigationRail(
+    items: List<BottomNavItem>,
+    currentRoute: String?,
+    onNavigate: (String) -> Unit
+) {
+    val accent = LocalAccentPalette.current
+    NavigationRail(
+        containerColor = Color(0xFF1A1A1A),
+        modifier = Modifier.fillMaxHeight()
+    ) {
+        items.filter { it != BottomNavItem.Settings }.forEach { item ->
+            val selected = currentRoute == item.route
+            NavigationRailItem(
+                selected = selected,
+                onClick = { onNavigate(item.route) },
+                icon = { Icon(item.icon, contentDescription = stringResource(item.labelRes)) },
+                label = { Text(stringResource(item.labelRes)) },
+                colors = NavigationRailItemDefaults.colors(
+                    selectedIconColor = accent.vibrant,
+                    selectedTextColor = accent.vibrant,
+                    indicatorColor = accent.primary.copy(alpha = 0.25f),
+                    unselectedIconColor = Color(0xFF8A8A93),
+                    unselectedTextColor = Color(0xFF8A8A93)
+                )
+            )
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        val settingsSelected = currentRoute == BottomNavItem.Settings.route
+        NavigationRailItem(
+            selected = settingsSelected,
+            onClick = { onNavigate(BottomNavItem.Settings.route) },
+            icon = { Icon(BottomNavItem.Settings.icon, contentDescription = stringResource(BottomNavItem.Settings.labelRes)) },
+            label = { Text(stringResource(BottomNavItem.Settings.labelRes)) },
+            colors = NavigationRailItemDefaults.colors(
+                selectedIconColor = accent.vibrant,
+                selectedTextColor = accent.vibrant,
+                indicatorColor = accent.primary.copy(alpha = 0.25f),
+                unselectedIconColor = Color(0xFF8A8A93),
+                unselectedTextColor = Color(0xFF8A8A93)
+            )
         )
     }
 }
