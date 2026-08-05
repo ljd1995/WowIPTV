@@ -65,7 +65,11 @@ import coil.compose.AsyncImage
 import com.dream.wowiptv.R
 import com.dream.wowiptv.domain.model.VodCategory
 import com.dream.wowiptv.domain.model.VodStream
+import com.dream.wowiptv.presentation.common.SortMode
 import com.dream.wowiptv.presentation.common.UiState
+import com.dream.wowiptv.presentation.common.applySort
+import com.dream.wowiptv.presentation.common.rememberIsTablet
+import com.dream.wowiptv.presentation.common.components.ContentToolbar
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.CategoryLockDialog
 import com.dream.wowiptv.presentation.common.components.EmptyState
@@ -92,6 +96,8 @@ fun MoviesScreen(
     val unlockedCategories by viewModel.unlockedCategories.collectAsState()
     val pendingLockedCategory by viewModel.pendingLockedCategory.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
+    val isTablet = rememberIsTablet()
+    var sortMode by remember { mutableStateOf(SortMode.AZ) }
 
     fun onCategorySelected(id: Int?) {
         viewModel.selectCategory(id)
@@ -109,21 +115,44 @@ fun MoviesScreen(
     MaterialTheme(colorScheme = DarkColorScheme) {
         GradientBackground {
         Column(modifier = Modifier.fillMaxSize()) {
-            TopAppBar(
-                title = { Text(stringResource(R.string.movies_title), color = Color.White) },
-                windowInsets = WindowInsets.statusBars,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    titleContentColor = Color.White
+            if (isTablet) {
+                ContentToolbar(
+                    categories = (categoriesState as? UiState.Success)?.data.orEmpty(),
+                    categoryId = { it.id },
+                    categoryName = { it.name },
+                    selectedCategoryId = selectedCategoryId,
+                    categoryCounts = categoryCounts,
+                    lockedCategoryIds = lockedCategories,
+                    unlockedCategoryIds = unlockedCategories,
+                    allLabel = stringResource(R.string.movies_all, categoryCounts.values.sum()),
+                    onCategorySelected = { id ->
+                        onCategorySelected(id)
+                        viewModel.setSearchQuery("")
+                    },
+                    sortMode = sortMode,
+                    onSortModeChange = { sortMode = it },
+                    gridColumns = gridColumns,
+                    onGridColumnsChange = { viewModel.setContentGridColumns(it) },
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { viewModel.setSearchQuery(it) },
+                    modifier = Modifier.fillMaxWidth().height(64.dp)
                 )
-            )
-            SearchField(
-                value = searchQuery,
-                onValueChange = { viewModel.setSearchQuery(it) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
-            )
+            } else {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.movies_title), color = Color.White) },
+                    windowInsets = WindowInsets.statusBars,
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White
+                    )
+                )
+                SearchField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.setSearchQuery(it) },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)
+                )
 
-            if (categoriesState is UiState.Success) {
+                if (categoriesState is UiState.Success) {
                 val cats = (categoriesState as UiState.Success<List<VodCategory>>).data
                 if (cats.isNotEmpty()) {
                     LazyRow(
@@ -168,19 +197,20 @@ fun MoviesScreen(
                         }
                     }
                 }
+                }
             }
 
             Box(modifier = Modifier.weight(1f)) {
-                val displayData = if (searchQuery.isNotBlank()) {
-                    val s = streamsState
-                    if (s is UiState.Success) {
-                        UiState.Success(s.data.filter { it.name.contains(searchQuery, ignoreCase = true) }) as UiState<List<VodStream>>
-                    } else {
-                        s
+                val displayData = when (val s = streamsState) {
+                is UiState.Success -> {
+                    var data = s.data
+                    if (searchQuery.isNotBlank()) {
+                        data = data.filter { it.name.contains(searchQuery, ignoreCase = true) }
                     }
-                } else {
-                    streamsState
+                    UiState.Success(applySort(data, sortMode, { it.name }, { it.added }))
                 }
+                else -> s
+            }
                 when (val streams = displayData) {
                     is UiState.Loading -> {
                         if (!isRefreshing) {
@@ -215,7 +245,7 @@ fun MoviesScreen(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 LazyVerticalGrid(
-                                    columns = GridCells.Fixed(gridColumns),
+                                    columns = GridCells.Fixed(if (isTablet) gridColumns.coerceAtLeast(4) else gridColumns),
                                     modifier = Modifier.fillMaxSize(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp),
