@@ -237,4 +237,13 @@
     <string name="err_m3u_no_url">M3U 频道无播放地址</string>
     <string name="err_m3u_not_supported">M3U 源不支持点播/剧集</string>
     <string name="err_no_active_source">未选择源</string>
+
+    <!-- 工具栏 -->
+    <string name="toolbar_category">分类</string>
+    <string name="toolbar_sort">排序</string>
+    <string name="sort_az">A-Z</string>
+    <string name="sort_recent">最近添加</string>
+    <string name="poster_small">小</string>
+    <string name="poster_medium">中</string>
+    <string name="poster_large">大</string>
 </resources>

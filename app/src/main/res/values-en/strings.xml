@@ -226,4 +226,12 @@
     <string name="err_m3u_no_url">No play URL for M3U channel</string>
     <string name="err_m3u_not_supported">M3U source does not support VOD/Series</string>
     <string name="err_no_active_source">No active source</string>
+
+    <string name="toolbar_category">Category</string>
+    <string name="toolbar_sort">Sort</string>
+    <string name="sort_az">A-Z</string>
+    <string name="sort_recent">Recently Added</string>
+    <string name="poster_small">S</string>
+    <string name="poster_medium">M</string>
+    <string name="poster_large">L</string>
 </resources>
