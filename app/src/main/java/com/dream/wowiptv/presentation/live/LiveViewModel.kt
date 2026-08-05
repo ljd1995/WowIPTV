@@ -19,6 +19,7 @@ import com.dream.wowiptv.domain.usecase.GetLiveCategoriesUseCase
 import com.dream.wowiptv.domain.usecase.GetLiveStreamsUseCase
 import com.dream.wowiptv.domain.usecase.GetShortEpgUseCase
 import com.dream.wowiptv.domain.usecase.PlayStreamUseCase
+import com.dream.wowiptv.domain.usecase.ResolveStreamMimeUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import com.dream.wowiptv.domain.repository.SourceRepository
 import com.dream.wowiptv.presentation.common.CategoryLocks
@@ -53,6 +54,7 @@ class LiveViewModel @Inject constructor(
     private val getShortEpgUseCase: GetShortEpgUseCase,
     private val liveTvRepository: LiveTvRepository,
     private val playStreamUseCase: PlayStreamUseCase,
+    private val resolveStreamMimeUseCase: ResolveStreamMimeUseCase,
     private val sourceRepository: SourceRepository,
     private val favoriteStreamDao: FavoriteStreamDao,
     private val watchProgressUseCase: WatchProgressUseCase,
@@ -206,6 +208,9 @@ class LiveViewModel @Inject constructor(
     private val _streamUrl = MutableStateFlow("")
     val streamUrl: StateFlow<String> = _streamUrl.asStateFlow()
 
+    private val _streamMimeType = MutableStateFlow<String?>(null)
+    val streamMimeType: StateFlow<String?> = _streamMimeType.asStateFlow()
+
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
@@ -265,10 +270,10 @@ class LiveViewModel @Inject constructor(
             defaultPlaybackSpeed.collect { player.setPlaybackSpeed(it) }
         }
         viewModelScope.launch {
-            combine(_streamUrl, _isPlaying) { url, playing -> url to playing }
-                .collect { (url, playing) ->
+            combine(_streamUrl, _streamMimeType, _isPlaying) { url, mime, playing -> Triple(url, mime, playing) }
+                .collect { (url, mime, playing) ->
                     if (url.isNotEmpty()) {
-                        player.setMediaItem(MediaItem.fromUri(url))
+                        player.setMediaItem(buildMediaItem(url, mime))
                         player.prepare()
                         player.playWhenReady = playing && url.isNotEmpty()
                         _isBuffering.value = true
@@ -277,6 +282,12 @@ class LiveViewModel @Inject constructor(
         }
     }
 
+    private fun buildMediaItem(url: String, mime: String?): MediaItem =
+        MediaItem.Builder()
+            .setUri(url)
+            .apply { mime?.let { setMimeType(it) } }
+            .build()
+
     fun onAppBackgrounded() {
         player.stop()
         player.clearMediaItems()
@@ -284,7 +295,7 @@ class LiveViewModel @Inject constructor(
 
     fun onAppForegrounded() {
         if (_streamUrl.value.isNotEmpty() && _isPlaying.value) {
-            player.setMediaItem(MediaItem.fromUri(_streamUrl.value))
+            player.setMediaItem(buildMediaItem(_streamUrl.value, _streamMimeType.value))
             player.prepare()
             player.playWhenReady = true
             _isBuffering.value = true
@@ -372,6 +383,11 @@ class LiveViewModel @Inject constructor(
             try {
                 val url = playStreamUseCase(PlayStreamUseCase.StreamType.Live(stream.id, m3uUrl = stream.m3uUrl))
                 _streamUrl.value = url
+                _streamMimeType.value = try {
+                    resolveStreamMimeUseCase(url)
+                } catch (_: Exception) {
+                    null
+                }
             } catch (_: Exception) {
                 _streamUrl.value = ""
             }

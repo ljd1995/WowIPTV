@@ -92,6 +92,7 @@ fun PlayerScreen(
     viewModel: PlayerViewModel = hiltViewModel()
 ) {
     val streamUrl by viewModel.streamUrl.collectAsState()
+    val streamMimeType by viewModel.streamMimeType.collectAsState()
     val defaultSpeed by viewModel.defaultPlaybackSpeed.collectAsState()
     val showStatus by viewModel.showPlayerStatus.collectAsState()
     val autoplayNext by viewModel.autoplayNextEpisode.collectAsState()
@@ -171,9 +172,12 @@ fun PlayerScreen(
         }
     }
 
-    LaunchedEffect(streamUrl) {
+    LaunchedEffect(streamUrl, streamMimeType) {
         if (streamUrl.isNotEmpty()) {
-            val mediaItem = MediaItem.fromUri(streamUrl)
+            val mediaItem = MediaItem.Builder()
+                .setUri(streamUrl)
+                .apply { streamMimeType?.let { setMimeType(it) } }
+                .build()
             exoPlayer.setMediaItem(mediaItem)
             exoPlayer.prepare()
             exoPlayer.playWhenReady = true
@@ -380,7 +384,11 @@ fun PlayerScreen(
                         onClick = {
                             if (streamUrl.isNotEmpty()) {
                                 exoPlayer.stop()
-                                exoPlayer.setMediaItem(MediaItem.fromUri(streamUrl))
+                                val mediaItem = MediaItem.Builder()
+                                    .setUri(streamUrl)
+                                    .apply { streamMimeType?.let { setMimeType(it) } }
+                                    .build()
+                                exoPlayer.setMediaItem(mediaItem)
                                 exoPlayer.prepare()
                                 exoPlayer.playWhenReady = true
                                 viewModel.play()

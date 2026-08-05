@@ -7,6 +7,7 @@ import com.dream.wowiptv.data.local.AppPreferences
 import com.dream.wowiptv.domain.model.EpgEntry
 import com.dream.wowiptv.domain.usecase.GetShortEpgUseCase
 import com.dream.wowiptv.domain.usecase.PlayStreamUseCase
+import com.dream.wowiptv.domain.usecase.ResolveStreamMimeUseCase
 import com.dream.wowiptv.domain.usecase.WatchProgressUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,7 @@ class PlayerViewModel @Inject constructor(
     private val playStreamUseCase: PlayStreamUseCase,
     private val getShortEpgUseCase: GetShortEpgUseCase,
     private val watchProgressUseCase: WatchProgressUseCase,
+    private val resolveStreamMimeUseCase: ResolveStreamMimeUseCase,
     appPreferences: AppPreferences
 ) : ViewModel() {
 
@@ -42,6 +44,9 @@ class PlayerViewModel @Inject constructor(
 
     private val _streamUrl = MutableStateFlow("")
     val streamUrl: StateFlow<String> = _streamUrl.asStateFlow()
+
+    private val _streamMimeType = MutableStateFlow<String?>(null)
+    val streamMimeType: StateFlow<String?> = _streamMimeType.asStateFlow()
 
     private val _epgEntries = MutableStateFlow<List<EpgEntry>>(emptyList())
     val epgEntries: StateFlow<List<EpgEntry>> = _epgEntries.asStateFlow()
@@ -77,6 +82,12 @@ class PlayerViewModel @Inject constructor(
                 _streamUrl.value = playStreamUseCase(
                     PlayStreamUseCase.StreamType.Series(episodeId)
                 )
+                _streamMimeType.value = try {
+                    resolveStreamMimeUseCase(_streamUrl.value)
+                } catch (e: Exception) {
+                    android.util.Log.e("PlayerVM", "resolve mime failed", e)
+                    null
+                }
             } catch (e: Exception) {
                 android.util.Log.e("PlayerVM", "playNextEpisode failed", e)
             }
@@ -94,6 +105,12 @@ class PlayerViewModel @Inject constructor(
                     else -> PlayStreamUseCase.StreamType.Live(idNum)
                 }
                 _streamUrl.value = playStreamUseCase(type)
+                _streamMimeType.value = try {
+                    resolveStreamMimeUseCase(_streamUrl.value)
+                } catch (e: Exception) {
+                    android.util.Log.e("PlayerVM", "resolve mime failed", e)
+                    null
+                }
                 if (streamType == "live") {
                     val contentId = "live_$streamId"
                     val pos = System.currentTimeMillis() / 1000
