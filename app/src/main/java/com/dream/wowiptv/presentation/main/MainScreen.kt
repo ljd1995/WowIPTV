@@ -53,6 +53,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dream.wowiptv.presentation.home.HomeScreen
+import com.dream.wowiptv.presentation.epg.EpgTimelineScreen
 import com.dream.wowiptv.presentation.live.LiveScreen
 import com.dream.wowiptv.presentation.movies.MoviesScreen
 import com.dream.wowiptv.presentation.navigation.BottomNavItem
@@ -69,6 +70,8 @@ import com.dream.wowiptv.presentation.update.UpdateViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dream.wowiptv.BuildConfig
 import com.dream.wowiptv.R
+
+private const val PROGRAM_GUIDE = "program_guide"
 
 @Composable
 fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int? = null) {
@@ -207,9 +210,6 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                             launchSingleTop = true
                             restoreState = true
                         }
-                    },
-                    onOpenProgramGuide = {
-                        outerNavController.navigate(Routes.epgRoute(0))
                     }
                 )
             }
@@ -322,6 +322,21 @@ fun MainScreen(outerNavController: NavHostController, pendingLiveStreamArg: Int?
                     onManageLocks = { outerNavController.navigate(Routes.MANAGE_LOCKS) }
                 )
             }
+            composable(
+                route = PROGRAM_GUIDE,
+                enterTransition = null,
+                exitTransition = null
+            ) {
+                if (isTablet) {
+                    EpgTimelineScreen(
+                        onNavigateBack = {},
+                        onPlayChannel = { streamId ->
+                            outerNavController.navigate(Routes.playerRoute("live", streamId.toString()))
+                        },
+                        embedded = true
+                    )
+                }
+            }
             }
         }
     }
@@ -398,8 +413,7 @@ private fun TabletTopBar(onOpenSearch: () -> Unit) {
 private fun TabletNavigationRail(
     items: List<BottomNavItem>,
     currentRoute: String?,
-    onNavigate: (String) -> Unit,
-    onOpenProgramGuide: () -> Unit
+    onNavigate: (String) -> Unit
 ) {
     val accent = LocalAccentPalette.current
     NavigationRail(
@@ -423,8 +437,8 @@ private fun TabletNavigationRail(
             )
         }
         NavigationRailItem(
-            selected = false,
-            onClick = onOpenProgramGuide,
+            selected = currentRoute == PROGRAM_GUIDE,
+            onClick = { onNavigate(PROGRAM_GUIDE) },
             icon = {
                 Icon(
                     Icons.Filled.DateRange,

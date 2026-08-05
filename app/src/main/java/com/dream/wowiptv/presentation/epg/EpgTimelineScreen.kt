@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -85,7 +87,8 @@ private val EPG_PREFETCH = 10
 fun EpgTimelineScreen(
     viewModel: EpgViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit,
-    onPlayChannel: (Int) -> Unit
+    onPlayChannel: (Int) -> Unit,
+    embedded: Boolean = false
 ) {
     val channelsState by viewModel.channels.collectAsState()
     val epgDataState by viewModel.epgData.collectAsState()
@@ -98,10 +101,12 @@ fun EpgTimelineScreen(
     val isLandscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     BackHandler {
-        if (isLandscape) {
-            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        } else {
-            onNavigateBack()
+        if (!embedded) {
+            if (isLandscape) {
+                activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            } else {
+                onNavigateBack()
+            }
         }
     }
 
@@ -111,35 +116,45 @@ fun EpgTimelineScreen(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { Text("EPG", color = Color.White) },
+                    title = {
+                        Text(
+                            text = if (embedded) stringResource(R.string.program_guide) else "EPG",
+                            color = Color.White
+                        )
+                    },
                     navigationIcon = {
-                        IconButton(onClick = {
-                            val a = activity
-                            if (a != null && isLandscape) {
-                                a.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                            } else {
-                                onNavigateBack()
+                        if (!embedded) {
+                            IconButton(onClick = {
+                                val a = activity
+                                if (a != null && isLandscape) {
+                                    a.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                } else {
+                                    onNavigateBack()
+                                }
+                            }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                             }
-                        }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                         }
                     },
                     actions = {
-                        IconButton(onClick = {
-                            val a = activity ?: return@IconButton
-                            if (isLandscape) {
-                                a.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                            } else {
-                                a.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                        if (!embedded) {
+                            IconButton(onClick = {
+                                val a = activity ?: return@IconButton
+                                if (isLandscape) {
+                                    a.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                                } else {
+                                    a.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                                }
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Filled.ScreenRotation,
+                                    contentDescription = stringResource(R.string.epg_rotate),
+                                    tint = Color.White
+                                )
                             }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.ScreenRotation,
-                                contentDescription = stringResource(R.string.epg_rotate),
-                                tint = Color.White
-                            )
                         }
                     },
+                    windowInsets = if (embedded) WindowInsets(0, 0, 0, 0) else WindowInsets.statusBars,
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
                         titleContentColor = Color.White,
