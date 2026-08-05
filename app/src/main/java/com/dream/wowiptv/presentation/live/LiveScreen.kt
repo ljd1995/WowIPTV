@@ -99,6 +99,7 @@ import com.dream.wowiptv.presentation.common.components.SearchField
 import com.dream.wowiptv.presentation.common.DeviceStatusIndicator
 import com.dream.wowiptv.presentation.common.enterPictureInPicture
 import com.dream.wowiptv.presentation.common.formatNetworkSpeed
+import com.dream.wowiptv.presentation.common.rememberIsTablet
 import com.dream.wowiptv.presentation.common.theme.LiveRed
 import com.dream.wowiptv.presentation.common.theme.LocalAccentPalette
 
@@ -180,6 +181,7 @@ fun LiveScreen(
         }
     }
 
+    val isTablet = rememberIsTablet()
     val exoPlayer = viewModel.player
     val isBuffering by viewModel.isBuffering.collectAsState()
     val networkSpeed by viewModel.networkSpeed.collectAsState()
@@ -217,6 +219,68 @@ fun LiveScreen(
         )
     } else {
         GradientBackground {
+        if (isTablet) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                CategorySidebar(
+                    categoriesState = categoriesState,
+                    selectedCategoryId = selectedCategoryId,
+                    categoryCounts = categoryCounts,
+                    lockedCategoryIds = lockedCategories,
+                    unlockedCategoryIds = unlockedCategories,
+                    visibleFavoriteCount = visibleFavoriteCount,
+                    onSelectCategory = { viewModel.selectCategory(it) },
+                    modifier = Modifier.width(200.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .background(Color.White.copy(alpha = 0.1f))
+                )
+                ChannelList(
+                    streamsState = filteredStreams,
+                    selectedCategoryId = selectedCategoryId,
+                    favoriteIds = favoriteIds,
+                    currentStream = currentStream,
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { viewModel.setSearchQuery(it) },
+                    onPlayStream = { viewModel.playStream(it) },
+                    onToggleFavorite = { stream -> viewModel.toggleFavorite(stream) },
+                    onOpenEpg = onOpenEpg,
+                    isM3u = isM3u,
+                    channelEpgTitles = channelEpg,
+                    onLoadChannelEpg = { viewModel.loadChannelEpg(it) },
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        isRefreshing = true
+                        viewModel.refresh()
+                    },
+                    modifier = Modifier.weight(1f)
+                )
+                Box(
+                    modifier = Modifier
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .background(Color.White.copy(alpha = 0.1f))
+                )
+                PlayerSection(
+                    exoPlayer = exoPlayer,
+                    currentStream = currentStream,
+                    streamUrl = streamUrl,
+                    isPlaying = isPlaying,
+                    isBuffering = isBuffering,
+                    epgEntries = epgEntries,
+                    networkSpeed = networkSpeed,
+                    isM3u = isM3u,
+                    showStatus = showStatus,
+                    onTogglePlay = { viewModel.togglePlay() },
+                    onRestart = { currentStream?.let { viewModel.playStream(it) } },
+                    onFullscreen = { viewModel.toggleFullscreen() },
+                    onOpenEpg = { currentStream?.let { onOpenEpg(it.id) } },
+                    modifier = Modifier.width(340.dp)
+                )
+            }
+        } else {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
                 title = { Text(stringResource(R.string.live_title), color = DarkText) },
@@ -269,6 +333,7 @@ fun LiveScreen(
                 },
                 modifier = Modifier.weight(0.6f)
             )
+        }
         }
         }
 
