@@ -6,7 +6,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 @Composable
 fun rememberIsTablet(): Boolean {
     val config = LocalConfiguration.current
-    return config.screenWidthDp >= 840
+    return config.smallestScreenWidthDp >= 600
 }
 
 fun effectiveGridColumns(gridColumns: Int, isTablet: Boolean): Int =

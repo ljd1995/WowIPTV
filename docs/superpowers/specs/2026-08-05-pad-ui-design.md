@@ -9,10 +9,10 @@
 
 ## 断点策略
 
-- 零新依赖：`LocalConfiguration.screenWidthDp >= 840` 判定 tablet（`rememberIsTablet()`，`common/AppLayout.kt`）
+- 零新依赖：`LocalConfiguration.smallestScreenWidthDp >= 600` 判定 tablet（`rememberIsTablet()`，`common/AppLayout.kt`；smallestScreenWidthDp 不随横竖屏变化，手机横屏不会误判为 PAD）
 - 两档处理：
-  - `<840dp`（手机、小平板、竖屏平板）：沿用手机布局，不做双栏
-  - `≥840dp`（横屏平板）：启用 PAD 布局
+  - `<600dp`（手机、含横屏手机）：沿用手机布局，不做双栏
+  - `≥600dp`（平板、折叠屏展开）：启用 PAD 布局
 - `LocalConfiguration` 是 CompositionLocal，屏幕方向/宽度变化自动触发重组，布局即时切换
 
 ## 全局布局（MainScreen）
