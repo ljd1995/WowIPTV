@@ -10,5 +10,6 @@ data class SeriesItem(
     val genre: String?,
     val rating: String?,
     val releaseDate: String?,
+    val lastModified: String?,
     val categoryId: Int
 )

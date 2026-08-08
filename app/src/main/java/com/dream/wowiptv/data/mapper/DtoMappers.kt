@@ -49,6 +49,7 @@ fun LiveStreamDto.toDomain(): LiveStream {
         epgChannelId = epgChannelId,
         categoryId = categoryId?.toIntOrNull() ?: 0,
         hasArchive = tvArchive == 1,
+        added = added,
         m3uUrl = null
     )
 }
@@ -128,6 +129,7 @@ fun SeriesDto.toDomain(): SeriesItem {
         genre = genre,
         rating = rating,
         releaseDate = releaseDate,
+        lastModified = lastModified,
         categoryId = categoryId?.toIntOrNull() ?: 0
     )
 }
@@ -171,6 +173,7 @@ fun SeriesInfoDto.toDomain(seriesId: Int = 0): SeriesInfo {
             genre = infoData?.genre,
             rating = infoData?.rating,
             releaseDate = infoData?.releaseDate,
+            lastModified = null,
             categoryId = 0
         )
     )
@@ -194,6 +197,7 @@ fun LiveStream.toEntity(sourceId: Long): LiveStreamEntity {
         epgChannelId = epgChannelId,
         categoryId = categoryId,
         tvArchive = hasArchive,
+        added = added,
         m3uUrl = m3uUrl,
         sourceId = sourceId
     )
@@ -289,6 +293,7 @@ fun SeriesItem.toEntity(sourceId: Long): SeriesEntity {
         genre = genre,
         rating = rating,
         releaseDate = releaseDate,
+        lastModified = lastModified,
         categoryId = categoryId,
         sourceId = sourceId
     )
@@ -337,6 +342,7 @@ fun LiveStreamEntity.toDomain(): LiveStream {
         epgChannelId = epgChannelId,
         categoryId = categoryId ?: 0,
         hasArchive = tvArchive,
+        added = added,
         m3uUrl = m3uUrl
     )
 }
@@ -389,6 +395,7 @@ fun SeriesEntity.toDomain(): SeriesItem {
         genre = genre,
         rating = rating,
         releaseDate = releaseDate,
+        lastModified = lastModified,
         categoryId = categoryId ?: 0
     )
 }

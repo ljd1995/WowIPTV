@@ -287,24 +287,24 @@ fun HomeScreen(
                         Column {
                             SectionHeader(title = stringResource(R.string.home_recent), onViewAll = onViewAllRecent)
                             Spacer(modifier = Modifier.height(16.dp))
-                            val all = data.recentLive + data.recentMovies + data.recentSeries
+                            val all = data.recentItems.take(10)
                             if (all.isEmpty()) {
                                 Text(stringResource(R.string.home_no_content), color = Color(0xFF888888), modifier = Modifier.padding(vertical = 16.dp))
                             } else {
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                                    items(all.take(10), key = { it.hashCode() }) { item ->
+                                    items(all, key = { it.hashCode() }) { item ->
                                         when (item) {
-                                            is LiveStreamEntity -> {
-                                                val catName = data.liveCategoryNames[item.categoryId]
-                                                RecentCard(name = item.name, icon = item.streamIcon, badge = "LIVE", categoryName = catName, onClick = { onLiveClick(item.streamId, item.name) })
+                                            is RecentItem.Live -> {
+                                                val catName = data.liveCategoryNames[item.entity.categoryId]
+                                                RecentCard(name = item.entity.name, icon = item.entity.streamIcon, badge = "LIVE", categoryName = catName, onClick = { onLiveClick(item.entity.streamId, item.entity.name) })
                                             }
-                                            is VodStreamEntity -> {
-                                                val catName = data.vodCategoryNames[item.categoryId]
-                                                RecentCard(name = item.name.orEmpty(), icon = item.streamIcon, badge = "MOVIE", categoryName = catName, rating = item.rating, onClick = { onMovieClick(item.streamId) })
+                                            is RecentItem.Movie -> {
+                                                val catName = data.vodCategoryNames[item.entity.categoryId]
+                                                RecentCard(name = item.entity.name.orEmpty(), icon = item.entity.streamIcon, badge = "MOVIE", categoryName = catName, rating = item.entity.rating, onClick = { onMovieClick(item.entity.streamId) })
                                             }
-                                            is SeriesEntity -> {
-                                                val catName = data.seriesCategoryNames[item.categoryId]
-                                                RecentCard(name = item.name.orEmpty(), icon = item.cover, badge = "SERIES", categoryName = catName, rating = item.rating, onClick = { onSeriesClick(item.seriesId) })
+                                            is RecentItem.Series -> {
+                                                val catName = data.seriesCategoryNames[item.entity.categoryId]
+                                                RecentCard(name = item.entity.name.orEmpty(), icon = item.entity.cover, badge = "SERIES", categoryName = catName, rating = item.entity.rating, onClick = { onSeriesClick(item.entity.seriesId) })
                                             }
                                         }
                                     }

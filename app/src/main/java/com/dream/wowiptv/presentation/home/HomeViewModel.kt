@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Locale
 import javax.inject.Inject
 
@@ -48,6 +47,13 @@ data class Quad(
     val seriesCat: List<SeriesCategoryEntity>,
     val locks: Set<String>
 )
+
+sealed class RecentItem {
+    abstract val timestamp: Long
+    data class Live(val entity: LiveStreamEntity, override val timestamp: Long) : RecentItem()
+    data class Movie(val entity: VodStreamEntity, override val timestamp: Long) : RecentItem()
+    data class Series(val entity: SeriesEntity, override val timestamp: Long) : RecentItem()
+}
 
 data class HomeSection(
     val username: String = "",
@@ -59,9 +65,7 @@ data class HomeSection(
     val favoriteStreams: List<FavoriteStreamEntity> = emptyList(),
     val favoriteMovies: List<FavoriteVodEntity> = emptyList(),
     val favoriteSeries: List<FavoriteVodEntity> = emptyList(),
-    val recentLive: List<LiveStreamEntity> = emptyList(),
-    val recentMovies: List<VodStreamEntity> = emptyList(),
-    val recentSeries: List<SeriesEntity> = emptyList(),
+    val recentItems: List<RecentItem> = emptyList(),
     val liveCategoryNames: Map<Int, String> = emptyMap(),
     val vodCategoryNames: Map<Int, String> = emptyMap(),
     val seriesCategoryNames: Map<Int, String> = emptyMap(),
@@ -199,15 +203,21 @@ val content = combine(
         }.filter { it.value.isNotEmpty() }
 
         val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        val cal = Calendar.getInstance()
-        cal.add(Calendar.DAY_OF_YEAR, -7)
-        val cutoff = cal.time
+        val fmtFull = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
-        val recentMovies = vod.filter { e ->
-            e.added?.let {
-                try { fmt.parse(it)?.after(cutoff) == true } catch (_: Exception) { false }
-            } ?: false
-        }.ifEmpty { vod.take(50) }
+        fun parseTimestamp(raw: String?): Long {
+            if (raw.isNullOrBlank()) return 0L
+            val s = raw.trim()
+            s.toLongOrNull()?.let { return it * 1000 }
+            return try { fmtFull.parse(s)?.time ?: 0L } catch (_: Exception) { 0L }
+                .let { if (it != 0L) it else try { fmt.parse(s)?.time ?: 0L } catch (_: Exception) { 0L } }
+        }
+
+        val recentItems = buildList {
+            live.forEach { add(RecentItem.Live(it, parseTimestamp(it.added))) }
+            vod.forEach { add(RecentItem.Movie(it, parseTimestamp(it.added))) }
+            series.forEach { add(RecentItem.Series(it, parseTimestamp(it.lastModified))) }
+        }.sortedByDescending { it.timestamp }
 
         return HomeSection(
             username = source.username,
@@ -217,9 +227,7 @@ val content = combine(
             favoriteStreams = favStreams.filter { it.categoryId !in lockedLiveIds },
             favoriteMovies = favVods.filter { it.type == "movie" && it.categoryId !in lockedVodIds },
             favoriteSeries = favVods.filter { it.type == "series" && it.categoryId !in lockedSeriesIds },
-            recentLive = live.take(50),
-            recentMovies = recentMovies,
-            recentSeries = series.take(50),
+            recentItems = recentItems,
             continueWatching = enriched.take(10),
             continueCategoryNames = catNames,
             liveCategoryNames = liveCatMap,

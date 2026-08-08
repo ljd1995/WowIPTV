@@ -13,6 +13,8 @@ data class SeriesDto(
     val genre: String? = null,
     val releaseDate: String? = null,
     val rating: String? = null,
+    @SerializedName("last_modified")
+    val lastModified: String? = null,
     @SerializedName("category_id")
     val categoryId: String? = null
 )

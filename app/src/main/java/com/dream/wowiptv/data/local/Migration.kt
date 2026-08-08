@@ -83,3 +83,10 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
         )
     }
 }
+
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE live_streams ADD COLUMN added TEXT")
+        db.execSQL("ALTER TABLE series_list ADD COLUMN lastModified TEXT")
+    }
+}

@@ -51,9 +51,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.dream.wowiptv.R
-import com.dream.wowiptv.data.local.entity.LiveStreamEntity
-import com.dream.wowiptv.data.local.entity.SeriesEntity
-import com.dream.wowiptv.data.local.entity.VodStreamEntity
 import com.dream.wowiptv.presentation.common.components.GradientBackground
 import com.dream.wowiptv.presentation.common.components.EmptyState
 import com.dream.wowiptv.presentation.common.rememberIsTablet
@@ -92,16 +89,16 @@ fun AllItemsScreen(
             },
             containerColor = Color.Transparent
         ) { innerPadding ->
-            val items: List<Any> = if (sourceType == "m3u") {
-                data.recentLive
+            val items: List<RecentItem> = if (sourceType == "m3u") {
+                data.recentItems.filterIsInstance<RecentItem.Live>()
             } else {
                 when (tab) {
-                    1 -> data.recentLive
-                    2 -> data.recentMovies
-                    3 -> data.recentSeries
-                    else -> data.recentLive + data.recentMovies + data.recentSeries
+                    1 -> data.recentItems.filterIsInstance<RecentItem.Live>()
+                    2 -> data.recentItems.filterIsInstance<RecentItem.Movie>()
+                    3 -> data.recentItems.filterIsInstance<RecentItem.Series>()
+                    else -> data.recentItems
                 }
-            }
+            }.take(50)
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(if (rememberIsTablet()) 8 else 3),
@@ -137,34 +134,34 @@ fun AllItemsScreen(
                 } else {
                     items(items, key = { it.hashCode() }) { item ->
                         when (item) {
-                            is LiveStreamEntity -> {
-                                val catName = data.liveCategoryNames[item.categoryId]
+                            is RecentItem.Live -> {
+                                val catName = data.liveCategoryNames[item.entity.categoryId]
                                 GridCell(
-                                    icon = item.streamIcon,
-                                    name = item.name,
+                                    icon = item.entity.streamIcon,
+                                    name = item.entity.name,
                                     badge = "LIVE",
                                     categoryName = catName,
-                                    onClick = { onLiveClick(item.streamId, item.name) }
+                                    onClick = { onLiveClick(item.entity.streamId, item.entity.name) }
                                 )
                             }
-                            is VodStreamEntity -> {
-                                val catName = data.vodCategoryNames[item.categoryId]
+                            is RecentItem.Movie -> {
+                                val catName = data.vodCategoryNames[item.entity.categoryId]
                                 GridCell(
-                                    icon = item.streamIcon,
-                                    name = item.name.orEmpty(),
+                                    icon = item.entity.streamIcon,
+                                    name = item.entity.name.orEmpty(),
                                     badge = "MOVIE",
                                     categoryName = catName,
-                                    onClick = { onMovieClick(item.streamId) }
+                                    onClick = { onMovieClick(item.entity.streamId) }
                                 )
                             }
-                            is SeriesEntity -> {
-                                val catName = data.seriesCategoryNames[item.categoryId]
+                            is RecentItem.Series -> {
+                                val catName = data.seriesCategoryNames[item.entity.categoryId]
                                 GridCell(
-                                    icon = item.cover,
-                                    name = item.name.orEmpty(),
+                                    icon = item.entity.cover,
+                                    name = item.entity.name.orEmpty(),
                                     badge = "SERIES",
                                     categoryName = catName,
-                                    onClick = { onSeriesClick(item.seriesId) }
+                                    onClick = { onSeriesClick(item.entity.seriesId) }
                                 )
                             }
                         }

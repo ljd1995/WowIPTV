@@ -7,9 +7,18 @@ import com.dream.wowiptv.data.local.SourcePreferences
 import com.dream.wowiptv.data.local.dao.LiveStreamDao
 import com.dream.wowiptv.data.local.dao.SeriesDao
 import com.dream.wowiptv.data.local.dao.VodStreamDao
+import com.dream.wowiptv.data.repository.M3uRepository
+import com.dream.wowiptv.domain.model.XtreamSource
+import com.dream.wowiptv.domain.repository.LiveTvRepository
+import com.dream.wowiptv.domain.repository.SeriesRepository
 import com.dream.wowiptv.domain.repository.SourceRepository
+import com.dream.wowiptv.domain.repository.VodRepository
 import com.dream.wowiptv.domain.usecase.GetUserInfoUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,7 +41,11 @@ class SplashViewModel @Inject constructor(
     private val seriesDao: SeriesDao,
     private val getUserInfoUseCase: GetUserInfoUseCase,
     private val sourcePreferences: SourcePreferences,
-    private val appPreferences: AppPreferences
+    private val appPreferences: AppPreferences,
+    private val liveTvRepository: LiveTvRepository,
+    private val vodRepository: VodRepository,
+    private val seriesRepository: SeriesRepository,
+    private val m3uRepository: M3uRepository
 ) : ViewModel() {
 
     private val _counts = MutableStateFlow<SplashCounts?>(null)
@@ -43,6 +56,9 @@ class SplashViewModel @Inject constructor(
 
     private val _ready = MutableStateFlow(false)
     val ready: StateFlow<Boolean> = _ready.asStateFlow()
+
+    private val preSyncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var preSyncJob: Job? = null
 
     init {
         preload()
@@ -85,6 +101,10 @@ class SplashViewModel @Inject constructor(
                 // 计数失败不阻塞跳转
             }
 
+            if (preSyncJob?.isActive != true) {
+                preSyncJob = preSyncScope.launch { preSync(source) }
+            }
+
             launch {
                 try {
                     val info = withTimeoutOrNull(3000) { getUserInfoUseCase() }
@@ -102,6 +122,22 @@ class SplashViewModel @Inject constructor(
                     _ready.value = true
                 }
             }
+        }
+    }
+
+    private suspend fun CoroutineScope.preSync(source: XtreamSource) {
+        try {
+            if (source.type == "m3u") {
+                m3uRepository.refreshAll(source)
+            } else {
+                launch { runCatching { liveTvRepository.refreshAll() } }
+                launch { runCatching { vodRepository.refreshAll() } }
+                launch { runCatching { seriesRepository.refreshAll() } }
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            // 后台预同步失败不影响跳转
         }
     }
 

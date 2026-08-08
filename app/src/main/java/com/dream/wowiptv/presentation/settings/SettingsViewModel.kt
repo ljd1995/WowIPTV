@@ -249,7 +249,12 @@ class SettingsViewModel @Inject constructor(
 
     fun switchSource(id: Long) {
         viewModelScope.launch {
-            switchSourceUseCase(id)
+            _syncingIds.update { it + id }
+            try {
+                switchSourceUseCase(id)
+            } finally {
+                _syncingIds.update { it - id }
+            }
         }
     }
 
